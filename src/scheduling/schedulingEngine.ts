@@ -33,10 +33,14 @@ export class SchedulingEngine {
       });
       return { status: 'confirmed', appointmentId: result.appointmentId };
     } catch (err) {
-      logger.error({ err: (err as Error).message, slotId: req.slotId }, 'falha ao agendar');
-      return { status: 'failed', reason: (err as Error).message };
+      const reason = err instanceof Error ? err.message : String(err);
+      logger.error({ err: reason, slotId: req.slotId }, 'falha ao agendar');
+      return { status: 'failed', reason };
     } finally {
-      await this.lock.release(handle);
+      const released = await this.lock.release(handle);
+      if (!released) {
+        logger.warn({ slotId: req.slotId }, 'lock release no-op (expirado ou ja liberado)');
+      }
     }
   }
 }

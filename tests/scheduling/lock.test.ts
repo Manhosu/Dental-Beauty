@@ -5,7 +5,7 @@ import { SlotLock, type LockRedis } from '../../src/scheduling/lock';
 function makeFakeRedis(): LockRedis {
   const store = new Map<string, string>();
   return {
-    async set(key, value, _mode, _px, _ttl, nx) {
+    async set(key, value, _px, _ttlMs, nx) {
       if (nx === 'NX' && store.has(key)) return null;
       store.set(key, value);
       return 'OK';
