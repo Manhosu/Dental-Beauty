@@ -5,6 +5,13 @@ export interface IdempotencyStore {
   markProcessed(id: string): Promise<void>;
 }
 
+// IMPORTANTE (constraint para a implementação concreta — ver Spike/Fase pós-spike):
+// `alreadyProcessed` + `markProcessed` NÃO são atômicos juntos. Entregas concorrentes
+// do mesmo eventId podem passar ambas pela checagem antes de qualquer marcação,
+// causando duplo-enqueue. A implementação real (ex: Redis) DEVE usar uma operação
+// atômica de "claim" — ex: `SET <eventId> 1 NX EX <ttl>` retornando se foi o primeiro —
+// em vez de um get-then-set ingênuo. Considerar trocar por um único `claim(id): boolean`.
+
 export interface InboundDeps {
   enqueue: (msg: InboundMessage) => Promise<void>;
   idempotency: IdempotencyStore;
