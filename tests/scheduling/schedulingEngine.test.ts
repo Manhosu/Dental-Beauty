@@ -17,6 +17,8 @@ function fakeClient(over: Partial<ClinicorpClient> = {}): ClinicorpClient {
     createAppointment: vi.fn(async () => ({ appointmentId: 'a1', status: 'confirmed' as const })),
     cancelAppointment: vi.fn(async () => ({ released: true })),
     listProfessionals: vi.fn(async () => []),
+    listBirthdays: vi.fn(async () => []),
+    listSpecialties: vi.fn(async () => []),
     ...over,
   };
 }

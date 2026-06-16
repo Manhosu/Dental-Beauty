@@ -15,6 +15,12 @@ const fake: ClinicorpClient = {
   async listProfessionals() {
     return [{ id: 1, name: 'Dr. Silva', cpf: '123.456.789-00' }];
   },
+  async listBirthdays() {
+    return [];
+  },
+  async listSpecialties() {
+    return [];
+  },
 };
 
 describe('ClinicorpClient contract', () => {

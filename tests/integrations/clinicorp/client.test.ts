@@ -177,6 +177,92 @@ describe('HttpClinicorpClient', () => {
     });
   });
 
+  describe('listBirthdays', () => {
+    it('maps raw API fields to Birthday shape and includes subscriber_id in URL', async () => {
+      const raw = [
+        {
+          PatientId: 6693556813430784,
+          Name: 'EDNO DA SILVA',
+          BirthDate: '1953-06-16T03:00:00.000Z',
+          Age: 73,
+          Email: 'edmo@gmail.com',
+          MobilePhone: '(21) 99616-0653',
+        },
+      ];
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse(raw));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.listBirthdays();
+
+      expect(result).toEqual([
+        {
+          patientId: 6693556813430784,
+          name: 'EDNO DA SILVA',
+          birthDate: '1953-06-16T03:00:00.000Z',
+          age: 73,
+          email: 'edmo@gmail.com',
+          mobilePhone: '(21) 99616-0653',
+        },
+      ]);
+
+      const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain('/patient/birthdays');
+      expect(url).toContain('subscriber_id=sub123');
+    });
+
+    it('omits email and mobilePhone when absent/falsy', async () => {
+      const raw = [
+        {
+          PatientId: 123,
+          Name: 'SEM EMAIL',
+          BirthDate: '2000-01-01T00:00:00.000Z',
+          Age: 26,
+        },
+      ];
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse(raw));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.listBirthdays();
+
+      expect(result[0]).not.toHaveProperty('email');
+      expect(result[0]).not.toHaveProperty('mobilePhone');
+    });
+  });
+
+  describe('listSpecialties', () => {
+    it('maps raw API fields and converts Active: X to active: true', async () => {
+      const raw = [
+        {
+          id: 5302587564752897,
+          Description: 'Avaliação Implante',
+          Type: 'EXPERTISE',
+          Active: 'X',
+          Language: 'pt-br',
+        },
+        {
+          id: 111,
+          Description: 'Inativa',
+          Type: 'OTHER',
+          Active: '',
+          Language: 'pt-br',
+        },
+      ];
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse(raw));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.listSpecialties();
+
+      expect(result).toEqual([
+        { id: 5302587564752897, description: 'Avaliação Implante', type: 'EXPERTISE', active: true },
+        { id: 111, description: 'Inativa', type: 'OTHER', active: false },
+      ]);
+
+      const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain('/procedures/list_specialties');
+      expect(url).toContain('subscriber_id=sub123');
+    });
+  });
+
   describe('getAvailability', () => {
     it('calls correct URL with subscriber_id and date, returns raw array', async () => {
       const rawData = [{ time: '10:00', available: true }, { time: '11:00', available: false }];

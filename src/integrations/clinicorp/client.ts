@@ -7,6 +7,8 @@ import type {
   AppointmentResult,
   AvailabilityQuery,
   Professional,
+  Birthday,
+  Specialty,
 } from './types';
 
 export class HttpClinicorpClient implements ClinicorpClient {
@@ -130,6 +132,49 @@ export class HttpClinicorpClient implements ClinicorpClient {
     return this.request<Professional[]>('GET', '/professional/list_all_professionals', {
       query: { subscriber_id: this.config.subscriberId },
     });
+  }
+
+  async listBirthdays(): Promise<Birthday[]> {
+    const raw = await this.request<Array<{
+      PatientId: number;
+      Name: string;
+      BirthDate: string;
+      Age: number;
+      Email?: string;
+      MobilePhone?: string;
+    }>>('GET', '/patient/birthdays', {
+      query: { subscriber_id: this.config.subscriberId },
+    });
+
+    return raw.map((r) => {
+      const b: Birthday = {
+        patientId: r.PatientId,
+        name: r.Name,
+        birthDate: r.BirthDate,
+        age: r.Age,
+      };
+      if (r.Email) b.email = r.Email;
+      if (r.MobilePhone) b.mobilePhone = r.MobilePhone;
+      return b;
+    });
+  }
+
+  async listSpecialties(): Promise<Specialty[]> {
+    const raw = await this.request<Array<{
+      id: number;
+      Description: string;
+      Type: string;
+      Active: string;
+    }>>('GET', '/procedures/list_specialties', {
+      query: { subscriber_id: this.config.subscriberId },
+    });
+
+    return raw.map((r) => ({
+      id: r.id,
+      description: r.Description,
+      type: r.Type,
+      active: r.Active === 'X',
+    }));
   }
 
   async getAvailability(query: AvailabilityQuery): Promise<unknown[]> {

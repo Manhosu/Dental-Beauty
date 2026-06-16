@@ -2,6 +2,7 @@ import Fastify, { type FastifyInstance } from 'fastify';
 import { registerErrorHandler } from './middleware/errorHandler';
 import { handleInbound, type InboundDeps } from './webhooks/chatbotify.route';
 import { registerAgendamentoRoutes, type AgendamentoDeps } from './routes/agendamento';
+import { registerCatalogoRoutes } from './routes/catalogo';
 
 export function buildServer(deps: InboundDeps, scheduling?: AgendamentoDeps): FastifyInstance {
   const app = Fastify({ logger: false });
@@ -18,6 +19,7 @@ export function buildServer(deps: InboundDeps, scheduling?: AgendamentoDeps): Fa
 
   if (scheduling) {
     registerAgendamentoRoutes(app, scheduling);
+    registerCatalogoRoutes(app, { clinicorp: scheduling.clinicorp });
   }
 
   return app;

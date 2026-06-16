@@ -33,9 +33,27 @@ export interface AvailabilityQuery {
 
 export interface Professional { id: number; name: string; cpf: string }
 
+export interface Birthday {
+  patientId: number;
+  name: string;
+  birthDate: string;
+  age: number;
+  email?: string;
+  mobilePhone?: string;
+}
+
+export interface Specialty {
+  id: number;
+  description: string;
+  type: string;
+  active: boolean;
+}
+
 export interface ClinicorpClient {
   getAvailability(query: AvailabilityQuery): Promise<unknown[]>;
   createAppointment(input: CreateAppointmentInput): Promise<AppointmentResult>;
   cancelAppointment(appointmentId: string): Promise<{ released: boolean }>;
   listProfessionals(): Promise<Professional[]>;
+  listBirthdays(): Promise<Birthday[]>;
+  listSpecialties(): Promise<Specialty[]>;
 }

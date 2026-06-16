@@ -36,7 +36,9 @@ function makeFakeClinicorp(slots: unknown[] = []): ClinicorpClient {
     getAvailability: vi.fn().mockResolvedValue(slots),
     createAppointment: vi.fn(),
     cancelAppointment: vi.fn(),
-    listProfessionals: vi.fn(),
+    listProfessionals: vi.fn().mockResolvedValue([]),
+    listBirthdays: vi.fn().mockResolvedValue([]),
+    listSpecialties: vi.fn().mockResolvedValue([]),
   } as unknown as ClinicorpClient;
 }
 
