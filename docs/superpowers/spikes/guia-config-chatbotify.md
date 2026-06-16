@@ -69,12 +69,23 @@ Os dados vêm da Clinicorp **através do nosso microserviço** (endpoints pronto
 - `GET /catalogo/profissionais` → `{ profissionais: [{ id, name, cpf }] }`
 Use no início da conversa (ou em cache) para o agente oferecer especialidades/profissionais reais da Dental Beauty.
 
-## 6. Roteamento por número
-Configurar cada conta de WhatsApp com seu papel:
-- **Atendimento Lead** → agente de triagem/agendamento.
-- **Recepção** → atendimento geral.
-- **Orçamento** → fluxo de orçamento (pode usar `/estimates` da Clinicorp no futuro).
-- **Disparos** → réguas/campanhas (saída).
+## 6. Papéis por número (definição do cliente)
+Os 4 números já estão conectados. Comportamento desejado:
+
+- **Atendimento Lead** → **IA completa** que atende o lead (triagem + agendamento). É o agente principal.
+- **Recepção** → IA focada em **pacientes já em tratamento / que já vieram à clínica** (não em leads novos).
+- **Orçamento** → mais **automação/fluxos**: resgate de mensagens e atendimento **fora do horário comercial**.
+- **Disparos** → apenas **disparos** (saída). Quando um lead **responde** a um disparo, o contato é **assumido pelo fluxo do Atendimento Lead** para finalizar o atendimento.
+
+Automação adicional (Lead e Orçamento): para leads que **enviam mensagem e não respondem** depois, colocar num **fluxo de follow-up** e, mais adiante, numa **etapa de requalificação** que recebe novos envios.
+
+## 7. Plano de testes da IA (sem afetar pacientes reais)
+⚠️ Recepção, Lead e Orçamento recebem mensagens de **pacientes reais** — ligar a IA neles para testar faria o robô responder pacientes de verdade. Por isso:
+
+1. **Banco de testes = número "Disparos".** Ele não recebe tráfego de entrada real. Ligar temporariamente a **IA completa do Lead** nesse número para validar conversa, triagem, catálogo e o agendamento de ponta a ponta — mensageando nós mesmos.
+2. **Recepção / Lead / Orçamento:** ficam **conectados, mas com a IA desligada** até a validação terminar.
+3. **Em paralelo**, o motor de agendamento é testado **direto pelos endpoints** (não precisa de WhatsApp) — então essa frente não fica bloqueada.
+4. **Promoção para produção:** validado no Disparos, replicamos as configurações nos números reais (ligar IA no Lead/Recepção, montar automações do Orçamento) **em horário de baixo movimento**, e devolvemos o Disparos ao papel de só-disparo.
 
 ---
 

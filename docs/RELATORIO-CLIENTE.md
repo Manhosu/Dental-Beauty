@@ -24,20 +24,32 @@ Um atendente virtual (robô) no WhatsApp que:
 - A **plataforma de atendimento (Chatbotify)** já foi analisada e tem tudo o que precisamos: robô com inteligência artificial, base de conhecimento, transferência para humano e automações. Deixamos um **guia completo de configuração** pronto.
 - Já preparamos as instruções para conectar os números de WhatsApp e o passo a passo para colocar o sistema no ar.
 
+## Como vamos testar sem incomodar os pacientes 🧪
+
+Os números de Recepção, Atendimento e Orçamento já recebem mensagens de pacientes reais, então **não** vamos ligar a inteligência artificial neles enquanto testamos (o robô poderia responder um paciente de verdade). O plano combinado:
+
+- Usamos o número de **Disparos** como ambiente de teste (ele não recebe mensagens de pacientes). Ligamos a IA completa nele temporariamente para validar a conversa, a triagem e o agendamento.
+- Os outros números ficam **conectados, mas com a IA desligada** até a validação terminar.
+- Quando estiver tudo certo, ligamos a IA nos números reais em um horário de baixo movimento e devolvemos o número de Disparos à sua função normal.
+
+Cada número terá seu papel:
+- **Atendimento Lead:** robô completo que atende novos interessados.
+- **Recepção:** robô focado em quem já é paciente / já veio à clínica.
+- **Orçamento:** automações de resgate e atendimento fora do horário comercial.
+- **Disparos:** envios em massa; quando um lead responde, o atendimento continua pelo fluxo do Atendimento Lead.
+
 ## O que precisamos de você (cliente) 🙏
 
-Para avançarmos, dependemos de **três coisas**:
+Os números já foram conectados ✅. Agora falta principalmente:
 
-1. **Conectar os números de WhatsApp** na plataforma (recepção, atendimento, disparos e orçamento). É rápido, feito por leitura de QR Code com cada celular — já te enviamos o passo a passo.
+1. **Liberar o "Agendamento Online" na Clinicorp.** Para o robô mostrar os horários livres, a Clinicorp exige que essa função esteja ativada e nos forneça um **código de acesso**. Por favor, ative o Agendamento Online no painel da Clinicorp (ou peça ao suporte) e nos passe esse código.
 
-2. **Liberar o "Agendamento Online" na Clinicorp.** Para o robô mostrar os horários livres, a Clinicorp exige que essa função esteja ativada e nos forneça um **código de acesso**. Por favor, ative o Agendamento Online no painel da Clinicorp (ou peça ao suporte da Clinicorp) e nos passe esse código.
-
-3. **Confirmar a contratação de eventuais planos** na plataforma de atendimento, caso seja necessário para colocar os números em produção (te avisamos antes de qualquer custo).
+2. **Confirmar a contratação de eventuais planos/módulos** na plataforma de atendimento, se necessário para a operação em produção (avisamos antes de qualquer custo).
 
 ## Próximos passos
 
-1. Você conecta os números e nos passa o código de acesso da Clinicorp.
-2. Nós ligamos a consulta de horários de ponta a ponta e fazemos um teste real de agendamento.
+1. Você nos passa o código de acesso da Clinicorp.
+2. Ligamos a consulta de horários de ponta a ponta e fazemos um teste real de agendamento (no número de Disparos).
 3. Configuramos o robô (textos, preços, materiais) e as automações de lembrete/campanha.
 4. Colocamos no ar e acompanhamos os primeiros atendimentos.
 
