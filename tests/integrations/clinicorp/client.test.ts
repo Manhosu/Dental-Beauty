@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { HttpClinicorpClient } from '../../../src/integrations/clinicorp/client';
 import type { ClinicorpConfig } from '../../../src/integrations/clinicorp/types';
 import { ExternalApiError } from '../../../src/lib/errors';
