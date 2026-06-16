@@ -7,6 +7,9 @@ const envSchema = z.object({
   CLINICORP_API_BASE: z.string().url(),
   CLINICORP_API_USER: z.string().min(1),
   CLINICORP_API_TOKEN: z.string().min(1),
+  CLINICORP_SUBSCRIBER_ID: z.string().min(1),
+  CLINICORP_BUSINESS_ID: z.coerce.number().int().positive(),
+  CLINICORP_ACCESS_CODE: z.string().optional(),
   CHATBOTIFY_API_BASE: z.string().url(),
   CHATBOTIFY_API_TOKEN: z.string().min(1),
 });

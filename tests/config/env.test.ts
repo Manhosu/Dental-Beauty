@@ -8,6 +8,8 @@ const base = {
   CLINICORP_API_BASE: 'https://sistema.clinicorp.com',
   CLINICORP_API_USER: 'user',
   CLINICORP_API_TOKEN: 'token',
+  CLINICORP_SUBSCRIBER_ID: 'oralmultiedentalbeauty',
+  CLINICORP_BUSINESS_ID: '6247357829611520',
   CHATBOTIFY_API_BASE: 'https://api.chatbotify.example',
   CHATBOTIFY_API_TOKEN: 'cb-token',
 };

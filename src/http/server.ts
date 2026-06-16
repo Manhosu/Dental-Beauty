@@ -1,8 +1,9 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { registerErrorHandler } from './middleware/errorHandler';
 import { handleInbound, type InboundDeps } from './webhooks/chatbotify.route';
+import { registerAgendamentoRoutes, type AgendamentoDeps } from './routes/agendamento';
 
-export function buildServer(deps: InboundDeps): FastifyInstance {
+export function buildServer(deps: InboundDeps, scheduling?: AgendamentoDeps): FastifyInstance {
   const app = Fastify({ logger: false });
   registerErrorHandler(app);
 
@@ -14,6 +15,10 @@ export function buildServer(deps: InboundDeps): FastifyInstance {
     if (result.status === 'duplicate') return reply.status(200).send(result);
     return reply.status(202).send(result);
   });
+
+  if (scheduling) {
+    registerAgendamentoRoutes(app, scheduling);
+  }
 
   return app;
 }

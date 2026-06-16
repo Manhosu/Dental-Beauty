@@ -1,0 +1,168 @@
+import { describe, it, expect, vi } from 'vitest';
+import { buildServer } from '../../src/http/server';
+import type { SchedulingEngine, BookResult } from '../../src/scheduling/schedulingEngine';
+import type { ClinicorpClient } from '../../src/integrations/clinicorp/types';
+
+// No-op InboundDeps so we can call buildServer with one arg style
+const noopInbound = {
+  enqueue: async () => {},
+  idempotency: {
+    alreadyProcessed: async () => false as const,
+    markProcessed: async () => {},
+  },
+};
+
+// Minimal valid book payload
+const validBookPayload = {
+  slotId: 'slot-1',
+  professionalId: 'prof-1',
+  specialty: 'Ortodontia',
+  patient: { name: 'João Silva', phone: '11999999999' },
+  date: '2026-07-01',
+  fromTime: '09:00',
+  toTime: '09:30',
+  dentistPersonId: 42,
+  scheduleToId: 10,
+};
+
+function makeFakeEngine(result: BookResult): SchedulingEngine {
+  return {
+    book: vi.fn().mockResolvedValue(result),
+  } as unknown as SchedulingEngine;
+}
+
+function makeFakeClinicorp(slots: unknown[] = []): ClinicorpClient {
+  return {
+    getAvailability: vi.fn().mockResolvedValue(slots),
+    createAppointment: vi.fn(),
+    cancelAppointment: vi.fn(),
+    listProfessionals: vi.fn(),
+  } as unknown as ClinicorpClient;
+}
+
+describe('POST /agendamento/book', () => {
+  it('returns 201 with confirmed when engine returns confirmed', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'appt-abc' });
+    const fakeClinicorp = makeFakeClinicorp();
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/agendamento/book',
+      payload: validBookPayload,
+    });
+
+    expect(res.statusCode).toBe(201);
+    expect(res.json()).toEqual({ status: 'confirmed', appointmentId: 'appt-abc' });
+    await app.close();
+  });
+
+  it('returns 409 when engine returns slot_taken', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'slot_taken' });
+    const fakeClinicorp = makeFakeClinicorp();
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/agendamento/book',
+      payload: validBookPayload,
+    });
+
+    expect(res.statusCode).toBe(409);
+    expect(res.json()).toEqual({ status: 'slot_taken' });
+    await app.close();
+  });
+
+  it('returns 502 when engine returns failed', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'failed', reason: 'API error' });
+    const fakeClinicorp = makeFakeClinicorp();
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/agendamento/book',
+      payload: validBookPayload,
+    });
+
+    expect(res.statusCode).toBe(502);
+    expect(res.json()).toEqual({ status: 'failed', reason: 'API error' });
+    await app.close();
+  });
+
+  it('returns 400 for invalid body (missing required fields)', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
+    const fakeClinicorp = makeFakeClinicorp();
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/agendamento/book',
+      payload: { bad: true },
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toMatchObject({ error: 'invalid' });
+    await app.close();
+  });
+});
+
+describe('GET /agendamento/disponibilidade', () => {
+  it('returns 200 with slots from fakeClinicorp when date is valid', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
+    const mockSlots = [{ id: 1, time: '09:00' }, { id: 2, time: '09:30' }];
+    const fakeClinicorp = makeFakeClinicorp(mockSlots);
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/agendamento/disponibilidade?date=2026-07-01',
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ date: '2026-07-01', slots: mockSlots });
+    await app.close();
+  });
+
+  it('returns 400 when date query param is missing', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
+    const fakeClinicorp = makeFakeClinicorp();
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/agendamento/disponibilidade',
+    });
+
+    expect(res.statusCode).toBe(400);
+    await app.close();
+  });
+
+  it('returns 400 when date format is invalid', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
+    const fakeClinicorp = makeFakeClinicorp();
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/agendamento/disponibilidade?date=01-07-2026',
+    });
+
+    expect(res.statusCode).toBe(400);
+    await app.close();
+  });
+
+  it('passes professionalId to getAvailability when provided', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
+    const fakeClinicorp = makeFakeClinicorp([]);
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/agendamento/disponibilidade?date=2026-07-01&professionalId=99',
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(fakeClinicorp.getAvailability).toHaveBeenCalledWith({ date: '2026-07-01', professionalId: 99 });
+    await app.close();
+  });
+});

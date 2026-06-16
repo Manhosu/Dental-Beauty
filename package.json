@@ -6,6 +6,8 @@
   "engines": { "node": ">=20" },
   "scripts": {
     "build": "tsc -p tsconfig.json",
+    "start": "node dist/main.js",
+    "dev": "tsc -p tsconfig.json && node dist/main.js",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
