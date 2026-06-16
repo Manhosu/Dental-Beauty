@@ -133,11 +133,16 @@ export class HttpClinicorpClient implements ClinicorpClient {
   }
 
   async getAvailability(query: AvailabilityQuery): Promise<unknown[]> {
-    // TODO: mapear shape quando o código de acesso estiver disponível
+    // NOTA: o endpoint exige um "código de acesso" do Agendamento Online da Clinicorp.
+    // O VALOR vem de `config.accessCode` e o NOME do parâmetro de `config.accessCodeParam`
+    // (default 'access_code'). Ambos precisam ser confirmados com a Clinicorp/cliente.
+    // TODO: confirmar nome do parâmetro + mapear o shape da resposta quando o código existir.
+    const accessParam = this.config.accessCodeParam ?? 'access_code';
     return this.request<unknown[]>('GET', '/appointment/get_avaliable_times_calendar', {
       query: {
         subscriber_id: this.config.subscriberId,
         date: query.date,
+        ...(this.config.accessCode !== undefined ? { [accessParam]: this.config.accessCode } : {}),
         ...(query.professionalId !== undefined ? { professionalId: query.professionalId } : {}),
       },
     });

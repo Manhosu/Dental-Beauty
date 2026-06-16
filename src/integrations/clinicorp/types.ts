@@ -5,6 +5,7 @@ export interface ClinicorpConfig {
   subscriberId: string;
   businessId: number;
   accessCode?: string;
+  accessCodeParam?: string; // nome do parâmetro do código de acesso (default 'access_code')
 }
 
 export interface CreateAppointmentInput {

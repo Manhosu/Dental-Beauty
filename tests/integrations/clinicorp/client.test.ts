@@ -201,5 +201,28 @@ describe('HttpClinicorpClient', () => {
       const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
       expect(url).toContain('professionalId=42');
     });
+
+    it('includes the access code under the configured param name when set', async () => {
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse([]));
+      const client = new HttpClinicorpClient(
+        { ...config, accessCode: 'ABC123', accessCodeParam: 'codigo' },
+        fetchFn,
+      );
+
+      await client.getAvailability({ date: '2026-07-01' });
+
+      const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain('codigo=ABC123');
+    });
+
+    it('defaults the access code param name to access_code', async () => {
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse([]));
+      const client = new HttpClinicorpClient({ ...config, accessCode: 'XYZ' }, fetchFn);
+
+      await client.getAvailability({ date: '2026-07-01' });
+
+      const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain('access_code=XYZ');
+    });
   });
 });

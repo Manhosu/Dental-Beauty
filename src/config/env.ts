@@ -10,8 +10,10 @@ const envSchema = z.object({
   CLINICORP_SUBSCRIBER_ID: z.string().min(1),
   CLINICORP_BUSINESS_ID: z.coerce.number().int().positive(),
   CLINICORP_ACCESS_CODE: z.string().optional(),
-  CHATBOTIFY_API_BASE: z.string().url(),
-  CHATBOTIFY_API_TOKEN: z.string().min(1),
+  CLINICORP_ACCESS_CODE_PARAM: z.string().optional(),
+  // Chatbotify é opcional no microserviço (Arquitetura C: a plataforma chama a gente).
+  CHATBOTIFY_API_BASE: z.string().url().optional().or(z.literal('')),
+  CHATBOTIFY_API_TOKEN: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

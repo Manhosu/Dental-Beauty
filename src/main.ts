@@ -22,6 +22,7 @@ async function main(): Promise<void> {
     subscriberId: env.CLINICORP_SUBSCRIBER_ID,
     businessId: env.CLINICORP_BUSINESS_ID,
     accessCode: env.CLINICORP_ACCESS_CODE,
+    accessCodeParam: env.CLINICORP_ACCESS_CODE_PARAM,
   });
 
   const engine = new SchedulingEngine(clinicorp, lock);
