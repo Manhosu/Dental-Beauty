@@ -106,6 +106,42 @@ describe('POST /agendamento/book', () => {
   });
 });
 
+describe('POST /agendamento/cancelar', () => {
+  it('returns 200 with status cancelled and released when appointmentId is valid', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
+    const fakeClinicorp = makeFakeClinicorp();
+    (fakeClinicorp.cancelAppointment as ReturnType<typeof vi.fn>).mockResolvedValue({ released: true });
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/agendamento/cancelar',
+      payload: { appointmentId: '123' },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ status: 'cancelled', released: true });
+    expect(fakeClinicorp.cancelAppointment).toHaveBeenCalledWith('123');
+    await app.close();
+  });
+
+  it('returns 400 when appointmentId is missing', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
+    const fakeClinicorp = makeFakeClinicorp();
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/agendamento/cancelar',
+      payload: {},
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toMatchObject({ error: 'invalid' });
+    await app.close();
+  });
+});
+
 describe('GET /agendamento/disponibilidade', () => {
   it('returns 200 with slots from fakeClinicorp when date is valid', async () => {
     const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
