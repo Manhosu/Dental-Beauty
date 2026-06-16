@@ -57,10 +57,17 @@ O agente, ao concluir a triagem (especialidade + nome), deve **consultar disponi
 > Observação: o microserviço garante o **anti double-booking** (lock atômico + confirmação só após a Clinicorp responder 200). O Flow Builder não precisa se preocupar com concorrência — basta tratar o 409.
 
 ## 5. Réguas (Flow Builder → ⏰ Gatilho Agendado)
-- **Anti no-show:** fluxo agendado T-24h e T-2h → envia confirmação (Sim/Não). Se "Não" → **Bloco HTTP** `POST /agendamento/cancelar` `{ "appointmentId": "{{id}}" }` (libera a vaga na Clinicorp).
-- **Follow-up limpeza (6 meses):** gatilho agendado + `🔍 Obter Dados` (CRM) → disparo de lembrete.
-- **Aniversariantes:** gatilho diário + ferramenta de aniversário / dados da Clinicorp (`/patient/birthdays`).
-- **Campanhas:** segmentar por procedimento e disparar pelo número "Disparos".
+Os dados vêm da Clinicorp **através do nosso microserviço** (endpoints prontos):
+
+- **Aniversariantes** (✅ pronto): gatilho **diário** → **Bloco HTTP** `GET https://SEU_DOMINIO/pacientes/aniversariantes` → retorna `{ aniversariantes: [{ patientId, name, mobilePhone, ... }] }` → para cada item, disparar felicitação pelo número "Disparos".
+- **Anti no-show:** gatilho T-24h e T-2h → buscar os agendamentos do dia (endpoint de próximos agendamentos — *pendente: confirmar o parâmetro de data do `/appointment/list` da Clinicorp*) → enviar confirmação (Sim/Não). Se "Não" → `POST /agendamento/cancelar` `{ "appointmentId": "{{id}}" }` (libera a vaga). O cancelamento **já está pronto**.
+- **Follow-up limpeza (6 meses):** gatilho agendado + histórico de procedimentos (a expor sobre `/patient/list_appointments`) → disparo de lembrete.
+- **Campanhas:** segmentar por procedimento histórico e disparar pelo número "Disparos".
+
+### Endpoints de catálogo (para o agente conhecer as opções válidas — README §3.1)
+- `GET /catalogo/especialidades` → `{ especialidades: [{ id, description, type, active }] }`
+- `GET /catalogo/profissionais` → `{ profissionais: [{ id, name, cpf }] }`
+Use no início da conversa (ou em cache) para o agente oferecer especialidades/profissionais reais da Dental Beauty.
 
 ## 6. Roteamento por número
 Configurar cada conta de WhatsApp com seu papel:
