@@ -1,4 +1,4 @@
-import type { ClinicorpClient } from '../integrations/clinicorp/types';
+import type { ClinicorpClient, CreateAppointmentInput } from '../integrations/clinicorp/types';
 import type { SlotLock } from './lock';
 import { logger } from '../lib/logger';
 
@@ -6,7 +6,16 @@ export interface BookRequest {
   slotId: string;
   professionalId: string;
   specialty: string;
-  patient: { name: string; phone: string };
+  patient: { name: string; phone: string; email?: string; personId?: number };
+  date: string;        // ISO 8601
+  fromTime: string;    // 'HH:mm'
+  toTime: string;      // 'HH:mm'
+  dentistPersonId: number;
+  scheduleToId: number;
+  scheduleToType?: 'CHAIR';
+  procedures?: string;
+  categoryDescription?: string;
+  categoryColor?: string;
 }
 
 export type BookResult =
@@ -26,11 +35,20 @@ export class SchedulingEngine {
     if (!handle) return { status: 'slot_taken' };
 
     try {
-      const result = await this.client.createAppointment({
-        slotId: req.slotId,
-        specialty: req.specialty,
+      const input: CreateAppointmentInput = {
         patient: req.patient,
-      });
+        date: req.date,
+        fromTime: req.fromTime,
+        toTime: req.toTime,
+        dentistPersonId: req.dentistPersonId,
+        scheduleToId: req.scheduleToId,
+        scheduleToType: req.scheduleToType,
+        procedures: req.procedures,
+        categoryDescription: req.categoryDescription,
+        categoryColor: req.categoryColor,
+      };
+
+      const result = await this.client.createAppointment(input);
       return { status: 'confirmed', appointmentId: result.appointmentId };
     } catch (err) {
       const reason = err instanceof Error ? err.message : String(err);
