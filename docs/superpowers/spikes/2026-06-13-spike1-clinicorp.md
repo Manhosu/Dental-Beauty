@@ -38,6 +38,32 @@
 | Procedimentos do paciente | `GET /patient/list_appointments` | `subscriber_id` + paciente | histórico p/ réguas |
 | Leads CRM | `POST /crm/add_leads` | corpo | |
 
+## Corpo de criação de agendamento (`POST /appointment/create_appointment_by_api`)
+Request body (JSON) — exemplo do Swagger:
+```json
+{
+  "Patient_PersonId": 333333333333,
+  "PatientName": "João da Silva",
+  "MobilePhone": "(11) 91234-5678",
+  "Email": "email@dominio.com",
+  "fromTime": "10:00",
+  "toTime": "11:00",
+  "date": "2025-04-12T03:00:00.000Z",
+  "Clinic_BusinessId": 111111111111,
+  "Dentist_PersonId": 222222222222,
+  "ScheduleToId": 1234567890124,
+  "ScheduleToType": "CHAIR",
+  "Procedures": "Limpeza, Obturação",
+  "CategoryColor": "#FF5733",
+  "CategoryDescription": "Consulta odontológica de rotina"
+}
+```
+Resposta 200: `[{ "Status": "CREATED", "id": 987654321 }]` · 400 = inválido/não encontrado.
+- `Clinic_BusinessId` = **6247357829611520** (Dental Beauty).
+- `Dentist_PersonId` = id do profissional (de `/professional/list_all_professionals`).
+- `ScheduleToId`/`ScheduleToType` = cadeira (de `GET /business/list_chairs`), tipo `CHAIR`.
+- `date` ISO + `fromTime`/`toTime` `HH:mm`.
+
 ## Pendências (para o plano de implementação)
 1. **Código de acesso de agendamento online:** os endpoints de disponibilidade (`get_avaliable_days`, `get_avaliable_times_calendar`) exigem um "código de acesso". É preciso **habilitar/obter o código de Agendamento Online** no painel da Clinicorp (config da clínica). → confirmar com o cliente. Vira config `CLINICORP_ACCESS_CODE`.
 2. **Mapear os corpos (request body)** de `create_online_scheduling` / `create_appointment_by_api` / `cancel_appointment` lendo os schemas no Swagger (ou via "Try it out" com dado descartável).

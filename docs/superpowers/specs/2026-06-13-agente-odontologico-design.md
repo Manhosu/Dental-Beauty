@@ -2,7 +2,26 @@
 
 **Projeto:** Dental Beauty / Oral Multi — Integração Chatbotify ⇄ Clinicorp
 **Data:** 2026-06-13
-**Status:** Design aprovado — pronto para virar plano de implementação (Fase 0 + Fase 1)
+**Status:** Design aprovado — Fase 0 implementada. **Revisado para Arquitetura C em 2026-06-15** (ver banner abaixo).
+
+---
+
+## ⚠️ Revisão 2026-06-15 — Arquitetura C (híbrida)
+
+Os spikes revelaram que o **Chatbotify (chatbotify.com.br) é uma plataforma no-code completa** (agentes de IA, base de conhecimento, handoff/supressão nativos, Flow Builder com cron/HTTP, agendamento e CRM). Logo, **não construímos do zero** triagem/NLP, handoff, mídias nem réguas — isso é configurado na plataforma.
+
+**Novo papel do nosso backend:** um **microserviço enxuto de integração Clinicorp**, chamado pelo **Flow Builder do Chatbotify** via HTTP, que garante o **agendamento atômico anti double-booking** (o `SchedulingEngine` + `ClinicorpClient` já construídos na Fase 0).
+
+**O que muda neste design:**
+- Seções 3.1 (IA), 3.3 (handoff) e 3.4 (réguas) passam a ser **configuração no Chatbotify**, não código nosso.
+- Seção 3.2 (agendamento síncrono) permanece **como nosso microserviço**.
+- Componentes `ConversationOrchestrator`, `IntentEngine`, `KnowledgeBase`, `HandoffManager`, `CronEngine`, worker de mensagens e webhook de entrada **saem do nosso escopo** (ficam na plataforma).
+
+**Fatos da integração Clinicorp (spike 1):** base `https://api.clinicorp.com/rest/v1`, **Basic auth** (user+token), `subscriber_id=oralmultiedentalbeauty`, `Clinic_BusinessId=6247357829611520`. Endpoints: disponibilidade (`/appointment/get_avaliable_times_calendar` + código de acesso), criação (`POST /appointment/create_appointment_by_api`), cancelamento (`/appointment/cancel_appointment`). Detalhes em [spikes/2026-06-13-spike1-clinicorp.md](../spikes/2026-06-13-spike1-clinicorp.md).
+
+**Pendência do cliente:** habilitar/obter o **código de acesso do Agendamento Online** na Clinicorp (necessário para consultar disponibilidade).
+
+> O restante deste documento descreve o plano original (backend completo). Mantido como referência histórica; o escopo ativo é o microserviço acima + a configuração no Chatbotify.
 
 ---
 
