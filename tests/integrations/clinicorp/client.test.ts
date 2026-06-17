@@ -20,8 +20,19 @@ function makeResponse(body: unknown, status = 200): Response {
 
 describe('HttpClinicorpClient', () => {
   describe('createAppointment', () => {
-    it('sends Basic auth header and maps CREATED response', async () => {
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse([{ Status: 'CREATED', id: 987654321 }]));
+    it('professional booking: sends Dentist_PersonId, omits ScheduleToId/ScheduleToType, maps single-object response', async () => {
+      const realResponse = {
+        PatientName: 'João da Silva',
+        fromTime: '10:00',
+        toTime: '11:00',
+        date: '2025-04-12T03:00:00.000Z',
+        Clinic_BusinessId: 111111111111,
+        Dentist_PersonId: 222222222222,
+        Deleted: '',
+        Patient_PersonId: 6572892430008321,
+        id: 6670720980484097,
+      };
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse(realResponse));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       const result = await client.createAppointment({
@@ -30,12 +41,11 @@ describe('HttpClinicorpClient', () => {
         fromTime: '10:00',
         toTime: '11:00',
         dentistPersonId: 222222222222,
-        scheduleToId: 1234567890124,
-        scheduleToType: 'CHAIR',
         procedures: 'Limpeza, Obturação',
+        // scheduleToId intentionally omitted → professional booking
       });
 
-      expect(result).toEqual({ appointmentId: '987654321', status: 'confirmed' });
+      expect(result).toEqual({ appointmentId: '6670720980484097', status: 'confirmed' });
 
       expect(fetchFn).toHaveBeenCalledOnce();
       const [url, init] = fetchFn.mock.calls[0] as [string, RequestInit];
@@ -53,6 +63,56 @@ describe('HttpClinicorpClient', () => {
       expect(body.Dentist_PersonId).toBe(222222222222);
       expect(body.PatientName).toBe('João da Silva');
       expect(body.MobilePhone).toBe('(11) 91234-5678');
+      expect(body.Email).toBe('email@dominio.com');
+      expect(body.Procedures).toBe('Limpeza, Obturação');
+
+      // Must NOT send ScheduleToId / ScheduleToType for professional booking
+      expect(body).not.toHaveProperty('ScheduleToId');
+      expect(body).not.toHaveProperty('ScheduleToType');
+    });
+
+    it('chair booking: sends ScheduleToId and ScheduleToType, omits Dentist_PersonId', async () => {
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse({ id: 9999, Deleted: '' }));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.createAppointment({
+        patient: { name: 'Ana', phone: '21999990000' },
+        date: '2026-07-01T13:00:00.000Z',
+        fromTime: '13:00',
+        toTime: '14:00',
+        dentistPersonId: 222,
+        scheduleToId: 123,
+        scheduleToType: 'CHAIR',
+      });
+
+      expect(result).toEqual({ appointmentId: '9999', status: 'confirmed' });
+
+      const [, init] = fetchFn.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(init.body as string);
+
+      expect(body.ScheduleToId).toBe(123);
+      expect(body.ScheduleToType).toBe('CHAIR');
+      // Must NOT send Dentist_PersonId for chair booking
+      expect(body).not.toHaveProperty('Dentist_PersonId');
+    });
+
+    it('chair booking defaults ScheduleToType to CHAIR when not provided', async () => {
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse({ id: 8888, Deleted: '' }));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      await client.createAppointment({
+        patient: { name: 'Ana', phone: '21999990000' },
+        date: '2026-07-01T13:00:00.000Z',
+        fromTime: '13:00',
+        toTime: '14:00',
+        dentistPersonId: 222,
+        scheduleToId: 456,
+        // scheduleToType omitted — should default to 'CHAIR'
+      });
+
+      const [, init] = fetchFn.mock.calls[0] as [string, RequestInit];
+      const body = JSON.parse(init.body as string);
+      expect(body.ScheduleToType).toBe('CHAIR');
     });
 
     it('throws ExternalApiError on HTTP 400', async () => {
@@ -66,7 +126,6 @@ describe('HttpClinicorpClient', () => {
           fromTime: '13:00',
           toTime: '14:00',
           dentistPersonId: 1,
-          scheduleToId: 2,
         }),
       ).rejects.toBeInstanceOf(ExternalApiError);
 
@@ -77,7 +136,6 @@ describe('HttpClinicorpClient', () => {
           fromTime: '13:00',
           toTime: '14:00',
           dentistPersonId: 1,
-          scheduleToId: 2,
         })
         .catch((e) => e);
 
@@ -85,24 +143,26 @@ describe('HttpClinicorpClient', () => {
       expect((err as ExternalApiError).status).toBe(400);
     });
 
-    it('throws ExternalApiError when response array is empty', async () => {
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse([]));
+    it('throws ExternalApiError 502 when response has no id (empty object)', async () => {
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse({}));
       const client = new HttpClinicorpClient(config, fetchFn);
 
-      await expect(
-        client.createAppointment({
+      const err = await client
+        .createAppointment({
           patient: { name: 'Test', phone: '11999999999' },
           date: '2026-07-01T13:00:00.000Z',
           fromTime: '13:00',
           toTime: '14:00',
           dentistPersonId: 1,
-          scheduleToId: 2,
-        }),
-      ).rejects.toBeInstanceOf(ExternalApiError);
+        })
+        .catch((e) => e);
+
+      expect(err).toBeInstanceOf(ExternalApiError);
+      expect((err as ExternalApiError).status).toBe(502);
     });
 
-    it('throws ExternalApiError when status is not CREATED', async () => {
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse([{ Status: 'FAILED', id: 0 }]));
+    it('throws ExternalApiError 502 when Deleted is X (cancelled/invalid)', async () => {
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse({ id: 99, Deleted: 'X' }));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       await expect(
@@ -112,7 +172,6 @@ describe('HttpClinicorpClient', () => {
           fromTime: '13:00',
           toTime: '14:00',
           dentistPersonId: 1,
-          scheduleToId: 2,
         }),
       ).rejects.toBeInstanceOf(ExternalApiError);
     });
@@ -121,7 +180,7 @@ describe('HttpClinicorpClient', () => {
       const fetchFn = vi
         .fn()
         .mockResolvedValueOnce(makeResponse({ error: 'unavailable' }, 503))
-        .mockResolvedValueOnce(makeResponse([{ Status: 'CREATED', id: 42 }]));
+        .mockResolvedValueOnce(makeResponse({ id: 42, Deleted: '' }));
 
       const client = new HttpClinicorpClient(config, fetchFn, {
         retries: 1,
@@ -135,11 +194,26 @@ describe('HttpClinicorpClient', () => {
         fromTime: '13:00',
         toTime: '14:00',
         dentistPersonId: 1,
-        scheduleToId: 2,
       });
 
       expect(result).toEqual({ appointmentId: '42', status: 'confirmed' });
       expect(fetchFn).toHaveBeenCalledTimes(2);
+    });
+
+    it('also accepts legacy array response shape defensively', async () => {
+      // The API might theoretically return an array — be defensive
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse([{ id: 77, Deleted: '' }]));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.createAppointment({
+        patient: { name: 'Test', phone: '11999999999' },
+        date: '2026-07-01T13:00:00.000Z',
+        fromTime: '13:00',
+        toTime: '14:00',
+        dentistPersonId: 1,
+      });
+
+      expect(result).toEqual({ appointmentId: '77', status: 'confirmed' });
     });
   });
 

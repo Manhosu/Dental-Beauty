@@ -77,10 +77,16 @@ export class HttpClinicorpClient implements ClinicorpClient {
       toTime: input.toTime,
       date: input.date,
       Clinic_BusinessId: this.config.businessId,
-      Dentist_PersonId: input.dentistPersonId,
-      ScheduleToId: input.scheduleToId,
-      ScheduleToType: input.scheduleToType ?? 'CHAIR',
     };
+
+    if (input.scheduleToId !== undefined) {
+      // Chair-based booking: send ScheduleTo* and omit Dentist_PersonId to avoid conflict
+      body.ScheduleToId = input.scheduleToId;
+      body.ScheduleToType = input.scheduleToType ?? 'CHAIR';
+    } else {
+      // Professional-based booking (default): send Dentist_PersonId only
+      body.Dentist_PersonId = input.dentistPersonId;
+    }
 
     if (input.patient.email !== undefined) {
       body.Email = input.patient.email;
@@ -102,18 +108,23 @@ export class HttpClinicorpClient implements ClinicorpClient {
       body.CategoryColor = input.categoryColor;
     }
 
-    const response = await this.request<Array<{ Status: string; id: number }>>(
+    const response = await this.request<
+      { id?: number; Deleted?: string } | Array<{ id?: number; Deleted?: string }>
+    >(
       'POST',
       '/appointment/create_appointment_by_api',
       { body },
     );
 
-    if (!Array.isArray(response) || response.length === 0 || response[0].Status !== 'CREATED') {
+    // Real API returns a single object; be defensive and also accept an array
+    const result = Array.isArray(response) ? response[0] : response;
+
+    if (!result || result.id == null || result.Deleted === 'X') {
       throw new ExternalApiError('Clinicorp não confirmou criação', 502);
     }
 
     return {
-      appointmentId: String(response[0].id),
+      appointmentId: String(result.id),
       status: 'confirmed',
     };
   }

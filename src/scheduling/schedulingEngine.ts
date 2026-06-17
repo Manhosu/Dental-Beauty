@@ -11,7 +11,7 @@ export interface BookRequest {
   fromTime: string;    // 'HH:mm'
   toTime: string;      // 'HH:mm'
   dentistPersonId: number;
-  scheduleToId: number;
+  scheduleToId?: number;
   scheduleToType?: 'CHAIR';
   procedures?: string;
   categoryDescription?: string;

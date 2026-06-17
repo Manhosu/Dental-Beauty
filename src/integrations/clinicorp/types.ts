@@ -14,8 +14,8 @@ export interface CreateAppointmentInput {
   fromTime: string;    // 'HH:mm'
   toTime: string;      // 'HH:mm'
   dentistPersonId: number;
-  scheduleToId: number;
-  scheduleToType?: 'CHAIR';
+  scheduleToId?: number;          // opcional — se informado, agenda por cadeira
+  scheduleToType?: 'CHAIR';       // só faz sentido junto com scheduleToId
   procedures?: string;
   categoryDescription?: string;
   categoryColor?: string;
