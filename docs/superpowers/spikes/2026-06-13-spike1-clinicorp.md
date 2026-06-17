@@ -79,10 +79,16 @@ O "código de acesso" é o **`code_link`** do Agendamento Online — para a Dent
 ### Observação sobre a agenda online (esclarece dúvida do cliente)
 O agendamento online **é por profissional** — `check_avaliable_times` retorna a grade semanal de cada profissional. Hoje o link expõe **3 profissionais** (Lívia-Protesista, Fábio-Odontopediatria, Adriana-Ortodontia) dos 11 da clínica. Para incluir mais profissionais/especialidades no fluxo, basta o cliente adicioná-los na configuração do Agendamento Online da Clinicorp.
 
+## ✅ Marcação + cancelamento VALIDADOS em produção (2026-06-17)
+Teste real (criado e cancelado na hora, sem lixo) com o nosso próprio `HttpClinicorpClient`:
+
+- **Criar:** `POST /appointment/create_appointment_by_api`. Enviar **só o profissional** (`Dentist_PersonId`) — **NÃO** enviar `ScheduleToId`/`ScheduleToType` junto, senão dá 400 *"não é possível ... Cadeira e Profissional ao mesmo tempo"*. Corpo mínimo: `PatientName, MobilePhone, fromTime, toTime, date (ISO), Clinic_BusinessId, Dentist_PersonId`. Resposta 200 = **objeto único** com `id` (não é `[{Status:'CREATED'}]` como no exemplo do Swagger).
+- **Cancelar:** `POST /appointment/cancel_appointment` `{ subscriber_id, id }` → 200 com `Deleted:"X"`. ✔
+- **Regra do paciente:** se o `PatientName` já existir, a API retorna `200 {"PatientNameAlreadyExists":true}` e **não cria**. Nesse caso é preciso resolver o paciente e enviar `Patient_PersonId`. O cliente lança `ExternalApiError 409` nesse caso.
+
 ## Pendências (para o plano de implementação)
-1. **Corpo de criação para o fluxo online:** `create_appointment_by_api` já mapeado, mas exige `ScheduleToId` (cadeira). O endpoint de disponibilidade online devolve `ProfessionalId`, não cadeira — avaliar usar `POST /appointment/create_online_scheduling` (booking do próprio fluxo online, que casa com o `code_link`) e mapear seu corpo. Confirmar no teste real com horário descartável.
-2. **`/business/list_chairs`** exige o "id da Clínica" (nome do parâmetro a confirmar) caso sigamos pelo `create_appointment_by_api`.
-3. **Webhooks Clinicorp:** verificar no painel ("Gestão de Webhook") se há push de eventos (criado/cancelado) — opcional para reduzir polling.
+1. **Resolução de paciente:** antes de marcar, buscar o paciente por telefone (`GET /patient/get`) → se existir, usar `Patient_PersonId`; senão, cria novo pelo nome. (Evita o guard `PatientNameAlreadyExists`.) Mapear params de `/patient/get`.
+2. **Webhooks Clinicorp:** verificar no painel ("Gestão de Webhook") se há push de eventos (criado/cancelado) — opcional para reduzir polling.
 
 ## Ajustes nas interfaces (`src/integrations/clinicorp/types.ts`)
 - `AvailabilityQuery` precisa de: `subscriberId`, `accessCode`, `date` (YYYY-MM-DD), e opcional `professionalId`/`businessId`.

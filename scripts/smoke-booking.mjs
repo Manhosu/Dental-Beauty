@@ -29,7 +29,7 @@ const slot = slots[0];
 console.log('Slot escolhido:', slot);
 
 const input = {
-  patient: { name: 'TESTE INTEGRACAO IA - PODE CANCELAR', phone: '21999990000' },
+  patient: { name: `TESTE IA ${Date.now()} - PODE CANCELAR`, phone: '21999990000' },
   date: `${date}T03:00:00.000Z`,
   fromTime: slot.from,
   toTime: slot.to,

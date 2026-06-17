@@ -108,9 +108,8 @@ export class HttpClinicorpClient implements ClinicorpClient {
       body.CategoryColor = input.categoryColor;
     }
 
-    const response = await this.request<
-      { id?: number; Deleted?: string } | Array<{ id?: number; Deleted?: string }>
-    >(
+    type CreateResponse = { id?: number; Deleted?: string; PatientNameAlreadyExists?: boolean };
+    const response = await this.request<CreateResponse | CreateResponse[]>(
       'POST',
       '/appointment/create_appointment_by_api',
       { body },
@@ -118,6 +117,15 @@ export class HttpClinicorpClient implements ClinicorpClient {
 
     // Real API returns a single object; be defensive and also accept an array
     const result = Array.isArray(response) ? response[0] : response;
+
+    // Guarda da Clinicorp: nome de paciente já cadastrado exige Patient_PersonId.
+    // Sinaliza ao chamador para resolver o paciente (buscar/criar) antes de reagendar.
+    if (result?.PatientNameAlreadyExists === true) {
+      throw new ExternalApiError(
+        'Paciente com este nome já existe na Clinicorp — informe patient.personId',
+        409,
+      );
+    }
 
     if (!result || result.id == null || result.Deleted === 'X') {
       throw new ExternalApiError('Clinicorp não confirmou criação', 502);

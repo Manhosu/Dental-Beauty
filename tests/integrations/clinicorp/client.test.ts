@@ -176,6 +176,24 @@ describe('HttpClinicorpClient', () => {
       ).rejects.toBeInstanceOf(ExternalApiError);
     });
 
+    it('throws ExternalApiError 409 when PatientNameAlreadyExists', async () => {
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse({ PatientNameAlreadyExists: true }));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const err = await client
+        .createAppointment({
+          patient: { name: 'Maria', phone: '11999999999' },
+          date: '2026-07-01T13:00:00.000Z',
+          fromTime: '13:00',
+          toTime: '14:00',
+          dentistPersonId: 1,
+        })
+        .catch((e) => e);
+
+      expect(err).toBeInstanceOf(ExternalApiError);
+      expect((err as ExternalApiError).status).toBe(409);
+    });
+
     it('retries on 503 then succeeds (fetch called twice)', async () => {
       const fetchFn = vi
         .fn()
