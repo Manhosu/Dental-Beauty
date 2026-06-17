@@ -3,30 +3,33 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "engines": { "node": ">=20" },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "start": "node dist/main.js",
-    "dev": "npm run build && node dist/main.js",
+    "start": "tsx src/main.ts",
+    "dev": "tsx watch src/main.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "lint": "eslint .",
     "format": "prettier --write ."
   },
   "dependencies": {
-    "fastify": "^4.28.1",
-    "zod": "^3.23.8",
-    "pino": "^9.3.2",
     "bullmq": "^5.12.0",
-    "ioredis": "^5.4.1"
+    "fastify": "^4.28.1",
+    "ioredis": "^5.4.1",
+    "pino": "^9.3.2",
+    "tsx": "^4.22.4",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
-    "typescript": "^5.5.4",
-    "vitest": "^2.0.5",
     "@types/node": "^20.14.0",
     "eslint": "^9.9.0",
+    "prettier": "^3.3.3",
+    "typescript": "^5.5.4",
     "typescript-eslint": "^8.1.0",
-    "prettier": "^3.3.3"
+    "vitest": "^2.0.5"
   }
 }

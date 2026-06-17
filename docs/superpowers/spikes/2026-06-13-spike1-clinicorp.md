@@ -64,9 +64,24 @@ Resposta 200: `[{ "Status": "CREATED", "id": 987654321 }]` · 400 = inválido/n�
 - `ScheduleToId`/`ScheduleToType` = cadeira (de `GET /business/list_chairs`), tipo `CHAIR`.
 - `date` ISO + `fromTime`/`toTime` `HH:mm`.
 
+## ✅ Disponibilidade RESOLVIDA (2026-06-17)
+O "código de acesso" é o **`code_link`** do Agendamento Online — para a Dental Beauty vale **`60903`** (ou o slug `dentalbeauty`). Descoberto inspecionando o link público `https://agenda.link/dentalbeauty` → `get_link_info` retornou `CodeLink: 60903`, `subscriber_id: oralmultiedentalbeautyoralmulti`, `BusinessId: 6247357829611520`.
+
+- **Dias disponíveis:** `GET /appointment/get_avaliable_days?subscriber_id=<id>&code_link=60903` → 200 (lista de dias úteis).
+- **Horários disponíveis:** `GET /appointment/get_avaliable_times_calendar?subscriber_id=<id>&code_link=60903&date=YYYY-MM-DD` → 200. Shape real do slot:
+  ```json
+  { "From":"11:00", "To":"12:00", "DayWeek":4, "BusinessId":6247357829611520, "ProfessionalId":4854067528859648 }
+  ```
+  (`From` pode vir sem zero à esquerda, ex `"8:00"`.)
+- **Config:** `CLINICORP_ACCESS_CODE=60903`, `CLINICORP_ACCESS_CODE_PARAM=code_link`. Já implementado no `HttpClinicorpClient.getAvailability` (mapeado para `AvailableSlot`).
+- **Verificado ponta a ponta** rodando o nosso próprio código contra a produção (`scripts/smoke-availability.mjs`): 13 horários reais para 2026-06-22. ✔
+
+### Observação sobre a agenda online (esclarece dúvida do cliente)
+O agendamento online **é por profissional** — `check_avaliable_times` retorna a grade semanal de cada profissional. Hoje o link expõe **3 profissionais** (Lívia-Protesista, Fábio-Odontopediatria, Adriana-Ortodontia) dos 11 da clínica. Para incluir mais profissionais/especialidades no fluxo, basta o cliente adicioná-los na configuração do Agendamento Online da Clinicorp.
+
 ## Pendências (para o plano de implementação)
-1. **Código de acesso de agendamento online:** os endpoints de disponibilidade (`get_avaliable_days`, `get_avaliable_times_calendar`) exigem um "código de acesso". É preciso **habilitar/obter o código de Agendamento Online** no painel da Clinicorp (config da clínica). → confirmar com o cliente. Vira config `CLINICORP_ACCESS_CODE`.
-2. **Mapear os corpos (request body)** de `create_online_scheduling` / `create_appointment_by_api` / `cancel_appointment` lendo os schemas no Swagger (ou via "Try it out" com dado descartável).
+1. **Corpo de criação para o fluxo online:** `create_appointment_by_api` já mapeado, mas exige `ScheduleToId` (cadeira). O endpoint de disponibilidade online devolve `ProfessionalId`, não cadeira — avaliar usar `POST /appointment/create_online_scheduling` (booking do próprio fluxo online, que casa com o `code_link`) e mapear seu corpo. Confirmar no teste real com horário descartável.
+2. **`/business/list_chairs`** exige o "id da Clínica" (nome do parâmetro a confirmar) caso sigamos pelo `create_appointment_by_api`.
 3. **Webhooks Clinicorp:** verificar no painel ("Gestão de Webhook") se há push de eventos (criado/cancelado) — opcional para reduzir polling.
 
 ## Ajustes nas interfaces (`src/integrations/clinicorp/types.ts`)

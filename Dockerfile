@@ -1,20 +1,15 @@
-# ---- build stage ----
-FROM node:20-slim AS build
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY tsconfig.json tsconfig.build.json ./
-COPY src ./src
-RUN npm run build
-
-# ---- runtime stage ----
 FROM node:20-slim AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
+
+# Dependências (inclui tsx, que roda o TypeScript direto em runtime)
 COPY package*.json ./
 RUN npm ci --omit=dev && npm cache clean --force
-COPY --from=build /app/dist ./dist
+
+# Código-fonte (rodado via tsx — sem etapa de build no runtime)
+COPY tsconfig.json ./
+COPY src ./src
+
 EXPOSE 3000
-# Roda como usuário não-root
 USER node
-CMD ["node", "dist/main.js"]
+CMD ["npx", "tsx", "src/main.ts"]
