@@ -264,28 +264,50 @@ describe('HttpClinicorpClient', () => {
   });
 
   describe('getAvailability', () => {
-    it('calls correct URL with subscriber_id and date, returns raw array', async () => {
-      const rawData = [{ time: '10:00', available: true }, { time: '11:00', available: false }];
+    it('calls correct URL with subscriber_id and date, maps raw API shape to AvailableSlot', async () => {
+      const rawData = [
+        { From: '11:00', To: '12:00', DayWeek: 4, BusinessId: 6247357829611520, ProfessionalId: 42 },
+      ];
       const fetchFn = vi.fn().mockResolvedValue(makeResponse(rawData));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       const result = await client.getAvailability({ date: '2026-07-01' });
 
-      expect(result).toEqual(rawData);
+      expect(result).toEqual([
+        { from: '11:00', to: '12:00', dayWeek: 4, businessId: 6247357829611520, professionalId: 42 },
+      ]);
       const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
       expect(url).toContain('/appointment/get_avaliable_times_calendar');
       expect(url).toContain('subscriber_id=sub123');
       expect(url).toContain('date=2026-07-01');
     });
 
-    it('includes professionalId in query when provided', async () => {
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse([]));
+    it('maps single-digit hour from API (e.g. "8:00") without modification', async () => {
+      const rawData = [
+        { From: '8:00', To: '9:00', DayWeek: 1, BusinessId: 100, ProfessionalId: 7 },
+      ];
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse(rawData));
       const client = new HttpClinicorpClient(config, fetchFn);
 
-      await client.getAvailability({ date: '2026-07-01', professionalId: 42 });
+      const result = await client.getAvailability({ date: '2026-07-01' });
 
-      const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
-      expect(url).toContain('professionalId=42');
+      expect(result[0].from).toBe('8:00');
+      expect(result[0].to).toBe('9:00');
+    });
+
+    it('filters by professionalId client-side when provided', async () => {
+      const rawData = [
+        { From: '09:00', To: '10:00', DayWeek: 2, BusinessId: 100, ProfessionalId: 42 },
+        { From: '10:00', To: '11:00', DayWeek: 2, BusinessId: 100, ProfessionalId: 99 },
+        { From: '11:00', To: '12:00', DayWeek: 2, BusinessId: 100, ProfessionalId: 42 },
+      ];
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse(rawData));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.getAvailability({ date: '2026-07-01', professionalId: 42 });
+
+      expect(result).toHaveLength(2);
+      expect(result.every((s) => s.professionalId === 42)).toBe(true);
     });
 
     it('includes the access code under the configured param name when set', async () => {
@@ -301,14 +323,25 @@ describe('HttpClinicorpClient', () => {
       expect(url).toContain('codigo=ABC123');
     });
 
-    it('defaults the access code param name to access_code', async () => {
+    it('defaults the access code param name to code_link', async () => {
       const fetchFn = vi.fn().mockResolvedValue(makeResponse([]));
-      const client = new HttpClinicorpClient({ ...config, accessCode: 'XYZ' }, fetchFn);
+      const client = new HttpClinicorpClient({ ...config, accessCode: '60903' }, fetchFn);
 
       await client.getAvailability({ date: '2026-07-01' });
 
       const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
-      expect(url).toContain('access_code=XYZ');
+      expect(url).toContain('code_link=60903');
+    });
+
+    it('includes access code under code_link when accessCode is set without custom param', async () => {
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse([]));
+      const client = new HttpClinicorpClient({ ...config, accessCode: '60903' }, fetchFn);
+
+      await client.getAvailability({ date: '2026-07-01' });
+
+      const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain('code_link=60903');
+      expect(url).not.toContain('access_code');
     });
   });
 });

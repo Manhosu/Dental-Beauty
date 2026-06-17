@@ -5,7 +5,7 @@ export interface ClinicorpConfig {
   subscriberId: string;
   businessId: number;
   accessCode?: string;
-  accessCodeParam?: string; // nome do parâmetro do código de acesso (default 'access_code')
+  accessCodeParam?: string; // nome do parâmetro do código de acesso (default 'code_link')
 }
 
 export interface CreateAppointmentInput {
@@ -31,6 +31,14 @@ export interface AvailabilityQuery {
   professionalId?: number;
 }
 
+export interface AvailableSlot {
+  from: string;          // 'H:mm' ou 'HH:mm' (mantém como veio da API, ex: '8:00')
+  to: string;
+  dayWeek: number;       // 0=Domingo..6=Sábado
+  businessId: number;
+  professionalId: number;
+}
+
 export interface Professional { id: number; name: string; cpf: string }
 
 export interface Birthday {
@@ -50,7 +58,7 @@ export interface Specialty {
 }
 
 export interface ClinicorpClient {
-  getAvailability(query: AvailabilityQuery): Promise<unknown[]>;
+  getAvailability(query: AvailabilityQuery): Promise<AvailableSlot[]>;
   createAppointment(input: CreateAppointmentInput): Promise<AppointmentResult>;
   cancelAppointment(appointmentId: string): Promise<{ released: boolean }>;
   listProfessionals(): Promise<Professional[]>;

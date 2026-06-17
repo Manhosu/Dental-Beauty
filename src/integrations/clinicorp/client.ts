@@ -6,6 +6,7 @@ import type {
   CreateAppointmentInput,
   AppointmentResult,
   AvailabilityQuery,
+  AvailableSlot,
   Professional,
   Birthday,
   Specialty,
@@ -177,19 +178,39 @@ export class HttpClinicorpClient implements ClinicorpClient {
     }));
   }
 
-  async getAvailability(query: AvailabilityQuery): Promise<unknown[]> {
-    // NOTA: o endpoint exige um "código de acesso" do Agendamento Online da Clinicorp.
+  async getAvailability(query: AvailabilityQuery): Promise<AvailableSlot[]> {
+    // O endpoint de disponibilidade exige o "código de acesso" do Agendamento Online da Clinicorp.
     // O VALOR vem de `config.accessCode` e o NOME do parâmetro de `config.accessCodeParam`
-    // (default 'access_code'). Ambos precisam ser confirmados com a Clinicorp/cliente.
-    // TODO: confirmar nome do parâmetro + mapear o shape da resposta quando o código existir.
-    const accessParam = this.config.accessCodeParam ?? 'access_code';
-    return this.request<unknown[]>('GET', '/appointment/get_avaliable_times_calendar', {
+    // (default confirmado: 'code_link', ex: 60903 ou o slug do link de agendamento).
+    // A API ignora professionalId — filtramos client-side quando informado.
+    const accessParam = this.config.accessCodeParam ?? 'code_link';
+
+    const raw = await this.request<Array<{
+      From: string;
+      To: string;
+      DayWeek: number;
+      BusinessId: number;
+      ProfessionalId: number;
+    }>>('GET', '/appointment/get_avaliable_times_calendar', {
       query: {
         subscriber_id: this.config.subscriberId,
         date: query.date,
         ...(this.config.accessCode !== undefined ? { [accessParam]: this.config.accessCode } : {}),
-        ...(query.professionalId !== undefined ? { professionalId: query.professionalId } : {}),
       },
     });
+
+    const slots: AvailableSlot[] = raw.map((r) => ({
+      from: r.From,
+      to: r.To,
+      dayWeek: r.DayWeek,
+      businessId: r.BusinessId,
+      professionalId: r.ProfessionalId,
+    }));
+
+    if (query.professionalId !== undefined) {
+      return slots.filter((s) => s.professionalId === query.professionalId);
+    }
+
+    return slots;
   }
 }

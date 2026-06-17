@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { SchedulingEngine } from '../../src/scheduling/schedulingEngine';
-import type { ClinicorpClient } from '../../src/integrations/clinicorp/types';
+import type { ClinicorpClient, AvailableSlot } from '../../src/integrations/clinicorp/types';
 import type { SlotLock, LockHandle } from '../../src/scheduling/lock';
 
 function fakeLock(acquire: boolean) {
@@ -13,7 +13,7 @@ function fakeLock(acquire: boolean) {
 
 function fakeClient(over: Partial<ClinicorpClient> = {}): ClinicorpClient {
   return {
-    getAvailability: vi.fn(async (): Promise<unknown[]> => []),
+    getAvailability: vi.fn(async (): Promise<AvailableSlot[]> => []),
     createAppointment: vi.fn(async () => ({ appointmentId: 'a1', status: 'confirmed' as const })),
     cancelAppointment: vi.fn(async () => ({ released: true })),
     listProfessionals: vi.fn(async () => []),

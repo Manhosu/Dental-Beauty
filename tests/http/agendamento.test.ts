@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { buildServer } from '../../src/http/server';
 import type { SchedulingEngine, BookResult } from '../../src/scheduling/schedulingEngine';
-import type { ClinicorpClient } from '../../src/integrations/clinicorp/types';
+import type { ClinicorpClient, AvailableSlot } from '../../src/integrations/clinicorp/types';
 
 // No-op InboundDeps so we can call buildServer with one arg style
 const noopInbound = {
@@ -31,7 +31,7 @@ function makeFakeEngine(result: BookResult): SchedulingEngine {
   } as unknown as SchedulingEngine;
 }
 
-function makeFakeClinicorp(slots: unknown[] = []): ClinicorpClient {
+function makeFakeClinicorp(slots: AvailableSlot[] = []): ClinicorpClient {
   return {
     getAvailability: vi.fn().mockResolvedValue(slots),
     createAppointment: vi.fn(),
@@ -147,7 +147,10 @@ describe('POST /agendamento/cancelar', () => {
 describe('GET /agendamento/disponibilidade', () => {
   it('returns 200 with slots from fakeClinicorp when date is valid', async () => {
     const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
-    const mockSlots = [{ id: 1, time: '09:00' }, { id: 2, time: '09:30' }];
+    const mockSlots: AvailableSlot[] = [
+      { from: '09:00', to: '10:00', dayWeek: 2, businessId: 6247357829611520, professionalId: 42 },
+      { from: '10:00', to: '11:00', dayWeek: 2, businessId: 6247357829611520, professionalId: 42 },
+    ];
     const fakeClinicorp = makeFakeClinicorp(mockSlots);
     const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
 
