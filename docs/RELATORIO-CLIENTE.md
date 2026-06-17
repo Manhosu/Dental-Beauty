@@ -13,10 +13,10 @@ Um atendente virtual (robô) no WhatsApp que:
 
 ## O que já está pronto ✅
 
-- **Motor de agendamento:** o sistema já conversa com a Clinicorp, consulta os dados reais da sua clínica (já reconheceu a unidade "Dental Beauty", os 11 profissionais e as especialidades) e está preparado para marcar e cancelar consultas com segurança contra horários duplicados.
-- **Lembrete de aniversário:** o sistema já consegue puxar a lista de aniversariantes do dia da Clinicorp (com nome e telefone) para enviar a felicitação.
-- **Catálogo automático:** o robô vai oferecer as especialidades e os profissionais reais da clínica, sempre atualizados.
-- **Cancelamento de horário:** quando o paciente responder que **não** vai à consulta, o sistema libera a vaga automaticamente na Clinicorp.
+- **Agendamento completo e testado de verdade:** o sistema já conversa com a Clinicorp, **mostra os horários livres reais**, **marca a consulta** e **cancela/libera a vaga** — tudo direto na Clinicorp, com a garantia de que dois pacientes nunca pegam o mesmo horário. Fizemos um teste real de marcação (criamos e cancelamos na hora, sem deixar nada na sua agenda) e funcionou. ✔
+- **Dados reais reconhecidos:** unidade "Dental Beauty", os profissionais e as especialidades já vêm direto do seu sistema.
+- **Lembrete de aniversário:** já puxa a lista de aniversariantes do dia da Clinicorp (com nome e telefone) para enviar a felicitação.
+- **Catálogo automático:** o robô oferece as especialidades e os profissionais reais da clínica, sempre atualizados.
 - **Base sólida e testada:** toda a parte central foi construída com testes automáticos e cuidado com a proteção de dados dos pacientes (LGPD).
 
 ## O que está pronto para ser ligado 🔌
@@ -40,18 +40,18 @@ Cada número terá seu papel:
 
 ## O que precisamos de você (cliente) 🙏
 
-Os números já foram conectados ✅. Agora falta principalmente:
+Os números já foram conectados ✅ e o acesso ao agendamento já está funcionando ✅. Agora só faltam duas coisas suas:
 
-1. **Liberar o "Agendamento Online" na Clinicorp.** Para o robô mostrar os horários livres, a Clinicorp exige que essa função esteja ativada e nos forneça um **código de acesso**. Por favor, ative o Agendamento Online no painel da Clinicorp (ou peça ao suporte) e nos passe esse código.
+1. **Profissionais no agendamento online:** hoje o link de agendamento está com **3 profissionais** ativos (Lívia – Protesista, Fábio – Odontopediatria e Adriana – Ortodontia). O robô só consegue agendar com quem estiver ativado aí. Se quiser incluir **mais profissionais/especialidades**, é só adicioná-los na configuração do **Agendamento Online da Clinicorp** e nos dizer quem entra.
 
-2. **Confirmar a contratação de eventuais planos/módulos** na plataforma de atendimento, se necessário para a operação em produção (avisamos antes de qualquer custo).
+2. **Materiais para a IA enviar:** os vídeos, fotos e áudios que vão ser enviados conforme o tipo de lead (ex.: vídeo específico para crianças com autismo, implante unitário x protocolo). Quando terminar de selecionar, é só mandar.
 
 ## Próximos passos
 
-1. Você nos passa o código de acesso da Clinicorp.
-2. Ligamos a consulta de horários de ponta a ponta e fazemos um teste real de agendamento (no número de Disparos).
-3. Configuramos o robô (textos, preços, materiais) e as automações de lembrete/campanha.
-4. Colocamos no ar e acompanhamos os primeiros atendimentos.
+1. Você nos diz quais profissionais devem entrar no agendamento online e nos manda os materiais.
+2. Montamos e testamos o robô (conversa, triagem, agendamento) com segurança no número de **Disparos**.
+3. Configuramos textos, preços, materiais e as automações de lembrete/campanha.
+4. Ligamos a IA nos números reais em horário de baixo movimento e acompanhamos os primeiros atendimentos.
 
 ## Observação importante sobre segurança
 
