@@ -31,9 +31,9 @@ Pedido do cliente: deixar campanhas **programadas** que buscam **data + frase nu
 - Viável no Flow Builder: **gatilho agendado** lê uma fonte (planilha/lista com data+mensagem) e a mídia (link/pasta) → dispara pelo número "Disparos".
 - Cliente mantém a lista + a pasta de artes; o sistema lê e envia na data marcada.
 
-## Roteamento de unidade (Recreio x Ipanema)
+## Roteamento de unidade (Recreio x Ipanema) — RESOLVIDO
 Regra do cliente (já no início do material de treinamento da IA): a IA **identifica o bairro** do paciente → indica a **unidade** → oferece horários. Se o paciente não responder o bairro, a IA **pergunta qual unidade** é melhor e segue o agendamento.
-- ⚠️ **Pendência técnica:** a API (credenciais atuais) retorna **só a unidade Recreio** (`business id 6247357829611520`); **não há Ipanema** em `business/list`. O "Fábio - Ipanema" existe só como **cadastro de profissional**. Confirmar com o cliente **como o Ipanema está cadastrado no Clinicorp** (conta/unidade separada? mesmo business?) — necessário para o `Clinic_BusinessId` correto na marcação.
+- ✅ **Modelo confirmado (2026-06-19):** tudo na **mesma conta/agenda** da Clinicorp (mesmo `business id 6247357829611520`, mesmo `code_link`). A unidade é derivada do **nome do profissional** (contém "Ipanema" → Ipanema; senão Recreio). Profissional em duas unidades = dois cadastros. Convenção para novos: incluir `- Recreio`/`- Ipanema` no nome. O backend já deriva e expõe `unit` no catálogo e na disponibilidade.
 
 ## Roteamento especialidade → profissional
 - Fonte: **Excel "profissionais e preferências agendamento"** (na pasta do Drive do cliente) — regras de quem é responsável por cada avaliação. Necessário para a IA escolher o profissional certo por especialidade.

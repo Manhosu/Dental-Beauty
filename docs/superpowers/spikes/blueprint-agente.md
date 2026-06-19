@@ -12,8 +12,12 @@ Fonte: pasta Drive "IA - em criação" (manual completo, Excel de profissionais,
 - **Recreio:** Rua Almirante Ary Rongel, 511. Radiologia digital no local (fotos + raio-X na avaliação), 300m², sala de cirurgia. **Faz todos os procedimentos.**
 - **Ipanema:** Rua Visconde de Pirajá, 550 – sala 215 – TOP Center. **Só faz:** odontopediatria, ortopedia, lentes de contato dental, prótese, clareamento. (Demais → exclusivamente Recreio.)
 
-### ⚠️ Pendência técnica crítica (Ipanema x Clinicorp)
-A API da Clinicorp com a credencial atual retorna **apenas a unidade Recreio** (`business id 6247357829611520`). **Ipanema não aparece** em `business/list`. Como Ipanema é unidade real com agenda própria, **confirmar com o cliente** se Ipanema é outra conta/unidade no Clinicorp (precisaria de credencial/`code_link`/business próprios) — senão a marcação em Ipanema não cai no lugar certo.
+### ✅ Modelo de unidades (resolvido com o cliente, 2026-06-19)
+**Tudo na mesma conta/agenda da Clinicorp** (um único `subscriber`, um `business id 6247357829611520`, um `code_link 60903`). **Não há credencial separada para Ipanema.** A unidade é derivada do **nome do profissional**:
+- Nome contém "Ipanema" → unidade **Ipanema**; senão → **Recreio** (padrão).
+- Profissional que atende nas duas unidades tem **dois cadastros** (ex.: "Fábio - Odontopediatria - Recreio" e "Fábio - Odontopediatria - Ipanema").
+- **Convenção para novos profissionais:** incluir a unidade no nome (`... - Recreio` / `... - Ipanema`). Assim o sistema classifica automaticamente, sem configuração extra.
+- O backend deriva e expõe `unit` por profissional (catálogo) e por horário (disponibilidade).
 
 ## Regra bairro → unidade
 A IA pergunta o **bairro** e direciona:
