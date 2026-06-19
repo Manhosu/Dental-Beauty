@@ -19,6 +19,59 @@ function makeResponse(body: unknown, status = 200): Response {
 }
 
 describe('HttpClinicorpClient', () => {
+  describe('findPatientByPhone', () => {
+    it('returns mapped Patient when API returns a non-empty array', async () => {
+      const rawPatient = [
+        {
+          PatientId: 6693556813430784,
+          Name: 'EDNO DA SILVA',
+          Email: 'edmo@gmail.com',
+          Phone: '21996160653',
+          Status: 'ACTIVE',
+          BirthDate: '1953-06-16T03:00:00.000Z',
+        },
+      ];
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse(rawPatient));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.findPatientByPhone('(21) 99616-0653');
+
+      expect(result).toEqual({
+        id: 6693556813430784,
+        name: 'EDNO DA SILVA',
+        phone: '21996160653',
+        email: 'edmo@gmail.com',
+        status: 'ACTIVE',
+      });
+
+      const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain('/patient/get');
+      expect(url).toContain('subscriber_id=sub123');
+      // Phone digits only (no formatting characters)
+      expect(url).toContain('Phone=21996160653');
+      // Must NOT have raw formatted phone
+      expect(url).not.toContain('(21)');
+    });
+
+    it('returns null when API response is an empty array []', async () => {
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse([]));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.findPatientByPhone('21996160653');
+
+      expect(result).toBeNull();
+    });
+
+    it('returns null when API response is an empty object {}', async () => {
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse({}));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.findPatientByPhone('21996160653');
+
+      expect(result).toBeNull();
+    });
+  });
+
   describe('createAppointment', () => {
     it('professional booking: sends Dentist_PersonId, omits ScheduleToId/ScheduleToType, maps single-object response', async () => {
       const realResponse = {
@@ -32,7 +85,11 @@ describe('HttpClinicorpClient', () => {
         Patient_PersonId: 6572892430008321,
         id: 6670720980484097,
       };
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse(realResponse));
+      // First call: lookup by phone → not found; Second call: create appointment
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValueOnce(makeResponse([]))
+        .mockResolvedValueOnce(makeResponse(realResponse));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       const result = await client.createAppointment({
@@ -47,8 +104,9 @@ describe('HttpClinicorpClient', () => {
 
       expect(result).toEqual({ appointmentId: '6670720980484097', status: 'confirmed' });
 
-      expect(fetchFn).toHaveBeenCalledOnce();
-      const [url, init] = fetchFn.mock.calls[0] as [string, RequestInit];
+      // fetch called twice: once for lookup, once for create
+      expect(fetchFn).toHaveBeenCalledTimes(2);
+      const [url, init] = fetchFn.mock.calls[1] as [string, RequestInit];
 
       // Correct URL
       expect(url).toBe('https://api.clinicorp.com/rest/v1/appointment/create_appointment_by_api');
@@ -72,7 +130,10 @@ describe('HttpClinicorpClient', () => {
     });
 
     it('chair booking: sends ScheduleToId and ScheduleToType, omits Dentist_PersonId', async () => {
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse({ id: 9999, Deleted: '' }));
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValueOnce(makeResponse([]))
+        .mockResolvedValueOnce(makeResponse({ id: 9999, Deleted: '' }));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       const result = await client.createAppointment({
@@ -87,7 +148,7 @@ describe('HttpClinicorpClient', () => {
 
       expect(result).toEqual({ appointmentId: '9999', status: 'confirmed' });
 
-      const [, init] = fetchFn.mock.calls[0] as [string, RequestInit];
+      const [, init] = fetchFn.mock.calls[1] as [string, RequestInit];
       const body = JSON.parse(init.body as string);
 
       expect(body.ScheduleToId).toBe(123);
@@ -97,7 +158,10 @@ describe('HttpClinicorpClient', () => {
     });
 
     it('chair booking defaults ScheduleToType to CHAIR when not provided', async () => {
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse({ id: 8888, Deleted: '' }));
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValueOnce(makeResponse([]))
+        .mockResolvedValueOnce(makeResponse({ id: 8888, Deleted: '' }));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       await client.createAppointment({
@@ -110,13 +174,19 @@ describe('HttpClinicorpClient', () => {
         // scheduleToType omitted — should default to 'CHAIR'
       });
 
-      const [, init] = fetchFn.mock.calls[0] as [string, RequestInit];
+      const [, init] = fetchFn.mock.calls[1] as [string, RequestInit];
       const body = JSON.parse(init.body as string);
       expect(body.ScheduleToType).toBe('CHAIR');
     });
 
     it('throws ExternalApiError on HTTP 400', async () => {
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse({ error: 'invalid' }, 400));
+      // First call: lookup → not found; Second call: create → 400
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValueOnce(makeResponse([]))
+        .mockResolvedValueOnce(makeResponse({ error: 'invalid' }, 400))
+        .mockResolvedValueOnce(makeResponse([]))
+        .mockResolvedValueOnce(makeResponse({ error: 'invalid' }, 400));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       await expect(
@@ -144,7 +214,10 @@ describe('HttpClinicorpClient', () => {
     });
 
     it('throws ExternalApiError 502 when response has no id (empty object)', async () => {
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse({}));
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValueOnce(makeResponse([]))
+        .mockResolvedValueOnce(makeResponse({}));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       const err = await client
@@ -162,7 +235,10 @@ describe('HttpClinicorpClient', () => {
     });
 
     it('throws ExternalApiError 502 when Deleted is X (cancelled/invalid)', async () => {
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse({ id: 99, Deleted: 'X' }));
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValueOnce(makeResponse([]))
+        .mockResolvedValueOnce(makeResponse({ id: 99, Deleted: 'X' }));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       await expect(
@@ -177,7 +253,10 @@ describe('HttpClinicorpClient', () => {
     });
 
     it('throws ExternalApiError 409 when PatientNameAlreadyExists', async () => {
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse({ PatientNameAlreadyExists: true }));
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValueOnce(makeResponse([]))
+        .mockResolvedValueOnce(makeResponse({ PatientNameAlreadyExists: true }));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       const err = await client
@@ -194,11 +273,12 @@ describe('HttpClinicorpClient', () => {
       expect((err as ExternalApiError).status).toBe(409);
     });
 
-    it('retries on 503 then succeeds (fetch called twice)', async () => {
+    it('retries on 503 then succeeds (lookup + 503 + create success = 3 fetch calls)', async () => {
       const fetchFn = vi
         .fn()
-        .mockResolvedValueOnce(makeResponse({ error: 'unavailable' }, 503))
-        .mockResolvedValueOnce(makeResponse({ id: 42, Deleted: '' }));
+        .mockResolvedValueOnce(makeResponse([]))                              // lookup miss
+        .mockResolvedValueOnce(makeResponse({ error: 'unavailable' }, 503))  // create attempt 1 → 503
+        .mockResolvedValueOnce(makeResponse({ id: 42, Deleted: '' }));        // create attempt 2 → success
 
       const client = new HttpClinicorpClient(config, fetchFn, {
         retries: 1,
@@ -215,12 +295,16 @@ describe('HttpClinicorpClient', () => {
       });
 
       expect(result).toEqual({ appointmentId: '42', status: 'confirmed' });
-      expect(fetchFn).toHaveBeenCalledTimes(2);
+      // 1 lookup + 2 create attempts (503 then success)
+      expect(fetchFn).toHaveBeenCalledTimes(3);
     });
 
     it('also accepts legacy array response shape defensively', async () => {
       // The API might theoretically return an array — be defensive
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse([{ id: 77, Deleted: '' }]));
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValueOnce(makeResponse([]))
+        .mockResolvedValueOnce(makeResponse([{ id: 77, Deleted: '' }]));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       const result = await client.createAppointment({
@@ -232,6 +316,81 @@ describe('HttpClinicorpClient', () => {
       });
 
       expect(result).toEqual({ appointmentId: '77', status: 'confirmed' });
+    });
+
+    it('auto-resolves existing patient by phone and sends Patient_PersonId', async () => {
+      // First fetch: lookup by phone → found patient with id 555
+      // Second fetch: create appointment → success
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValueOnce(makeResponse([{ PatientId: 555, Name: 'Maria', Phone: '21999990000' }]))
+        .mockResolvedValueOnce(makeResponse({ id: 999, Deleted: '' }));
+
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.createAppointment({
+        patient: { name: 'Maria', phone: '21999990000' },
+        date: '2026-07-01T13:00:00.000Z',
+        fromTime: '13:00',
+        toTime: '14:00',
+        dentistPersonId: 1,
+        // no personId provided — should be auto-resolved
+      });
+
+      expect(result).toEqual({ appointmentId: '999', status: 'confirmed' });
+
+      // Verify the create body includes the resolved Patient_PersonId
+      const [, createInit] = fetchFn.mock.calls[1] as [string, RequestInit];
+      const createBody = JSON.parse(createInit.body as string);
+      expect(createBody.Patient_PersonId).toBe(555);
+    });
+
+    it('new patient (lookup returns []) proceeds by name without Patient_PersonId', async () => {
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValueOnce(makeResponse([]))
+        .mockResolvedValueOnce(makeResponse({ id: 1000, Deleted: '' }));
+
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.createAppointment({
+        patient: { name: 'Novo Paciente', phone: '11988887777' },
+        date: '2026-07-01T13:00:00.000Z',
+        fromTime: '13:00',
+        toTime: '14:00',
+        dentistPersonId: 1,
+      });
+
+      expect(result).toEqual({ appointmentId: '1000', status: 'confirmed' });
+
+      const [, createInit] = fetchFn.mock.calls[1] as [string, RequestInit];
+      const createBody = JSON.parse(createInit.body as string);
+      expect(createBody).not.toHaveProperty('Patient_PersonId');
+    });
+
+    it('skips lookup when personId is already provided in input', async () => {
+      // Only ONE fetch call: the create (lookup is skipped)
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValueOnce(makeResponse({ id: 2000, Deleted: '' }));
+
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.createAppointment({
+        patient: { name: 'Paciente Conhecido', phone: '11988887777', personId: 777 },
+        date: '2026-07-01T13:00:00.000Z',
+        fromTime: '13:00',
+        toTime: '14:00',
+        dentistPersonId: 1,
+      });
+
+      expect(result).toEqual({ appointmentId: '2000', status: 'confirmed' });
+      // Only 1 call (no lookup)
+      expect(fetchFn).toHaveBeenCalledTimes(1);
+
+      const [, createInit] = fetchFn.mock.calls[0] as [string, RequestInit];
+      const createBody = JSON.parse(createInit.body as string);
+      expect(createBody.Patient_PersonId).toBe(777);
     });
   });
 

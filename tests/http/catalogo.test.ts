@@ -26,6 +26,7 @@ function makeFakeClinicorp(overrides: Partial<ClinicorpClient> = {}): ClinicorpC
     listProfessionals: vi.fn().mockResolvedValue([]),
     listBirthdays: vi.fn().mockResolvedValue([]),
     listSpecialties: vi.fn().mockResolvedValue([]),
+    findPatientByPhone: vi.fn().mockResolvedValue(null),
     ...overrides,
   } as unknown as ClinicorpClient;
 }

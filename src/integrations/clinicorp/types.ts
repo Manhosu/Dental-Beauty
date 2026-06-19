@@ -57,6 +57,14 @@ export interface Specialty {
   active: boolean;
 }
 
+export interface Patient {
+  id: number;
+  name: string;
+  phone?: string;
+  email?: string;
+  status?: string;
+}
+
 export interface ClinicorpClient {
   getAvailability(query: AvailabilityQuery): Promise<AvailableSlot[]>;
   createAppointment(input: CreateAppointmentInput): Promise<AppointmentResult>;
@@ -64,4 +72,5 @@ export interface ClinicorpClient {
   listProfessionals(): Promise<Professional[]>;
   listBirthdays(): Promise<Birthday[]>;
   listSpecialties(): Promise<Specialty[]>;
+  findPatientByPhone(phone: string): Promise<Patient | null>;
 }

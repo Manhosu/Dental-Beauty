@@ -19,6 +19,7 @@ function fakeClient(over: Partial<ClinicorpClient> = {}): ClinicorpClient {
     listProfessionals: vi.fn(async () => []),
     listBirthdays: vi.fn(async () => []),
     listSpecialties: vi.fn(async () => []),
+    findPatientByPhone: vi.fn(async () => null),
     ...over,
   };
 }

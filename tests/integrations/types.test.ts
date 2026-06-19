@@ -28,6 +28,9 @@ const fake: ClinicorpClient = {
   async listSpecialties() {
     return [];
   },
+  async findPatientByPhone() {
+    return null;
+  },
 };
 
 describe('ClinicorpClient contract', () => {

@@ -10,6 +10,7 @@ import type {
   Professional,
   Birthday,
   Specialty,
+  Patient,
 } from './types';
 
 export class HttpClinicorpClient implements ClinicorpClient {
@@ -69,7 +70,43 @@ export class HttpClinicorpClient implements ClinicorpClient {
     }, this.retryOpts);
   }
 
+  async findPatientByPhone(phone: string): Promise<Patient | null> {
+    const digits = phone.replace(/\D/g, '');
+    const response = await this.request<unknown>('GET', '/patient/get', {
+      query: { subscriber_id: this.config.subscriberId, Phone: digits },
+    });
+
+    if (!Array.isArray(response) || response.length === 0) {
+      return null;
+    }
+
+    const raw = response[0] as {
+      PatientId: number;
+      Name: string;
+      Phone?: string;
+      Email?: string;
+      Status?: string;
+    };
+
+    return {
+      id: raw.PatientId,
+      name: raw.Name,
+      phone: raw.Phone,
+      email: raw.Email,
+      status: raw.Status,
+    };
+  }
+
   async createAppointment(input: CreateAppointmentInput): Promise<AppointmentResult> {
+    // Auto-resolve existing patient by phone to avoid PatientNameAlreadyExists conflict
+    let resolvedPersonId = input.patient.personId;
+    if (resolvedPersonId === undefined && input.patient.phone) {
+      const found = await this.findPatientByPhone(input.patient.phone);
+      if (found !== null) {
+        resolvedPersonId = found.id;
+      }
+    }
+
     const body: Record<string, unknown> = {
       PatientName: input.patient.name,
       MobilePhone: input.patient.phone,
@@ -92,8 +129,8 @@ export class HttpClinicorpClient implements ClinicorpClient {
       body.Email = input.patient.email;
     }
 
-    if (input.patient.personId !== undefined) {
-      body.Patient_PersonId = input.patient.personId;
+    if (resolvedPersonId !== undefined) {
+      body.Patient_PersonId = resolvedPersonId;
     }
 
     if (input.procedures !== undefined) {
