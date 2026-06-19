@@ -411,17 +411,20 @@ describe('HttpClinicorpClient', () => {
   });
 
   describe('listProfessionals', () => {
-    it('parses professional list from API', async () => {
-      const professionals = [
-        { id: 1, name: 'Dr. Silva', cpf: '123.456.789-00' },
-        { id: 2, name: 'Dr. Santos', cpf: '987.654.321-00' },
+    it('parses professional list from API and derives unit from name', async () => {
+      const rawProfessionals = [
+        { id: 1, name: 'Dr. Silva - Recreio', cpf: '123.456.789-00' },
+        { id: 2, name: 'Alinne - Lentes Ipanema', cpf: '987.654.321-00' },
       ];
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse(professionals));
+      const fetchFn = vi.fn().mockResolvedValue(makeResponse(rawProfessionals));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       const result = await client.listProfessionals();
 
-      expect(result).toEqual(professionals);
+      expect(result).toEqual([
+        { id: 1, name: 'Dr. Silva - Recreio', cpf: '123.456.789-00', unit: 'Recreio' },
+        { id: 2, name: 'Alinne - Lentes Ipanema', cpf: '987.654.321-00', unit: 'Ipanema' },
+      ]);
       const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
       expect(url).toContain('/professional/list_all_professionals');
       expect(url).toContain('subscriber_id=sub123');
@@ -515,11 +518,19 @@ describe('HttpClinicorpClient', () => {
   });
 
   describe('getAvailability', () => {
+    // NOTE: getAvailability makes TWO fetch calls:
+    //   1st: GET /appointment/get_avaliable_times_calendar (availability)
+    //   2nd: GET /professional/list_all_professionals (professionals, for enrichment)
+    // Tests use mockResolvedValueOnce twice so each call gets the correct response.
+
     it('calls correct URL with subscriber_id and date, maps raw API shape to AvailableSlot', async () => {
       const rawData = [
         { From: '11:00', To: '12:00', DayWeek: 4, BusinessId: 6247357829611520, ProfessionalId: 42 },
       ];
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse(rawData));
+      // 1st call: availability; 2nd call: professionals (empty → no enrichment)
+      const fetchFn = vi.fn()
+        .mockResolvedValueOnce(makeResponse(rawData))
+        .mockResolvedValueOnce(makeResponse([]));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       const result = await client.getAvailability({ date: '2026-07-01' });
@@ -537,7 +548,10 @@ describe('HttpClinicorpClient', () => {
       const rawData = [
         { From: '8:00', To: '9:00', DayWeek: 1, BusinessId: 100, ProfessionalId: 7 },
       ];
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse(rawData));
+      // 1st call: availability; 2nd call: professionals (empty)
+      const fetchFn = vi.fn()
+        .mockResolvedValueOnce(makeResponse(rawData))
+        .mockResolvedValueOnce(makeResponse([]));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       const result = await client.getAvailability({ date: '2026-07-01' });
@@ -552,7 +566,10 @@ describe('HttpClinicorpClient', () => {
         { From: '10:00', To: '11:00', DayWeek: 2, BusinessId: 100, ProfessionalId: 99 },
         { From: '11:00', To: '12:00', DayWeek: 2, BusinessId: 100, ProfessionalId: 42 },
       ];
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse(rawData));
+      // 1st call: availability; 2nd call: professionals (empty)
+      const fetchFn = vi.fn()
+        .mockResolvedValueOnce(makeResponse(rawData))
+        .mockResolvedValueOnce(makeResponse([]));
       const client = new HttpClinicorpClient(config, fetchFn);
 
       const result = await client.getAvailability({ date: '2026-07-01', professionalId: 42 });
@@ -562,7 +579,10 @@ describe('HttpClinicorpClient', () => {
     });
 
     it('includes the access code under the configured param name when set', async () => {
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse([]));
+      // 1st call: availability (empty); 2nd call: professionals (empty)
+      const fetchFn = vi.fn()
+        .mockResolvedValueOnce(makeResponse([]))
+        .mockResolvedValueOnce(makeResponse([]));
       const client = new HttpClinicorpClient(
         { ...config, accessCode: 'ABC123', accessCodeParam: 'codigo' },
         fetchFn,
@@ -575,7 +595,10 @@ describe('HttpClinicorpClient', () => {
     });
 
     it('defaults the access code param name to code_link', async () => {
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse([]));
+      // 1st call: availability (empty); 2nd call: professionals (empty)
+      const fetchFn = vi.fn()
+        .mockResolvedValueOnce(makeResponse([]))
+        .mockResolvedValueOnce(makeResponse([]));
       const client = new HttpClinicorpClient({ ...config, accessCode: '60903' }, fetchFn);
 
       await client.getAvailability({ date: '2026-07-01' });
@@ -585,7 +608,10 @@ describe('HttpClinicorpClient', () => {
     });
 
     it('includes access code under code_link when accessCode is set without custom param', async () => {
-      const fetchFn = vi.fn().mockResolvedValue(makeResponse([]));
+      // 1st call: availability (empty); 2nd call: professionals (empty)
+      const fetchFn = vi.fn()
+        .mockResolvedValueOnce(makeResponse([]))
+        .mockResolvedValueOnce(makeResponse([]));
       const client = new HttpClinicorpClient({ ...config, accessCode: '60903' }, fetchFn);
 
       await client.getAvailability({ date: '2026-07-01' });
@@ -593,6 +619,43 @@ describe('HttpClinicorpClient', () => {
       const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
       expect(url).toContain('code_link=60903');
       expect(url).not.toContain('access_code');
+    });
+
+    it('enriches slots with professionalName and unit from the professionals list', async () => {
+      const availabilityRaw = [
+        { From: '10:00', To: '11:00', DayWeek: 1, BusinessId: 1, ProfessionalId: 42 },
+      ];
+      const professionalsRaw = [
+        { id: 42, name: 'Alinne - Lentes Ipanema', cpf: 'x' },
+      ];
+      // Call order: 1st availability, 2nd professionals
+      const fetchFn = vi.fn()
+        .mockResolvedValueOnce(makeResponse(availabilityRaw))
+        .mockResolvedValueOnce(makeResponse(professionalsRaw));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.getAvailability({ date: '2026-07-01' });
+
+      expect(result).toHaveLength(1);
+      expect(result[0].unit).toBe('Ipanema');
+      expect(result[0].professionalName).toBe('Alinne - Lentes Ipanema');
+      expect(result[0].professionalId).toBe(42);
+    });
+
+    it('leaves unit and professionalName undefined when professional not found in list', async () => {
+      const availabilityRaw = [
+        { From: '10:00', To: '11:00', DayWeek: 1, BusinessId: 1, ProfessionalId: 99 },
+      ];
+      // 1st call: availability; 2nd call: professionals (different id — no match)
+      const fetchFn = vi.fn()
+        .mockResolvedValueOnce(makeResponse(availabilityRaw))
+        .mockResolvedValueOnce(makeResponse([{ id: 42, name: 'Outro Pro', cpf: 'y' }]));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.getAvailability({ date: '2026-07-01' });
+
+      expect(result[0].unit).toBeUndefined();
+      expect(result[0].professionalName).toBeUndefined();
     });
   });
 });

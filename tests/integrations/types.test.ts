@@ -20,7 +20,7 @@ const fake: ClinicorpClient = {
     return { released: true };
   },
   async listProfessionals() {
-    return [{ id: 1, name: 'Dr. Silva', cpf: '123.456.789-00' }];
+    return [{ id: 1, name: 'Dr. Silva', cpf: '123.456.789-00', unit: 'Recreio' as const }];
   },
   async listBirthdays() {
     return [];

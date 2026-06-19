@@ -1,5 +1,6 @@
 import { ExternalApiError } from '../../lib/errors';
 import { withRetry, type RetryOptions } from '../../lib/retry';
+import { unitFromProfessionalName } from '../../domain/unit';
 import type {
   ClinicorpConfig,
   ClinicorpClient,
@@ -186,9 +187,17 @@ export class HttpClinicorpClient implements ClinicorpClient {
   }
 
   async listProfessionals(): Promise<Professional[]> {
-    return this.request<Professional[]>('GET', '/professional/list_all_professionals', {
-      query: { subscriber_id: this.config.subscriberId },
-    });
+    const raw = await this.request<Array<{ id: number; name: string; cpf: string }>>(
+      'GET',
+      '/professional/list_all_professionals',
+      { query: { subscriber_id: this.config.subscriberId } },
+    );
+    return raw.map((r) => ({
+      id: r.id,
+      name: r.name,
+      cpf: r.cpf,
+      unit: unitFromProfessionalName(r.name),
+    }));
   }
 
   async listBirthdays(): Promise<Birthday[]> {
@@ -239,6 +248,7 @@ export class HttpClinicorpClient implements ClinicorpClient {
     // O VALOR vem de `config.accessCode` e o NOME do parâmetro de `config.accessCodeParam`
     // (default confirmado: 'code_link', ex: 60903 ou o slug do link de agendamento).
     // A API ignora professionalId — filtramos client-side quando informado.
+    // Call order: 1) GET availability, 2) GET professionals (for enrichment).
     const accessParam = this.config.accessCodeParam ?? 'code_link';
 
     const raw = await this.request<Array<{
@@ -255,13 +265,23 @@ export class HttpClinicorpClient implements ClinicorpClient {
       },
     });
 
-    const slots: AvailableSlot[] = raw.map((r) => ({
-      from: r.From,
-      to: r.To,
-      dayWeek: r.DayWeek,
-      businessId: r.BusinessId,
-      professionalId: r.ProfessionalId,
-    }));
+    // Enrich slots with professionalName and unit derived from the professionals list.
+    const professionals = await this.listProfessionals();
+    const profMap = new Map<number, { name: string; unit: import('./types').ClinicUnit }>(
+      professionals.map((p) => [p.id, { name: p.name, unit: p.unit }]),
+    );
+
+    const slots: AvailableSlot[] = raw.map((r) => {
+      const prof = profMap.get(r.ProfessionalId);
+      return {
+        from: r.From,
+        to: r.To,
+        dayWeek: r.DayWeek,
+        businessId: r.BusinessId,
+        professionalId: r.ProfessionalId,
+        ...(prof !== undefined ? { professionalName: prof.name, unit: prof.unit } : {}),
+      };
+    });
 
     if (query.professionalId !== undefined) {
       return slots.filter((s) => s.professionalId === query.professionalId);

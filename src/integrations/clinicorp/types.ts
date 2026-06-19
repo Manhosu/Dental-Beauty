@@ -1,3 +1,6 @@
+import type { ClinicUnit } from '../../domain/unit';
+export type { ClinicUnit };
+
 export interface ClinicorpConfig {
   baseUrl: string;
   user: string;
@@ -37,9 +40,11 @@ export interface AvailableSlot {
   dayWeek: number;       // 0=Domingo..6=Sábado
   businessId: number;
   professionalId: number;
+  professionalName?: string;
+  unit?: ClinicUnit;
 }
 
-export interface Professional { id: number; name: string; cpf: string }
+export interface Professional { id: number; name: string; cpf: string; unit: ClinicUnit }
 
 export interface Birthday {
   patientId: number;

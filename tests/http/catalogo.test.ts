@@ -113,7 +113,7 @@ describe('GET /catalogo/especialidades', () => {
 
 describe('GET /catalogo/profissionais', () => {
   it('returns 200 with profissionais array from clinicorp', async () => {
-    const professional: Professional = { id: 1, name: 'Dr. Silva', cpf: '123.456.789-00' };
+    const professional: Professional = { id: 1, name: 'Dr. Silva', cpf: '123.456.789-00', unit: 'Recreio' };
     const fakeClinicorp = makeFakeClinicorp({
       listProfessionals: vi.fn().mockResolvedValue([professional]),
     });
