@@ -10,7 +10,24 @@ const patientSchema = z.object({
   personId: z.number().int().optional(),
 });
 
-const bookBodySchema = z.object({
+// O Flow Builder/Requisições HTTP do Chatbotify só envia campos PLANOS (sem objeto aninhado)
+// e como strings. O preprocess monta `patient` a partir de name/phone, deriva dentistPersonId
+// (= professionalId), slotId e specialty quando não vierem, e mantém compatível com o formato
+// aninhado usado nos testes/uso interno.
+const bookBodySchema = z.preprocess((raw) => {
+  if (raw && typeof raw === 'object') {
+    const r = raw as Record<string, unknown>;
+    if (!r.patient && (r.name || r.phone)) {
+      r.patient = { name: r.name, phone: r.phone, email: r.email, personId: r.personId };
+    }
+    if (r.dentistPersonId == null && r.professionalId != null) r.dentistPersonId = Number(r.professionalId);
+    if (r.slotId == null && r.date && r.fromTime && r.professionalId) {
+      r.slotId = `${r.date}-${r.fromTime}-${r.professionalId}`;
+    }
+    if (r.specialty == null) r.specialty = 'Avaliação';
+  }
+  return raw;
+}, z.object({
   slotId: z.string().min(1),
   professionalId: z.string().min(1),
   specialty: z.string().min(1),
@@ -18,14 +35,14 @@ const bookBodySchema = z.object({
   date: z.string().min(1),
   fromTime: z.string().min(1),
   toTime: z.string().min(1),
-  dentistPersonId: z.number().int(),
+  dentistPersonId: z.coerce.number().int(),
   // Opcional: createAppointment usa dentistPersonId OU scheduleToId (booking por dentista não exige scheduleToId).
-  scheduleToId: z.number().int().optional(),
+  scheduleToId: z.coerce.number().int().optional(),
   scheduleToType: z.literal('CHAIR').optional(),
   procedures: z.string().optional(),
   categoryDescription: z.string().optional(),
   categoryColor: z.string().optional(),
-});
+}));
 
 const cancelBodySchema = z.object({
   appointmentId: z.string().min(1),

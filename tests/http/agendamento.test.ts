@@ -77,6 +77,33 @@ describe('POST /agendamento/book', () => {
     await app.close();
   });
 
+  it('accepts flat fields (formato do Chatbotify) e normaliza patient/dentistPersonId/slotId', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'appt-flat' });
+    const fakeClinicorp = makeFakeClinicorp();
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/agendamento/book',
+      payload: {
+        professionalId: '4848869307449344',
+        name: 'Maria Teste',
+        phone: '5521999998888',
+        date: '2026-07-01',
+        fromTime: '9:00',
+        toTime: '9:30',
+      },
+    });
+
+    expect(res.statusCode).toBe(201);
+    const arg = (fakeEngine.book as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    expect(arg.patient).toEqual({ name: 'Maria Teste', phone: '5521999998888', email: undefined, personId: undefined });
+    expect(arg.dentistPersonId).toBe(4848869307449344);
+    expect(arg.slotId).toBe('2026-07-01-9:00-4848869307449344');
+    expect(arg.specialty).toBe('Avaliação');
+    await app.close();
+  });
+
   it('returns 409 when engine returns slot_taken', async () => {
     const fakeEngine = makeFakeEngine({ status: 'slot_taken' });
     const fakeClinicorp = makeFakeClinicorp();
