@@ -38,7 +38,10 @@ CLINICORP_BUSINESS_ID=6247357829611520
 CLINICORP_ACCESS_CODE=<codigo do agendamento online>   # ver pendência
 CHATBOTIFY_API_BASE=https://chatbotify.com.br
 CHATBOTIFY_API_TOKEN=
+API_KEY_SECRET=<chave secreta>      # chave compartilhada com o Flow Builder (header X-Api-Key)
 ```
+
+> **Railway (managed) como alternativa à VPS:** em vez do caminho VPS + Nginx + Certbot, dá para subir no Railway. Configure as mesmas variáveis de ambiente; o Redis gerenciado fornece `REDIS_URL` automaticamente; e a plataforma já entrega uma URL HTTPS (dispensa Nginx/Let's Encrypt). Aponte os blocos HTTP do Flow Builder para essa URL.
 
 ## 2. Subir app + Redis
 ```bash
@@ -94,7 +97,7 @@ docker compose up -d --build
 
 ## Segurança
 - `.env` fica só na VPS (gitignored). Rotacionar o token Clinicorp periodicamente.
-- Considerar proteger os endpoints `/agendamento/*` com um header secreto compartilhado com o Flow Builder (ex: `X-Api-Key`) — **melhoria recomendada** antes de produção, já que a URL é chamada de fora.
+- `API_KEY_SECRET`: quando definida, todas as rotas (exceto `/health`) exigem o header `X-Api-Key` igual ao valor — o Flow Builder do Chatbotify deve enviar esse header em todos os blocos HTTP. Se a variável estiver vazia/ausente, não há enforcement (local/dev permanece aberto).
 
 ## Pendências
 - **`CLINICORP_ACCESS_CODE`**: código do Agendamento Online da Clinicorp (necessário para `disponibilidade`). Confirmar com o cliente + o nome exato do parâmetro na chamada.

@@ -19,7 +19,8 @@ const bookBodySchema = z.object({
   fromTime: z.string().min(1),
   toTime: z.string().min(1),
   dentistPersonId: z.number().int(),
-  scheduleToId: z.number().int(),
+  // Opcional: createAppointment usa dentistPersonId OU scheduleToId (booking por dentista não exige scheduleToId).
+  scheduleToId: z.number().int().optional(),
   scheduleToType: z.literal('CHAIR').optional(),
   procedures: z.string().optional(),
   categoryDescription: z.string().optional(),

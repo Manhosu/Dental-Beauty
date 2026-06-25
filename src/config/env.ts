@@ -14,6 +14,8 @@ const envSchema = z.object({
   // Chatbotify é opcional no microserviço (Arquitetura C: a plataforma chama a gente).
   CHATBOTIFY_API_BASE: z.string().url().optional().or(z.literal('')),
   CHATBOTIFY_API_TOKEN: z.string().optional(),
+  // Chave compartilhada com o Flow Builder (header X-Api-Key). Opcional: se vazia, não há enforcement.
+  API_KEY_SECRET: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;
@@ -26,4 +28,9 @@ let _env: Env | undefined;
 export function getEnv(): Env {
   if (!_env) _env = parseEnv();
   return _env;
+}
+
+// Limpa o singleton (usado em testes que manipulam process.env).
+export function resetEnv(): void {
+  _env = undefined;
 }

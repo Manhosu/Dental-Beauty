@@ -60,6 +60,23 @@ describe('POST /agendamento/book', () => {
     await app.close();
   });
 
+  it('accepts a valid body without scheduleToId (booking by dentist)', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'appt-no-chair' });
+    const fakeClinicorp = makeFakeClinicorp();
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const { scheduleToId, ...payloadWithoutScheduleToId } = validBookPayload;
+    const res = await app.inject({
+      method: 'POST',
+      url: '/agendamento/book',
+      payload: payloadWithoutScheduleToId,
+    });
+
+    expect(res.statusCode).toBe(201);
+    expect(res.json()).toEqual({ status: 'confirmed', appointmentId: 'appt-no-chair' });
+    await app.close();
+  });
+
   it('returns 409 when engine returns slot_taken', async () => {
     const fakeEngine = makeFakeEngine({ status: 'slot_taken' });
     const fakeClinicorp = makeFakeClinicorp();

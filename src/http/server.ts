@@ -1,4 +1,5 @@
 import Fastify, { type FastifyInstance } from 'fastify';
+import { getEnv } from '../config/env';
 import { registerErrorHandler } from './middleware/errorHandler';
 import { handleInbound, type InboundDeps } from './webhooks/chatbotify.route';
 import { registerAgendamentoRoutes, type AgendamentoDeps } from './routes/agendamento';
@@ -7,6 +8,23 @@ import { registerCatalogoRoutes } from './routes/catalogo';
 export function buildServer(deps: InboundDeps, scheduling?: AgendamentoDeps): FastifyInstance {
   const app = Fastify({ logger: false });
   registerErrorHandler(app);
+
+  // Proteção X-Api-Key: se API_KEY_SECRET estiver definida, exige o header em todas as rotas
+  // exceto /health. Se vazia/ausente (local/dev), não há enforcement.
+  app.addHook('preHandler', async (req, reply) => {
+    // Lê o segredo sem forçar a validação completa do env (mantém local/dev/testes abertos quando não há env completo).
+    let expected: string | undefined;
+    try {
+      expected = getEnv().API_KEY_SECRET;
+    } catch {
+      expected = process.env.API_KEY_SECRET;
+    }
+    if (!expected) return;
+    if (req.url.split('?')[0] === '/health') return;
+    if (req.headers['x-api-key'] !== expected) {
+      return reply.status(401).send({ error: 'unauthorized' });
+    }
+  });
 
   app.get('/health', async () => ({ status: 'ok' }));
 
