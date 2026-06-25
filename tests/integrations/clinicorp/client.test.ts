@@ -19,6 +19,57 @@ function makeResponse(body: unknown, status = 200): Response {
 }
 
 describe('HttpClinicorpClient', () => {
+  describe('listAppointmentsByDate', () => {
+    it('mapeia agendamentos, filtra Deleted e enriquece com profissional/unidade', async () => {
+      const rawList = [
+        {
+          id: 123,
+          PatientName: 'Maria',
+          MobilePhone: '+5521999999999',
+          Email: 'maria@x.com',
+          Dentist_PersonId: 42,
+          date: '2026-06-26T03:00:00.000Z',
+          fromTime: '16:30',
+          toTime: '17:00',
+          Procedures: 'Limpeza',
+          CategoryDescription: 'Consulta',
+        },
+        { id: 999, PatientName: 'Cancelado', date: '2026-06-26T03:00:00.000Z', fromTime: '9:00', toTime: '9:30', Deleted: 'X' },
+      ];
+      const professionals = [{ id: 42, name: 'Adriana - Ortodontia - Recreio', cpf: '0' }];
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValueOnce(makeResponse(rawList))
+        .mockResolvedValueOnce(makeResponse(professionals));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.listAppointmentsByDate('2026-06-26');
+
+      expect(result).toEqual([
+        {
+          id: '123',
+          patientName: 'Maria',
+          mobilePhone: '+5521999999999',
+          email: 'maria@x.com',
+          dentistPersonId: 42,
+          professionalName: 'Adriana - Ortodontia - Recreio',
+          unit: 'Recreio',
+          date: '2026-06-26T03:00:00.000Z',
+          fromTime: '16:30',
+          toTime: '17:00',
+          procedures: 'Limpeza',
+          categoryDescription: 'Consulta',
+        },
+      ]);
+
+      const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
+      expect(url).toContain('/appointment/list');
+      expect(url).toContain('subscriber_id=sub123');
+      expect(url).toContain('from=2026-06-26');
+      expect(url).toContain('to=2026-06-26');
+    });
+  });
+
   describe('findPatientByPhone', () => {
     it('returns mapped Patient when API returns a non-empty array', async () => {
       const rawPatient = [

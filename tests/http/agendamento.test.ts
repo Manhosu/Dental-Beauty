@@ -37,6 +37,7 @@ function makeFakeClinicorp(slots: AvailableSlot[] = []): ClinicorpClient {
     createAppointment: vi.fn(),
     cancelAppointment: vi.fn(),
     listProfessionals: vi.fn().mockResolvedValue([]),
+    listAppointmentsByDate: vi.fn().mockResolvedValue([]),
     listBirthdays: vi.fn().mockResolvedValue([]),
     listSpecialties: vi.fn().mockResolvedValue([]),
     findPatientByPhone: vi.fn().mockResolvedValue(null),
@@ -185,6 +186,48 @@ describe('POST /agendamento/cancelar', () => {
 
     expect(res.statusCode).toBe(400);
     expect(res.json()).toMatchObject({ error: 'invalid' });
+    await app.close();
+  });
+});
+
+describe('GET /agendamento/agenda', () => {
+  it('returns 200 with appointments for the given date', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
+    const fakeClinicorp = makeFakeClinicorp();
+    const appts = [
+      { id: '1', patientName: 'Maria', mobilePhone: '5521999999999', date: '2026-06-26T03:00:00.000Z', fromTime: '16:30', toTime: '17:00', dentistPersonId: 42 },
+    ];
+    (fakeClinicorp.listAppointmentsByDate as ReturnType<typeof vi.fn>).mockResolvedValue(appts);
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({ method: 'GET', url: '/agendamento/agenda?date=2026-06-26' });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ from: '2026-06-26', to: '2026-06-26', appointments: appts });
+    expect(fakeClinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2026-06-26', undefined);
+    await app.close();
+  });
+
+  it('passes the optional `to` for a date range', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
+    const fakeClinicorp = makeFakeClinicorp();
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({ method: 'GET', url: '/agendamento/agenda?date=2026-06-26&to=2026-06-30' });
+
+    expect(res.statusCode).toBe(200);
+    expect(fakeClinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2026-06-26', '2026-06-30');
+    await app.close();
+  });
+
+  it('returns 400 when date is missing or invalid', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
+    const fakeClinicorp = makeFakeClinicorp();
+    const app = buildServer(noopInbound, { engine: fakeEngine, clinicorp: fakeClinicorp });
+
+    const res = await app.inject({ method: 'GET', url: '/agendamento/agenda?date=26-06-2026' });
+
+    expect(res.statusCode).toBe(400);
     await app.close();
   });
 });

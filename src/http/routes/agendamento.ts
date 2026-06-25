@@ -53,6 +53,11 @@ const disponibilidadeQuerySchema = z.object({
   professionalId: z.coerce.number().int().optional(),
 });
 
+const agendaQuerySchema = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be YYYY-MM-DD'),
+  to: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'to must be YYYY-MM-DD').optional(),
+});
+
 export interface AgendamentoDeps {
   engine: SchedulingEngine;
   clinicorp: ClinicorpClient;
@@ -99,5 +104,18 @@ export function registerAgendamentoRoutes(app: FastifyInstance, deps: Agendament
     const slots = await deps.clinicorp.getAvailability({ date, professionalId });
 
     return reply.status(200).send({ date, slots });
+  });
+
+  // Lista os agendamentos de um período (fonte das réguas de no-show/lembrete).
+  app.get('/agendamento/agenda', async (req, reply) => {
+    const parsed = agendaQuerySchema.safeParse(req.query);
+    if (!parsed.success) {
+      return reply.status(400).send({ error: 'invalid', issues: parsed.error.issues });
+    }
+
+    const { date, to } = parsed.data;
+    const appointments = await deps.clinicorp.listAppointmentsByDate(date, to);
+
+    return reply.status(200).send({ from: date, to: to ?? date, appointments });
   });
 }

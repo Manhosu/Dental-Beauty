@@ -9,6 +9,7 @@ import type {
   AvailabilityQuery,
   AvailableSlot,
   Professional,
+  Appointment,
   Birthday,
   Specialty,
   Patient,
@@ -198,6 +199,54 @@ export class HttpClinicorpClient implements ClinicorpClient {
       cpf: r.cpf,
       unit: unitFromProfessionalName(r.name),
     }));
+  }
+
+  async listAppointmentsByDate(from: string, to?: string): Promise<Appointment[]> {
+    // GET /appointment/list exige subscriber_id + from/to (YYYY-MM-DD). `to` default = `from` (um dia).
+    const raw = await this.request<Array<{
+      id: number;
+      PatientName?: string;
+      MobilePhone?: string;
+      Email?: string;
+      Dentist_PersonId?: number;
+      date: string;
+      fromTime: string;
+      toTime: string;
+      Procedures?: string;
+      CategoryDescription?: string;
+      Deleted?: string;
+    }>>('GET', '/appointment/list', {
+      query: { subscriber_id: this.config.subscriberId, from, to: to ?? from },
+    });
+
+    // Enriquece com nome/unidade do profissional (mesmo padrão de getAvailability).
+    const professionals = await this.listProfessionals();
+    const profMap = new Map<number, { name: string; unit: import('./types').ClinicUnit }>(
+      professionals.map((p) => [p.id, { name: p.name, unit: p.unit }]),
+    );
+
+    return raw
+      .filter((r) => r.Deleted !== 'X') // descarta agendamentos cancelados/excluídos
+      .map((r) => {
+        const prof = r.Dentist_PersonId !== undefined ? profMap.get(r.Dentist_PersonId) : undefined;
+        const appt: Appointment = {
+          id: String(r.id),
+          patientName: r.PatientName ?? '',
+          date: r.date,
+          fromTime: r.fromTime,
+          toTime: r.toTime,
+        };
+        if (r.MobilePhone) appt.mobilePhone = r.MobilePhone;
+        if (r.Email) appt.email = r.Email;
+        if (r.Dentist_PersonId !== undefined) appt.dentistPersonId = r.Dentist_PersonId;
+        if (prof !== undefined) {
+          appt.professionalName = prof.name;
+          appt.unit = prof.unit;
+        }
+        if (r.Procedures) appt.procedures = r.Procedures;
+        if (r.CategoryDescription) appt.categoryDescription = r.CategoryDescription;
+        return appt;
+      });
   }
 
   async listBirthdays(): Promise<Birthday[]> {

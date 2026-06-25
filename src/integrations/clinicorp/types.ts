@@ -44,6 +44,22 @@ export interface AvailableSlot {
   unit?: ClinicUnit;
 }
 
+/** Um agendamento retornado por GET /appointment/list (fonte das réguas de no-show/agenda). */
+export interface Appointment {
+  id: string;
+  patientName: string;
+  mobilePhone?: string;
+  email?: string;
+  dentistPersonId?: number;
+  professionalName?: string;
+  unit?: ClinicUnit;
+  date: string; // ISO 8601 como veio da API
+  fromTime: string; // 'HH:mm'
+  toTime: string; // 'HH:mm'
+  procedures?: string;
+  categoryDescription?: string;
+}
+
 export interface Professional { id: number; name: string; cpf: string; unit: ClinicUnit }
 
 export interface Birthday {
@@ -75,6 +91,8 @@ export interface ClinicorpClient {
   createAppointment(input: CreateAppointmentInput): Promise<AppointmentResult>;
   cancelAppointment(appointmentId: string): Promise<{ released: boolean }>;
   listProfessionals(): Promise<Professional[]>;
+  /** Lista agendamentos por período (GET /appointment/list?from=&to=). `to` default = `from`. */
+  listAppointmentsByDate(from: string, to?: string): Promise<Appointment[]>;
   listBirthdays(): Promise<Birthday[]>;
   listSpecialties(): Promise<Specialty[]>;
   findPatientByPhone(phone: string): Promise<Patient | null>;
