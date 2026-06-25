@@ -63,6 +63,19 @@ Sequência após gerar/agendar retorno do orçamento:
 ---
 
 ## Pendências técnicas (nosso lado)
-- **Listagem de agendamentos por período** (fonte das réguas 2/3/4 e inatividade): confirmar o nome do parâmetro de data do `/appointment/list` da Clinicorp (e expor um endpoint `GET /agendamentos?date=`). Itens prontos hoje: disponibilidade, book, cancelar, aniversariantes, catálogo.
+- ✅ **Listagem de agendamentos por período — RESOLVIDO (2026-06-25).** O param do `/appointment/list` é **`from`/`to`** (`YYYY-MM-DD`). Exposto em **`GET /agendamento/agenda?date=YYYY-MM-DD[&to=YYYY-MM-DD]`** → `{ from, to, appointments[] }` com `id` (p/ cancelar), `patientName`, `mobilePhone`, `fromTime/toTime`, `professionalName`, `unit`. Fonte da régua de no-show. Validado em produção (14 agendamentos reais p/ 26/06). Filtra `Deleted`.
+- ⚠️ **Status "atendido/CHECKOUT" p/ pós-procedimento:** o registro de `/appointment/list` **não traz um campo Status**, e `/patient/list_appointments` retornou vazio nos params testados. Confirmar com a Clinicorp como obter "procedimento executado" (campo de status, `/appointment/get` por id, ou webhooks de CHECKOUT) antes de montar as réguas de pós-procedimento/inatividade.
+- Itens prontos hoje: disponibilidade, book, cancelar, **agenda (listagem)**, aniversariantes, catálogo.
+
+## Spike Flow Builder — RESULTADO (2026-06-25)
+Capacidades do Flow Builder do Chatbotify (conta Disparos):
+- **Gatilhos:** `Gatilho Agendado` (via n8n; ex.: todo dia às 9h), `Gatilho HTTP` (POST externo), Trigger Asaas.
+- **Blocos:** `HTTP Request` (chama APIs externas — nosso backend), `Mensagem` (envia ao usuário), `Obter Dados` (busca contatos/leads do CRM com filtros de pipeline/temperatura/status/tempo na etapa), `Validação de Resposta` (AI), `Aguardar` (com saída antecipada), `Condição`/`Case`, `Agente AI`/`Agente Analista`, `Controle de Agente`, `Definir Variável`, `Editar Contato`, `Kanban`, `Iniciar Atendimento`, `Notificação`, `Resetar/Fim`.
+- ⚠️ **Não há bloco de loop/iterar lista.** Logo, réguas com destinatários vindos da **Clinicorp** (aniversário, no-show, pós-procedimento) não podem fazer N envios a partir de um único `Gatilho Agendado` que chama nosso endpoint.
+
+### Arquitetura recomendada das réguas (casa com README §3.4)
+- **Réguas Clinicorp (aniversário, no-show, pós-procedimento, inatividade):** **Cron-Engine no backend** (node-cron/BullMQ-repeat) → consulta Clinicorp (`/pacientes/aniversariantes`, `/agendamento/agenda`, etc.) → **itera a lista** → por destinatário, faz `POST` no **`Gatilho HTTP`** de um fluxo simples (`Gatilho HTTP → Mensagem`) que envia pelo número Disparos. (A iteração e as regras de prazo ficam no backend; o Flow Builder faz o envio.)
+- **Réguas baseadas no CRM (follow-up de lead D0–D15, inatividade por etapa):** nativas — `Gatilho Agendado` + `Obter Dados` (filtra contatos) + `Mensagem`.
+- **Validação pendente:** construir o fluxo `Gatilho HTTP → Mensagem` e confirmar que o POST dispara o envio ao telefone do payload (linchpin do envio das réguas).
 - **Resolução de paciente por telefone** antes de marcar (evita conflito de nome) — `GET /patient/get`.
 - **Unidade Ipanema** na Clinicorp (API só expõe Recreio) — necessário para marcar em Ipanema.

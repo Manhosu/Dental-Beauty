@@ -6,6 +6,8 @@ import { SchedulingEngine } from './scheduling/schedulingEngine';
 import { HttpClinicorpClient } from './integrations/clinicorp/client';
 import { buildServer } from './http/server';
 import type { InboundDeps } from './http/webhooks/chatbotify.route';
+import { createHttpDispatcher } from './scheduling/reguas/dispatcher';
+import { startReguas } from './scheduling/reguas/cronEngine';
 import { logger } from './lib/logger';
 
 async function main(): Promise<void> {
@@ -40,6 +42,13 @@ async function main(): Promise<void> {
 
   await app.listen({ port: env.PORT, host: '0.0.0.0' });
   logger.info({ port: env.PORT }, 'servidor iniciado');
+
+  // Cron-Engine das réguas (§3.4) — só liga se habilitado e com a URL do fluxo de disparo.
+  if (env.REGUAS_ENABLED && env.CHATBOTIFY_REGUA_WEBHOOK_URL) {
+    const dispatch = createHttpDispatcher(env.CHATBOTIFY_REGUA_WEBHOOK_URL);
+    startReguas({ clinicorp, dispatch });
+    logger.info('réguas (cron-engine) ativadas');
+  }
 }
 
 main().catch((err) => {

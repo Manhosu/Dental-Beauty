@@ -16,6 +16,9 @@ const envSchema = z.object({
   CHATBOTIFY_API_TOKEN: z.string().optional(),
   // Chave compartilhada com o Flow Builder (header X-Api-Key). Opcional: se vazia, não há enforcement.
   API_KEY_SECRET: z.string().optional(),
+  // Réguas (Cron-Engine §3.4) — dormentes por padrão. Liguem com REGUAS_ENABLED=true + a URL do fluxo.
+  REGUAS_ENABLED: z.string().optional().transform((v) => v === 'true'),
+  CHATBOTIFY_REGUA_WEBHOOK_URL: z.string().url().optional().or(z.literal('')),
 });
 
 export type Env = z.infer<typeof envSchema>;
