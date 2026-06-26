@@ -77,5 +77,11 @@ Capacidades do Flow Builder do Chatbotify (conta Disparos):
 - **Réguas Clinicorp (aniversário, no-show, pós-procedimento, inatividade):** **Cron-Engine no backend** (node-cron/BullMQ-repeat) → consulta Clinicorp (`/pacientes/aniversariantes`, `/agendamento/agenda`, etc.) → **itera a lista** → por destinatário, faz `POST` no **`Gatilho HTTP`** de um fluxo simples (`Gatilho HTTP → Mensagem`) que envia pelo número Disparos. (A iteração e as regras de prazo ficam no backend; o Flow Builder faz o envio.)
 - **Réguas baseadas no CRM (follow-up de lead D0–D15, inatividade por etapa):** nativas — `Gatilho Agendado` + `Obter Dados` (filtra contatos) + `Mensagem`.
 - **Validação pendente:** construir o fluxo `Gatilho HTTP → Mensagem` e confirmar que o POST dispara o envio ao telefone do payload (linchpin do envio das réguas).
+
+### Como montar o fluxo de envio no canvas (protocolo descoberto 2026-06-26)
+Os blocos da paleta usam **HTML5 drag-and-drop** com `dataTransfer.setData('application/reactflow', <tipo>)`. Tipo do **Gatilho HTTP** = `formTrigger`. Para automatizar: construir um `DataTransfer`, `setData('application/reactflow', tipo)`, e disparar `dragenter/dragover/drop` (DragEvent com esse dataTransfer) no `.react-flow__pane` na posição desejada. Conectar arestas (arrastar handle source→target) e configurar o bloco `Mensagem` (enviar p/ o telefone do payload, texto por `type`) ainda é trabalho de canvas. O fluxo deve ter **Gatilho HTTP → Mensagem**, ser ativado, e a URL do Gatilho HTTP vai pra `CHATBOTIFY_REGUA_WEBHOOK_URL` no Render + `REGUAS_ENABLED=true`.
+
+### Status "atendido" da Clinicorp — INVESTIGADO (2026-06-26)
+`/appointment/list` NÃO traz status CONFIRMED/CHECKOUT direto. O que existe por agendamento: `CategoryId` + `CategoryDescription` (texto livre, ex.: "AGENDAMENTO PENDENTE DE CONFIRMAÇÃO") + `tags` (ex.: "PAGAMENTO PENDENTE", Type "AppointmentMarker") + `ListTagsId`. `/appointment/get?id=` não respondeu JSON nos params testados. → **Pós-procedimento/inatividade dependem de confirmar com a Clinicorp/clínica qual Categoria/Tag = "atendido"**, ou habilitar webhook de evento (Gestão de Webhook da Clinicorp).
 - **Resolução de paciente por telefone** antes de marcar (evita conflito de nome) — `GET /patient/get`.
 - **Unidade Ipanema** na Clinicorp (API só expõe Recreio) — necessário para marcar em Ipanema.
