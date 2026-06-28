@@ -51,14 +51,20 @@ async function main(): Promise<void> {
     env.CHATBOTIFY_REGUA_TOKEN &&
     env.CHATBOTIFY_REGUA_FLOW
   ) {
-    const dispatch = createHttpDispatcher({
+    const base = {
       url: env.CHATBOTIFY_REGUA_WEBHOOK_URL,
       accountId: env.CHATBOTIFY_REGUA_ACCOUNT_ID,
       token: env.CHATBOTIFY_REGUA_TOKEN,
-      flow: env.CHATBOTIFY_REGUA_FLOW,
-    });
-    startReguas({ clinicorp, dispatch });
-    logger.info('réguas (cron-engine) ativadas');
+    };
+    const dispatchers = {
+      aniversario: createHttpDispatcher({ ...base, flow: env.CHATBOTIFY_REGUA_FLOW }),
+      // No-show só liga quando o 2º fluxo (mensagem de lembrete) existir.
+      ...(env.CHATBOTIFY_REGUA_FLOW_NOSHOW
+        ? { noShow: createHttpDispatcher({ ...base, flow: env.CHATBOTIFY_REGUA_FLOW_NOSHOW }) }
+        : {}),
+    };
+    startReguas({ clinicorp, dispatchers });
+    logger.info({ noShow: !!env.CHATBOTIFY_REGUA_FLOW_NOSHOW }, 'réguas (cron-engine) ativadas');
   }
 }
 

@@ -22,7 +22,8 @@ const envSchema = z.object({
   CHATBOTIFY_REGUA_WEBHOOK_URL: z.string().url().optional().or(z.literal('')),
   CHATBOTIFY_REGUA_ACCOUNT_ID: z.string().optional(),
   CHATBOTIFY_REGUA_TOKEN: z.string().optional(),
-  CHATBOTIFY_REGUA_FLOW: z.string().optional(),
+  CHATBOTIFY_REGUA_FLOW: z.string().optional(), // id do fluxo de ANIVERSÁRIO
+  CHATBOTIFY_REGUA_FLOW_NOSHOW: z.string().optional(), // id do fluxo de NO-SHOW (2º fluxo)
 });
 
 export type Env = z.infer<typeof envSchema>;

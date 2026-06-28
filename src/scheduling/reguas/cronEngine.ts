@@ -1,7 +1,13 @@
 import type { ClinicorpClient } from '../../integrations/clinicorp/types';
 import type { ReguaDispatcher } from './dispatcher';
-import { runAniversariantes } from './jobs';
+import { runAniversariantes, runNoShow } from './jobs';
 import { logger } from '../../lib/logger';
+
+/** Dispatchers por régua (cada um aponta para o SEU fluxo Gatilho HTTP, com mensagem própria). */
+export interface ReguaDispatchers {
+  aniversario: ReguaDispatcher;
+  noShow?: ReguaDispatcher;
+}
 
 /** Data YYYY-MM-DD deslocada por `daysFromNow` (UTC) a partir de `base`. */
 export function isoDate(base: Date, daysFromNow = 0): string {
@@ -9,17 +15,19 @@ export function isoDate(base: Date, daysFromNow = 0): string {
 }
 
 /**
- * Executa as réguas do dia. Hoje só ANIVERSÁRIO (o fluxo de envio "Gatilho HTTP → Mensagem" criado
- * tem o texto de aniversário). A régua de no-show precisa do SEU PRÓPRIO fluxo/dispatcher (mensagem
- * diferente) — `runNoShow` continua disponível para quando esse 2º fluxo existir. `now` mantido p/ T-24h.
+ * Executa as réguas do dia: ANIVERSÁRIO (sempre) e NO-SHOW (T-24h = agendamentos de amanhã), este
+ * só se o dispatcher de no-show estiver configurado (precisa do SEU PRÓPRIO fluxo, mensagem diferente).
  */
 export async function runDailyReguas(
   clinicorp: ClinicorpClient,
-  dispatch: ReguaDispatcher,
-  _now: Date,
-): Promise<{ aniversario: number }> {
-  const aniversario = await runAniversariantes(clinicorp, dispatch);
-  return { aniversario };
+  dispatchers: ReguaDispatchers,
+  now: Date,
+): Promise<{ aniversario: number; noShow: number }> {
+  const aniversario = await runAniversariantes(clinicorp, dispatchers.aniversario);
+  const noShow = dispatchers.noShow
+    ? await runNoShow(clinicorp, dispatchers.noShow, isoDate(now, 1))
+    : 0;
+  return { aniversario, noShow };
 }
 
 /**
@@ -28,7 +36,7 @@ export async function runDailyReguas(
  */
 export function startReguas(opts: {
   clinicorp: ClinicorpClient;
-  dispatch: ReguaDispatcher;
+  dispatchers: ReguaDispatchers;
   hourUtc?: number;
 }): () => void {
   const hour = opts.hourUtc ?? 12;
@@ -42,7 +50,7 @@ export function startReguas(opts: {
     if (next.getTime() <= now.getTime()) next.setUTCDate(next.getUTCDate() + 1);
 
     timer = setTimeout(() => {
-      void runDailyReguas(opts.clinicorp, opts.dispatch, new Date())
+      void runDailyReguas(opts.clinicorp, opts.dispatchers, new Date())
         .then((res) => logger.info(res, 'réguas diárias executadas'))
         .catch((err) => logger.error({ err }, 'falha nas réguas diárias'))
         .finally(scheduleNext);

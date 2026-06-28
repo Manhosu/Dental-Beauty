@@ -60,16 +60,28 @@ describe('réguas — cronEngine', () => {
     expect(isoDate(new Date('2026-06-26T10:00:00.000Z'), 1)).toBe('2026-06-27');
   });
 
-  it('runDailyReguas roda aniversário (no-show fica para o seu próprio fluxo)', async () => {
+  it('runDailyReguas roda aniversário + no-show (T-24h) quando ambos configurados', async () => {
     const clinicorp = fakeClinicorp({
       listBirthdays: vi.fn().mockResolvedValue([{ patientId: 1, name: 'Ana', birthDate: 'x', age: 30, mobilePhone: '5521999' }]),
+      listAppointmentsByDate: vi.fn().mockResolvedValue([{ id: '10', patientName: 'B', mobilePhone: '5521888', date: 'x', fromTime: '9:00', toTime: '9:30' }]),
     });
-    const dispatch = vi.fn().mockResolvedValue(undefined);
+    const aniversario = vi.fn().mockResolvedValue(undefined);
+    const noShow = vi.fn().mockResolvedValue(undefined);
 
-    const res = await runDailyReguas(clinicorp, dispatch, new Date('2026-06-26T12:00:00.000Z'));
+    const res = await runDailyReguas(clinicorp, { aniversario, noShow }, new Date('2026-06-26T12:00:00.000Z'));
 
-    expect(res).toEqual({ aniversario: 1 });
-    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(res).toEqual({ aniversario: 1, noShow: 1 });
+    expect(clinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2026-06-27');
+  });
+
+  it('runDailyReguas pula no-show quando não há dispatcher', async () => {
+    const clinicorp = fakeClinicorp({ listBirthdays: vi.fn().mockResolvedValue([]) });
+    const aniversario = vi.fn().mockResolvedValue(undefined);
+
+    const res = await runDailyReguas(clinicorp, { aniversario }, new Date('2026-06-26T12:00:00.000Z'));
+
+    expect(res).toEqual({ aniversario: 0, noShow: 0 });
+    expect(clinicorp.listAppointmentsByDate).not.toHaveBeenCalled();
   });
 });
 
