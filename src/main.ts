@@ -43,9 +43,20 @@ async function main(): Promise<void> {
   await app.listen({ port: env.PORT, host: '0.0.0.0' });
   logger.info({ port: env.PORT }, 'servidor iniciado');
 
-  // Cron-Engine das réguas (§3.4) — só liga se habilitado e com a URL do fluxo de disparo.
-  if (env.REGUAS_ENABLED && env.CHATBOTIFY_REGUA_WEBHOOK_URL) {
-    const dispatch = createHttpDispatcher(env.CHATBOTIFY_REGUA_WEBHOOK_URL);
+  // Cron-Engine das réguas (§3.4) — só liga se habilitado e com a config completa do fluxo de disparo.
+  if (
+    env.REGUAS_ENABLED &&
+    env.CHATBOTIFY_REGUA_WEBHOOK_URL &&
+    env.CHATBOTIFY_REGUA_ACCOUNT_ID &&
+    env.CHATBOTIFY_REGUA_TOKEN &&
+    env.CHATBOTIFY_REGUA_FLOW
+  ) {
+    const dispatch = createHttpDispatcher({
+      url: env.CHATBOTIFY_REGUA_WEBHOOK_URL,
+      accountId: env.CHATBOTIFY_REGUA_ACCOUNT_ID,
+      token: env.CHATBOTIFY_REGUA_TOKEN,
+      flow: env.CHATBOTIFY_REGUA_FLOW,
+    });
     startReguas({ clinicorp, dispatch });
     logger.info('réguas (cron-engine) ativadas');
   }

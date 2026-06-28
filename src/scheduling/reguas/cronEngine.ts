@@ -1,6 +1,6 @@
 import type { ClinicorpClient } from '../../integrations/clinicorp/types';
 import type { ReguaDispatcher } from './dispatcher';
-import { runAniversariantes, runNoShow } from './jobs';
+import { runAniversariantes } from './jobs';
 import { logger } from '../../lib/logger';
 
 /** Data YYYY-MM-DD deslocada por `daysFromNow` (UTC) a partir de `base`. */
@@ -8,15 +8,18 @@ export function isoDate(base: Date, daysFromNow = 0): string {
   return new Date(base.getTime() + daysFromNow * 86_400_000).toISOString().slice(0, 10);
 }
 
-/** Executa as réguas do dia: aniversariantes + no-show (T-24h = agendamentos de amanhã). */
+/**
+ * Executa as réguas do dia. Hoje só ANIVERSÁRIO (o fluxo de envio "Gatilho HTTP → Mensagem" criado
+ * tem o texto de aniversário). A régua de no-show precisa do SEU PRÓPRIO fluxo/dispatcher (mensagem
+ * diferente) — `runNoShow` continua disponível para quando esse 2º fluxo existir. `now` mantido p/ T-24h.
+ */
 export async function runDailyReguas(
   clinicorp: ClinicorpClient,
   dispatch: ReguaDispatcher,
-  now: Date,
-): Promise<{ aniversario: number; noShow: number }> {
+  _now: Date,
+): Promise<{ aniversario: number }> {
   const aniversario = await runAniversariantes(clinicorp, dispatch);
-  const noShow = await runNoShow(clinicorp, dispatch, isoDate(now, 1));
-  return { aniversario, noShow };
+  return { aniversario };
 }
 
 /**

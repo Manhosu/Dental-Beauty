@@ -60,30 +60,34 @@ describe('réguas — cronEngine', () => {
     expect(isoDate(new Date('2026-06-26T10:00:00.000Z'), 1)).toBe('2026-06-27');
   });
 
-  it('runDailyReguas roda aniversário + no-show de amanhã (T-24h)', async () => {
+  it('runDailyReguas roda aniversário (no-show fica para o seu próprio fluxo)', async () => {
     const clinicorp = fakeClinicorp({
       listBirthdays: vi.fn().mockResolvedValue([{ patientId: 1, name: 'Ana', birthDate: 'x', age: 30, mobilePhone: '5521999' }]),
-      listAppointmentsByDate: vi.fn().mockResolvedValue([{ id: '10', patientName: 'B', mobilePhone: '5521888', date: 'x', fromTime: '9:00', toTime: '9:30' }]),
     });
     const dispatch = vi.fn().mockResolvedValue(undefined);
 
     const res = await runDailyReguas(clinicorp, dispatch, new Date('2026-06-26T12:00:00.000Z'));
 
-    expect(res).toEqual({ aniversario: 1, noShow: 1 });
-    expect(clinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2026-06-27');
+    expect(res).toEqual({ aniversario: 1 });
+    expect(dispatch).toHaveBeenCalledTimes(1);
   });
 });
 
 describe('réguas — dispatcher', () => {
-  it('faz POST do payload na URL do fluxo', async () => {
+  it('faz POST com headers (id/token/flow) e body {nome, numero}', async () => {
     const fetchFn = vi.fn().mockResolvedValue(new Response('ok', { status: 200 }));
-    const dispatch = createHttpDispatcher('https://flow.example/hook', fetchFn);
+    const dispatch = createHttpDispatcher(
+      { url: 'https://flow.example/hook', accountId: 'acc', token: 'tok', flow: 'fl' },
+      fetchFn,
+    );
 
-    await dispatch({ type: 'aniversario', phone: '5521999', name: 'Ana' });
+    await dispatch({ type: 'aniversario', phone: '+55 21 99999-8888', name: 'Ana' });
 
     const [url, init] = fetchFn.mock.calls[0] as [string, RequestInit];
     expect(url).toBe('https://flow.example/hook');
     expect(init.method).toBe('POST');
-    expect(JSON.parse(init.body as string)).toEqual({ type: 'aniversario', phone: '5521999', name: 'Ana' });
+    expect(init.headers).toMatchObject({ id: 'acc', token: 'tok', flow: 'fl', 'Content-Type': 'application/json' });
+    // numero normalizado (só dígitos)
+    expect(JSON.parse(init.body as string)).toEqual({ nome: 'Ana', numero: '5521999998888' });
   });
 });
