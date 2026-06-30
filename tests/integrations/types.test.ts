@@ -22,6 +22,12 @@ const fake: ClinicorpClient = {
   async listProfessionals() {
     return [{ id: 1, name: 'Dr. Silva', cpf: '123.456.789-00', unit: 'Recreio' as const }];
   },
+  async listAppointmentsByDate() {
+    return [];
+  },
+  async listAppointmentStatuses() {
+    return [];
+  },
   async listBirthdays() {
     return [];
   },

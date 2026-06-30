@@ -24,6 +24,7 @@ const envSchema = z.object({
   CHATBOTIFY_REGUA_TOKEN: z.string().optional(),
   CHATBOTIFY_REGUA_FLOW: z.string().optional(), // id do fluxo de ANIVERSÁRIO
   CHATBOTIFY_REGUA_FLOW_NOSHOW: z.string().optional(), // id do fluxo de NO-SHOW (2º fluxo)
+  CHATBOTIFY_REGUA_FLOW_POSPROC: z.string().optional(), // id do fluxo de PÓS-PROCEDIMENTO (retorno)
 });
 
 export type Env = z.infer<typeof envSchema>;

@@ -58,6 +58,16 @@ export interface Appointment {
   toTime: string; // 'HH:mm'
   procedures?: string;
   categoryDescription?: string;
+  /** Id do status do agendamento (ver /appointment/status_list). CHECKOUT = "4-Atendido". */
+  statusId?: number;
+}
+
+/** Status possível de um agendamento (GET /appointment/status_list). */
+export interface AppointmentStatus {
+  id: number;
+  type: string; // ex.: 'CHECKOUT', 'MISSED', 'CONFIRMED'
+  description: string; // ex.: '4-Atendido', '8-Faltou'
+  active: boolean;
 }
 
 export interface Professional { id: number; name: string; cpf: string; unit: ClinicUnit }
@@ -93,6 +103,8 @@ export interface ClinicorpClient {
   listProfessionals(): Promise<Professional[]>;
   /** Lista agendamentos por período (GET /appointment/list?from=&to=). `to` default = `from`. */
   listAppointmentsByDate(from: string, to?: string): Promise<Appointment[]>;
+  /** Vocabulário de status de agendamento (GET /appointment/status_list). */
+  listAppointmentStatuses(): Promise<AppointmentStatus[]>;
   listBirthdays(): Promise<Birthday[]>;
   listSpecialties(): Promise<Specialty[]>;
   findPatientByPhone(phone: string): Promise<Patient | null>;

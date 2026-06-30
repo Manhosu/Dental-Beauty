@@ -43,3 +43,54 @@ export async function runNoShow(
   }
   return sent;
 }
+
+/** Meses distintos da tabela de retorno do escopo (réguas-e-campanhas.md). */
+export const POST_PROCEDURE_INTERVALS = [3, 6, 12] as const;
+
+/**
+ * Mapeia a categoria/procedimento atendido para o prazo de retorno (meses), conforme a tabela do
+ * cliente: Periodontia 3m; Coroa/Prótese 12m; demais (limpeza, clareamento, restauração, canal,
+ * implante, ortodontia, invisalign, odontopediatria, lente/faceta) 6m. Default = 6m.
+ */
+export function intervalMonthsForCategory(category?: string): number {
+  const c = (category ?? '').toLowerCase();
+  if (/periodont/.test(c)) return 3;
+  if (/pr[óo]tese|coroa/.test(c)) return 12;
+  return 6;
+}
+
+/**
+ * Régua de pós-procedimento (README §3.4 / réguas-e-campanhas.md): para cada agendamento ATENDIDO
+ * (StatusId == CHECKOUT) há `intervalMonthsForCategory` meses, dispara o convite de retorno.
+ * `monthsAgoIso(runDate, m)` produz a data-alvo de cada bucket de meses.
+ */
+export async function runPostProcedure(
+  clinicorp: ClinicorpClient,
+  dispatch: ReguaDispatcher,
+  monthsAgoIso: (months: number) => string,
+): Promise<number> {
+  const statuses = await clinicorp.listAppointmentStatuses();
+  const checkoutId = statuses.find((s) => s.type === 'CHECKOUT')?.id;
+  if (checkoutId === undefined) return 0; // sem o status mapeado, não dispara (evita falso-positivo)
+
+  let sent = 0;
+  for (const months of POST_PROCEDURE_INTERVALS) {
+    const target = monthsAgoIso(months);
+    const appointments = await clinicorp.listAppointmentsByDate(target);
+    for (const a of appointments) {
+      if (a.statusId !== checkoutId) continue; // só quem compareceu (alta)
+      if (intervalMonthsForCategory(a.categoryDescription) !== months) continue; // bucket certo
+      if (!a.mobilePhone) continue;
+      await dispatch({
+        type: 'pos_procedimento',
+        phone: a.mobilePhone,
+        name: a.patientName,
+        date: a.date,
+        ...(a.categoryDescription !== undefined ? { procedure: a.categoryDescription } : {}),
+        ...(a.unit !== undefined ? { unit: a.unit } : {}),
+      });
+      sent++;
+    }
+  }
+  return sent;
+}

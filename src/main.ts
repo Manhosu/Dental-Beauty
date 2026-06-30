@@ -62,9 +62,19 @@ async function main(): Promise<void> {
       ...(env.CHATBOTIFY_REGUA_FLOW_NOSHOW
         ? { noShow: createHttpDispatcher({ ...base, flow: env.CHATBOTIFY_REGUA_FLOW_NOSHOW }) }
         : {}),
+      // Pós-procedimento (retorno) só liga quando o 3º fluxo existir.
+      ...(env.CHATBOTIFY_REGUA_FLOW_POSPROC
+        ? { posProcedimento: createHttpDispatcher({ ...base, flow: env.CHATBOTIFY_REGUA_FLOW_POSPROC }) }
+        : {}),
     };
     startReguas({ clinicorp, dispatchers });
-    logger.info({ noShow: !!env.CHATBOTIFY_REGUA_FLOW_NOSHOW }, 'réguas (cron-engine) ativadas');
+    logger.info(
+      {
+        noShow: !!env.CHATBOTIFY_REGUA_FLOW_NOSHOW,
+        posProcedimento: !!env.CHATBOTIFY_REGUA_FLOW_POSPROC,
+      },
+      'réguas (cron-engine) ativadas',
+    );
   }
 }
 

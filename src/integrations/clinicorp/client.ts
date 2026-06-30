@@ -214,6 +214,7 @@ export class HttpClinicorpClient implements ClinicorpClient {
       toTime: string;
       Procedures?: string;
       CategoryDescription?: string;
+      StatusId?: number;
       Deleted?: string;
     }>>('GET', '/appointment/list', {
       query: { subscriber_id: this.config.subscriberId, from, to: to ?? from },
@@ -245,8 +246,27 @@ export class HttpClinicorpClient implements ClinicorpClient {
         }
         if (r.Procedures) appt.procedures = r.Procedures;
         if (r.CategoryDescription) appt.categoryDescription = r.CategoryDescription;
+        if (r.StatusId !== undefined) appt.statusId = r.StatusId;
         return appt;
       });
+  }
+
+  async listAppointmentStatuses(): Promise<import('./types').AppointmentStatus[]> {
+    const response = await this.request<{ list: Array<{
+      id: number;
+      Type: string;
+      Description: string;
+      Active?: string;
+    }> }>('GET', '/appointment/status_list', {
+      query: { subscriber_id: this.config.subscriberId },
+    });
+
+    return (response.list ?? []).map((r) => ({
+      id: r.id,
+      type: r.Type,
+      description: r.Description,
+      active: r.Active === 'X',
+    }));
   }
 
   async listBirthdays(): Promise<Birthday[]> {
