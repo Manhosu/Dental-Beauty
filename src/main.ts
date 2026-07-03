@@ -66,12 +66,17 @@ async function main(): Promise<void> {
       ...(env.CHATBOTIFY_REGUA_FLOW_POSPROC
         ? { posProcedimento: createHttpDispatcher({ ...base, flow: env.CHATBOTIFY_REGUA_FLOW_POSPROC }) }
         : {}),
+      // NPS pós-consulta só liga quando o fluxo de pesquisa existir.
+      ...(env.CHATBOTIFY_REGUA_FLOW_NPS
+        ? { nps: createHttpDispatcher({ ...base, flow: env.CHATBOTIFY_REGUA_FLOW_NPS }) }
+        : {}),
     };
     startReguas({ clinicorp, dispatchers });
     logger.info(
       {
         noShow: !!env.CHATBOTIFY_REGUA_FLOW_NOSHOW,
         posProcedimento: !!env.CHATBOTIFY_REGUA_FLOW_POSPROC,
+        nps: !!env.CHATBOTIFY_REGUA_FLOW_NPS,
       },
       'réguas (cron-engine) ativadas',
     );

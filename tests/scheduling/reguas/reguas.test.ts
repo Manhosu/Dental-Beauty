@@ -3,6 +3,7 @@ import {
   runAniversariantes,
   runNoShow,
   runPostProcedure,
+  runNps,
   intervalMonthsForCategory,
 } from '../../../src/scheduling/reguas/jobs';
 import { isoDate, monthsAgoIso, runDailyReguas } from '../../../src/scheduling/reguas/cronEngine';
@@ -102,6 +103,23 @@ describe('réguas — jobs', () => {
     expect(dispatch).not.toHaveBeenCalled();
   });
 
+  it('NPS: dispara só para ATENDIDOS (CHECKOUT) com telefone na data', async () => {
+    const clinicorp = fakeClinicorp({
+      listAppointmentsByDate: vi.fn().mockResolvedValue([
+        { id: '1', patientName: 'Ana', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID },
+        { id: '2', patientName: 'Faltou', mobilePhone: '5522', date: 'x', fromTime: '9', toTime: '10', statusId: 111 },
+        { id: '3', patientName: 'SemFone', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID },
+      ]),
+    });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runNps(clinicorp, dispatch, '2026-06-28');
+
+    expect(sent).toBe(1);
+    expect(clinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2026-06-28');
+    expect(dispatch).toHaveBeenCalledWith({ type: 'nps', phone: '5511', name: 'Ana' });
+  });
+
   it('intervalMonthsForCategory: Periodontia 3m, Prótese/Coroa 12m, demais 6m', () => {
     expect(intervalMonthsForCategory('Tratamento Periodontal')).toBe(3);
     expect(intervalMonthsForCategory('Prótese retorno laboratório')).toBe(12);
@@ -132,7 +150,7 @@ describe('réguas — cronEngine', () => {
 
     const res = await runDailyReguas(clinicorp, { aniversario, noShow }, new Date('2026-06-26T12:00:00.000Z'));
 
-    expect(res).toEqual({ aniversario: 1, noShow: 1, posProcedimento: 0 });
+    expect(res).toEqual({ aniversario: 1, noShow: 1, posProcedimento: 0, nps: 0 });
     expect(clinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2026-06-27');
   });
 
@@ -142,7 +160,7 @@ describe('réguas — cronEngine', () => {
 
     const res = await runDailyReguas(clinicorp, { aniversario }, new Date('2026-06-26T12:00:00.000Z'));
 
-    expect(res).toEqual({ aniversario: 0, noShow: 0, posProcedimento: 0 });
+    expect(res).toEqual({ aniversario: 0, noShow: 0, posProcedimento: 0, nps: 0 });
     expect(clinicorp.listAppointmentsByDate).not.toHaveBeenCalled();
   });
 
@@ -158,8 +176,25 @@ describe('réguas — cronEngine', () => {
     const res = await runDailyReguas(clinicorp, { aniversario, posProcedimento }, new Date('2026-06-29T12:00:00.000Z'));
 
     // Limpeza = 6 meses → dispara 1x (apenas no bucket de 6m); 3m e 12m não casam.
-    expect(res).toEqual({ aniversario: 0, noShow: 0, posProcedimento: 1 });
+    expect(res).toEqual({ aniversario: 0, noShow: 0, posProcedimento: 1, nps: 0 });
     expect(clinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2025-12-29'); // 6 meses antes
+  });
+
+  it('runDailyReguas roda NPS (T-1) quando o dispatcher existe', async () => {
+    const clinicorp = fakeClinicorp({
+      listAppointmentsByDate: vi.fn().mockResolvedValue([
+        { id: '1', patientName: 'Atend', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID },
+        { id: '2', patientName: 'Faltou', mobilePhone: '5522', date: 'x', fromTime: '9', toTime: '10', statusId: 111 },
+      ]),
+    });
+    const aniversario = vi.fn().mockResolvedValue(undefined);
+    const nps = vi.fn().mockResolvedValue(undefined);
+
+    const res = await runDailyReguas(clinicorp, { aniversario, nps }, new Date('2026-06-29T12:00:00.000Z'));
+
+    expect(res).toEqual({ aniversario: 0, noShow: 0, posProcedimento: 0, nps: 1 });
+    expect(clinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2026-06-28'); // ontem (T-1)
+    expect(nps).toHaveBeenCalledWith(expect.objectContaining({ type: 'nps', phone: '5511' }));
   });
 });
 

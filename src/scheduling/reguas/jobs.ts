@@ -94,3 +94,27 @@ export async function runPostProcedure(
   }
   return sent;
 }
+
+/**
+ * NPS pós-consulta: no dia seguinte à consulta ATENDIDA (StatusId == CHECKOUT), dispara a pesquisa
+ * "de 0 a 10". A IA trata a resposta (nota alta → link do Google Maps). `date` = a data-alvo (ontem).
+ */
+export async function runNps(
+  clinicorp: ClinicorpClient,
+  dispatch: ReguaDispatcher,
+  date: string,
+): Promise<number> {
+  const statuses = await clinicorp.listAppointmentStatuses();
+  const checkoutId = statuses.find((s) => s.type === 'CHECKOUT')?.id;
+  if (checkoutId === undefined) return 0;
+
+  const appointments = await clinicorp.listAppointmentsByDate(date);
+  let sent = 0;
+  for (const a of appointments) {
+    if (a.statusId !== checkoutId) continue; // só quem compareceu
+    if (!a.mobilePhone) continue;
+    await dispatch({ type: 'nps', phone: a.mobilePhone, name: a.patientName });
+    sent++;
+  }
+  return sent;
+}

@@ -2,7 +2,7 @@ import { withRetry } from '../../lib/retry';
 
 /** Payload interno por destinatário (vindo dos jobs das réguas). */
 export interface ReguaPayload {
-  type: 'aniversario' | 'no_show' | 'pos_procedimento';
+  type: 'aniversario' | 'no_show' | 'pos_procedimento' | 'nps';
   phone: string;
   name?: string;
   // Extras de no-show (lembrete de presença):
