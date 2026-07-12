@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 15mm 14mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; color: #1e2430; font-size: 11px; line-height: 1.45; margin: 0; }
+  .cover { text-align: center; padding: 36px 0 22px; border-bottom: 3px solid #16a3a3; margin-bottom: 18px; }
+  .cover h1 { font-size: 24px; margin: 0 0 6px; color: #0f7a7a; }
+  .cover .sub { font-size: 13px; color: #5a6472; }
+  .cover .tag { display:inline-block; margin-top:12px; background:#e8f6f6; color:#0f7a7a; font-weight:600; font-size:11px; padding:5px 12px; border-radius:20px; }
+  .intro { background:#f7f9fb; border:1px solid #e3e8ee; border-radius:8px; padding:11px 15px; margin-bottom:18px; font-size:10.5px; color:#3a4453; }
+  .intro b { color:#1e2430; }
+  .intro ul { margin:6px 0 0; padding-left:18px; }
+  h2 { font-size:16px; color:#0f7a7a; margin:22px 0 4px; padding-bottom:6px; border-bottom:2px solid #16a3a3; page-break-after: avoid; }
+  h3 { font-size:12.5px; color:#334; margin:16px 0 8px; page-break-after: avoid; }
+  .card { border:1px solid #e3e8ee; border-radius:8px; padding:9px 12px; margin-bottom:8px; page-break-inside: avoid; }
+  .chead { display:flex; align-items:center; gap:7px; flex-wrap:wrap; margin-bottom:6px; }
+  .name { font-family:'Consolas','Courier New',monospace; font-size:10.5px; font-weight:700; color:#0f7a7a; background:#eef7f7; padding:2px 7px; border-radius:4px; }
+  .cat { font-size:9px; font-weight:700; padding:2px 7px; border-radius:4px; text-transform:uppercase; letter-spacing:.3px; }
+  .mkt { background:#fdeee0; color:#a8620a; }
+  .utl { background:#e6f0ff; color:#1c5fb8; }
+  .vars { font-size:9.5px; color:#8a94a2; }
+  .hdr { font-size:9.5px; color:#a06a00; }
+  .body { font-family:'Consolas','Courier New',monospace; font-size:10px; white-space:pre-wrap; background:#fbfcfd; border-left:3px solid #16a3a3; padding:7px 10px; border-radius:0 4px 4px 0; color:#2a3240; }
+  .foot { margin-top:22px; padding-top:10px; border-top:1px solid #e3e8ee; font-size:10px; color:#8a94a2; text-align:center; }
+  .note { font-size:10px; color:#5a6472; font-style:italic; margin:0 0 10px; }
+</style>
+</head>
+<body>
+  <div class="cover">
+    <h1>Kit de Templates — WhatsApp Oficial</h1>
+    <div class="sub">Dental Beauty · Oral Multi — 50 templates para submissão à Meta</div>
+    <div class="tag">Follow-up (25) + Réguas de Relacionamento (25)</div>
+  </div>
+
+  <div class="intro">
+    Todo envio iniciado pela clínica <b>fora da janela de 24h</b> precisa ser um <b>template aprovado pela Meta</b>. Este material traz os <b>50 templates</b> prontos pra submeter no painel oficial. Para cada um:
+    <ul>
+      <li><b>Nome</b> (minúsculo, sem espaço) · <b>Idioma</b> pt_BR · <b>Categoria</b> Marketing ou Utility</li>
+      <li><b>Corpo</b> com variáveis <b>{{1}}, {{2}}…</b> (o sistema preenche nome/data/hora no envio)</li>
+      <li>Onde indicado, <b>cabeçalho com mídia</b> (foto/vídeo) — arquivos na pasta <b>midias-followup/</b></li>
+    </ul>
+    <b>Categorias:</b> <span class="cat mkt">Marketing</span> promoção/reengajamento · <span class="cat utl">Utility</span> transacional (lembrete de consulta, NPS) — mais barato. &nbsp; <b>Infantil</b> usa 2 variáveis: responsável + criança.
+  </div>
+
+  <h2>A · Follow-up de Leads (25)</h2>
+  <div class="note">Disparam X dias após o lead entrar em contato sem agendar. Todos categoria Marketing. {{1}} = nome.</div>
+
+  <h3>🦷 Implante e Prótese</h3>
+  <div class="card"><div class="chead"><span class="name">fup_implante_d1</span><span class="cat mkt">Marketing</span><span class="hdr">📷 img: implante-antes-depois.jpg</span></div><div class="body">Oi, {{1}}! Vi que você pediu informações sobre implante dentário 😊 Fiquei à disposição pra te explicar direitinho como funciona, valores e formas de pagamento. Quer que eu te envie um resumão ou prefere já ver horários disponíveis?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_implante_d2</span><span class="cat mkt">Marketing</span><span class="hdr">🎬 vídeo: estrutura-clinica.mp4</span></div><div class="body">Olá! Muita gente acha que implante é algo complicado, mas hoje o procedimento é bem mais tranquilo do que parece 🙂 Inclusive, a avaliação é o primeiro passo pra ver se é indicado no seu caso. Nossa estrutura é bem completa para te Receber! Posso reservar seu horário?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_implante_d4</span><span class="cat mkt">Marketing</span><span class="hdr">🎬 vídeo: implante-depoimento-rose.mp4</span></div><div class="body">Oi, {{1}}! Essa semana atendemos vários pacientes que também tinham receio de fazer implante… e saíram super tranquilos 😊 Cada caso é único, por isso a avaliação faz toda diferença. Olha esse depoimento de nossa paciente 1 ano após o Tratamento. Quer que eu veja um horário pra você?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_implante_d7</span><span class="cat mkt">Marketing</span><span class="hdr">📷 img: implante-antes-depois-2.jpg</span></div><div class="body">Oi, {{1}}! Passando aqui porque já faz 1 semana que você entrou em contato sobre implante 🙂 Queria saber se ainda faz sentido pra você ou se ficou alguma dúvida que eu possa te ajudar.</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_implante_d10</span><span class="cat mkt">Marketing</span><span class="hdr">— sem cabeçalho</span></div><div class="body">Oi, {{1}}! Vou encerrar seu atendimento por aqui pra não ficar te incomodando 😊 Mas se ainda quiser cuidar disso, me chama que te ajudo com tudo, tá?</div></div>
+
+  <h3>✨ Lentes de Contato Dental</h3>
+  <div class="card"><div class="chead"><span class="name">fup_lentes_d1</span><span class="cat mkt">Marketing</span><span class="hdr">📷 img: lentes-antes-depois.jpg</span></div><div class="body">Oi, {{1}}! Vi que você se interessou por lentes de contato dental ✨ Elas são ótimas pra transformar o sorriso de forma rápida e natural. Quer ver alguns casos reais ou prefere já agendar uma avaliação?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_lentes_d2</span><span class="cat mkt">Marketing</span><span class="hdr">📷 img: lentes-antes-depois-2.jpg</span></div><div class="body">Olá! Uma dúvida comum é se fica artificial… e a resposta é: não 😊 Hoje conseguimos resultados bem naturais e personalizados para cada sorriso. Se quiser, te mostro mais exemplos.</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_lentes_d4</span><span class="cat mkt">Marketing</span><span class="hdr">🎬 vídeo: estrutura-clinica.mp4</span></div><div class="body">Oi, {{1}}! Cada sorriso que fazemos é planejado exclusivamente pro paciente ✨ Nada de padrão: avaliamos formato do rosto, cor, proporção e expectativa. Possuímos uma estrutura completa para te atender. Quer um horário para avaliação?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_lentes_d7</span><span class="cat mkt">Marketing</span><span class="hdr">— sem cabeçalho</span></div><div class="body">Oi, {{1}}! Já tem 1 semana desde que você perguntou sobre lentes 🙂 Queria saber se ainda pensa em melhorar o sorriso ou se posso te ajudar com alguma dúvida.</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_lentes_d10</span><span class="cat mkt">Marketing</span><span class="hdr">— sem cabeçalho</span></div><div class="body">Oi, {{1}}! Vou finalizar seu atendimento por aqui pra não te incomodar 😊 Mas quando quiser retomar seu plano para transformar o sorriso, é só me chamar!</div></div>
+
+  <h3>🦷 Ortodontia</h3>
+  <div class="card"><div class="chead"><span class="name">fup_ortodontia_d1</span><span class="cat mkt">Marketing</span><span class="hdr">📷 img: ortodontia-tipos-aparelhos.png</span></div><div class="body">Oi, {{1}}! Vi seu interesse em aparelho 😊 Hoje temos opções bem mais discretas e confortáveis para alinhar seu sorriso. Quer que eu te explique as opções ou prefere já ver horários?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_ortodontia_d2</span><span class="cat mkt">Marketing</span><span class="hdr">🎬 vídeo: estrutura-clinica.mp4</span></div><div class="body">Oi, {{1}}! Muita gente acha que aparelho é só estética, mas ele também ajuda na mastigação, encaixe dos dentes e saúde bucal 🙂 A avaliação é essencial pra indicar o melhor tipo para você! Estamos com uma estrutura completa para te atender. Posso reservar seu horário?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_ortodontia_d4</span><span class="cat mkt">Marketing</span><span class="hdr">— sem cabeçalho</span></div><div class="body">Oi, {{1}}! Temos pacientes começando tratamento ortodôntico toda semana e se adaptando super bem 😊 Se quiser, posso reservar um horário para sua avaliação.</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_ortodontia_d7</span><span class="cat mkt">Marketing</span><span class="hdr">🎬 vídeo: ortodontia-invisalign.mp4</span></div><div class="body">Oi, {{1}}! Já faz 1 semana que você entrou em contato sobre aparelho 🙂 Nosso atendimento alinhado a tecnologia e ao conhecimento, trás mais segurança a seus procedimentos. Ainda tem interesse em alinhar seu sorriso ou posso te ajudar com alguma dúvida?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_ortodontia_d10</span><span class="cat mkt">Marketing</span><span class="hdr">— sem cabeçalho</span></div><div class="body">Oi, {{1}}! Vou encerrar seu atendimento por aqui pra não te incomodar 😊 Mas fico à disposição quando quiser retomar seu tratamento ortodôntico!</div></div>
+
+  <h3>🧚 Odontopediatria</h3>
+  <div class="card"><div class="chead"><span class="name">fup_odontopediatria_d1</span><span class="cat mkt">Marketing</span><span class="hdr">🎬 vídeo: odonto-estrutura.mp4</span></div><div class="body">Oi, {{1}}! Vi que você entrou em contato sobre atendimento infantil 😊 Aqui temos um cuidado especial pra deixar a criança tranquila, segura e confortável. Além de uma estrutura bem lúdica. Quer ver como funciona ou já agendar?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_odontopediatria_d2</span><span class="cat mkt">Marketing</span><span class="hdr">🎬 vídeo: odonto-primeira-consulta.mp4</span></div><div class="body">Oi, {{1}}! A primeira experiência da criança no dentista faz toda diferença 🙂 Por isso nosso atendimento é bem acolhedor, lúdico e pensado para os pequenos. Posso reservar um horário?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_odontopediatria_d4</span><span class="cat mkt">Marketing</span><span class="hdr">🎬 vídeo: odonto-atendimento-crianca.mp4</span></div><div class="body">Oi, {{1}}! Muitos pais ficam surpresos com o quanto os pequenos ficam à vontade quando o atendimento é feito do jeito certo 😊 Se quiser, te mostro como funciona a consulta.</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_odontopediatria_d7</span><span class="cat mkt">Marketing</span><span class="hdr">🎬 vídeo: odonto-tea.mp4</span></div><div class="body">Oi, {{1}}! Já faz 1 semana que você procurou atendimento para o seu filho(a) 🙂 Somos referência em atendimentos de crianças com Transtorno do Espectro Autista (TEA). Queria saber se ainda precisa ou se posso te ajudar com alguma dúvida.</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_odontopediatria_d10</span><span class="cat mkt">Marketing</span><span class="hdr">— sem cabeçalho</span></div><div class="body">Oi, {{1}}! Vou finalizar por aqui pra não te incomodar 😊 Mas quando precisar cuidar do sorriso do seu filho(a), estamos à disposição!</div></div>
+
+  <h3>🩺 Clínico Geral</h3>
+  <div class="card"><div class="chead"><span class="name">fup_clinico_geral_d1</span><span class="cat mkt">Marketing</span><span class="hdr">🎬 vídeo: estrutura-clinica.mp4</span></div><div class="body">Oi, {{1}}! Vi que você buscou atendimento odontológico 😊 Se quiser, posso te ajudar com uma avaliação completa para entender o que você precisa. Nossa estrutura é bem completa para te Receber. Quer que eu veja um horário?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_clinico_geral_d2</span><span class="cat mkt">Marketing</span><span class="hdr">— sem cabeçalho</span></div><div class="body">Oi, {{1}}! Às vezes deixamos pra depois, mas uma avaliação ajuda a evitar problemas maiores 🙂 Se quiser, posso te passar os horários disponíveis. Qual sua necessidade hoje?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_clinico_geral_d4</span><span class="cat mkt">Marketing</span><span class="hdr">🎬 vídeo: geral-centro-cirurgico.mp4</span></div><div class="body">Oi, {{1}}! Trabalhamos com especialistas alinhado a tecnologia de ponta. Tudo para que seu Tratamento ocorra como imaginado. 😊 Aqui na Dental beauty, possuímos Radiologia, para seu maior Conforto! Posso te encaixar no melhor horário para você?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_clinico_geral_d7</span><span class="cat mkt">Marketing</span><span class="hdr">— sem cabeçalho</span></div><div class="body">Oi, {{1}}! Já faz 1 semana desde seu contato 🙂 Ainda precisa de atendimento odontológico ou posso te ajudar com alguma dúvida?</div></div>
+  <div class="card"><div class="chead"><span class="name">fup_clinico_geral_d10</span><span class="cat mkt">Marketing</span><span class="hdr">— sem cabeçalho</span></div><div class="body">Oi, {{1}}! Vou encerrar seu atendimento por aqui pra não te incomodar 😊 Mas fico à disposição quando precisar cuidar do seu sorriso!</div></div>
+
+  <h2>B · Réguas de Relacionamento (25)</h2>
+  <div class="note">Disparam por evento (procedimento realizado, aniversário, consulta, inatividade). Adulto: {{1}} = nome. Infantil: {{1}} = responsável, {{2}} = criança.</div>
+
+  <h3>🔁 Retorno pós-procedimento — Adulto</h3>
+  <div class="card"><div class="chead"><span class="name">reg_retorno_limpeza</span><span class="cat mkt">Marketing</span><span class="vars">6 meses · {{1}} nome</span></div><div class="body">Oi, {{1}}! 😊
+Já faz 6 meses da sua última limpeza aqui na Dental Beauty.
+Além de remover tártaro e prevenir cáries e gengivite, a gente aproveita pra revisar sua saúde bucal completa — com calma, sem pressa e sem aquele barulho de broca que incomoda 🦷✨
+Posso reservar seu horário para a próxima limpeza?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_retorno_clareamento</span><span class="cat mkt">Marketing</span><span class="vars">6 meses · {{1}} nome</span></div><div class="body">Oi, {{1}}! ✨
+Seu clareamento completou 6 meses.
+O sorriso tende a escurecer naturalmente com o tempo — uma avaliação rápida mostra se vale um retoque leve pra manter o tom bonito e saudável 🦷
+Posso reservar seu horário?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_retorno_restauracao</span><span class="cat mkt">Marketing</span><span class="vars">6 meses · {{1}} nome</span></div><div class="body">Oi, {{1}}! 🙂
+Já faz 6 meses da sua restauração.
+A gente gosta de revisar: ver a integridade do material, a selagem marginal e se a mordida está confortável — tudo isso previne infiltração e trocas precoces 🦷
+Quer agendar essa checagem?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_retorno_canal</span><span class="cat mkt">Marketing</span><span class="vars">6 meses · {{1}} nome</span></div><div class="body">Oi, {{1}}! 😊
+Seu tratamento de canal fez 6 meses.
+O acompanhamento radiográfico e clínico nessa fase é o que garante que o dente segue saudável, sem lesão apical ou reinfecção 🦷
+Posso reservar seu retorno?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_retorno_coroa_protese</span><span class="cat mkt">Marketing</span><span class="vars">12 meses · {{1}} nome</span></div><div class="body">Oi, {{1}}! 🙂
+Sua prótese completou 1 ano.
+A revisão anual a gente confere ajuste oclusal, saúde gengival ao redor, integridade do cimento e estética — pra ela durar muitos anos certinha 🦷
+Quer que eu veja um horário?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_retorno_implante</span><span class="cat mkt">Marketing</span><span class="vars">12 meses · {{1}} nome</span></div><div class="body">Oi, {{1}}! 😊
+Já faz 1 ano do seu implante.
+Nessa fase a gente avalia a osseointegração, saúde do tecido peri-implantar, higiene e oclusão — o segredo pra longevidade é o acompanhamento de perto 🦷
+Vamos marcar seu retorno?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_retorno_periodontal</span><span class="cat mkt">Marketing</span><span class="vars">3 meses · {{1}} nome</span></div><div class="body">Oi, {{1}}! 🙂
+Seu tratamento periodontal fez 3 meses — o momento-chave da manutenção.
+A gente remove biofilme subgengival, reavalia sondagem e reforça a técnica pra manter a gengiva estável e evitar recidiva 🦷
+Posso agendar sua manutenção?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_retorno_ortodontia</span><span class="cat mkt">Marketing</span><span class="vars">6 meses · {{1}} nome</span></div><div class="body">Oi, {{1}}! 😊
+Faz um tempinho do seu último acompanhamento ortodôntico.
+Seja pra verificar a contenção, evolução do caso ou planejar próximos passos, a gente te recebe com tempo pra conversar e tirar dúvidas 🦷
+Me avisa que eu reservo seu horário!</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_retorno_invisalign</span><span class="cat mkt">Marketing</span><span class="vars">6 meses · {{1}} nome</span></div><div class="body">Oi, {{1}}! ✨
+Já faz um tempinho que finalizamos com o Invisalign.
+Vamos ver a evolução do alinhamento, conferir os encaixes, trocar alinhadores se necessário e alinhar os próximos passos 🦷
+Posso te passar horários?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_retorno_lente_faceta</span><span class="cat mkt">Marketing</span><span class="vars">6 meses · {{1}} nome</span></div><div class="body">Oi, {{1}}! ✨
+Suas lentes/facetas completaram 6 meses.
+A revisão a gente confere margem, brilho, saúde gengival, oclusão e estética — pra manter tudo impecável e duradouro 🦷
+Posso agendar sua avaliação?</div></div>
+
+  <h3>Outras réguas — Adulto</h3>
+  <div class="card"><div class="chead"><span class="name">reg_aniversario_adulto</span><span class="cat mkt">Marketing</span><span class="vars">{{1}} nome</span></div><div class="body">Feliz aniversário, {{1}}! 🎉🎂
+A equipe da Dental Beauty te deseja um dia leve, feliz e cheio de motivos pra sorrir 💙
+Se quiser dar um up no sorriso nesse novo ciclo, a gente tá por aqui 🦷✨</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_lembrete_24h_adulto</span><span class="cat utl">Utility</span><span class="vars">{{1}} nome · {{2}} dia · {{3}} hora</span></div><div class="body">Oi, {{1}}! 😊
+Lembrando da sua consulta amanhã, {{2}} às {{3}}, na Dental Beauty.
+Responda SIM pra confirmar ou NÃO se precisar remarcar — a gente reorganiza na hora 🙌</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_lembrete_2h_adulto</span><span class="cat utl">Utility</span><span class="vars">{{1}} nome · {{2}} hora</span></div><div class="body">Oi, {{1}}! 😊
+Sua consulta é hoje às {{2}}.
+Tudo certo pra você vir? Qualquer imprevisto, só me avisar.</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_nps_adulto</span><span class="cat utl">Utility</span><span class="vars">{{1}} nome</span></div><div class="body">Oi, {{1}}! 😊
+Como foi sua experiência com a gente hoje?
+De 0 a 10, o quanto indicaria a Dental Beauty pra alguém? 💙
+Sua resposta vem direto pra mim.</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_reengaj_12m_adulto</span><span class="cat mkt">Marketing</span><span class="vars">{{1}} nome</span></div><div class="body">Oi, {{1}}! 😊
+Faz um ano que não nos vemos.
+Uma avaliação completa agora evita tratamentos maiores depois — e aqui a consulta é tranquila, sem barulho de broca, com tempo pra conversar e planejar junto 🦷✨
+Quer que eu veja um horário?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_reengaj_6m_adulto</span><span class="cat mkt">Marketing</span><span class="vars">{{1}} nome</span></div><div class="body">Oi, {{1}}! 🙂
+Já faz 6 meses da sua última consulta.
+Manter o acompanhamento em dia é o jeito mais simples de cuidar do sorriso sem sustos 🦷
+Posso agendar sua revisão?</div></div>
+
+  <h3>🧒 Réguas — Infantil (Dental Beauty Kids)</h3>
+  <div class="card"><div class="chead"><span class="name">reg_retorno_limpeza_infantil</span><span class="cat mkt">Marketing</span><span class="vars">{{1}} resp. · {{2}} criança</span></div><div class="body">Oi, {{1}}! 😊
+Já está na hora da limpeza do(a) {{2}}!
+Aqui na Dental Beauty Kids, cuidamos do sorriso com calma e carinho — tem brinquedos, cadeira com a cor favorita e tecnologia sem barulho de broca 🦷✨
+Quer que eu veja um horário?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_retorno_restauracao_infantil</span><span class="cat mkt">Marketing</span><span class="vars">{{1}} resp. · {{2}} criança</span></div><div class="body">Oi, {{1}}! 🙂
+Já faz um tempinho da restauração do(a) {{2}}.
+A gente gosta de revisar pra garantir que está tudo certinho — sempre de forma leve, sem medo e sem aquele barulho que assusta 🦷💛
+Quer agendar essa checagem?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_retorno_ortodontia_infantil</span><span class="cat mkt">Marketing</span><span class="vars">{{1}} resp. · {{2}} criança</span></div><div class="body">Oi, {{1}}! 😊
+Faz um tempinho do acompanhamento ortodôntico do(a) {{2}}.
+Acompanhamos cada fase do sorriso com cuidado, de forma leve e tranquila 🦷✨
+Posso ver um horário pra vocês?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_aniversario_infantil</span><span class="cat mkt">Marketing</span><span class="vars">{{1}} criança</span></div><div class="body">Feliz aniversário! 🎉🎂
+Desejamos um dia cheio de alegria, brincadeiras e muitos sorrisos! 💛
+Conte com a gente pra cuidar do sorriso do(a) {{1}} com todo carinho 🦷✨</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_lembrete_24h_infantil</span><span class="cat utl">Utility</span><span class="vars">{{1}} resp. · {{2}} criança · {{3}} dia · {{4}} hora</span></div><div class="body">Oi, {{1}}! 😊
+Lembrando da consulta do(a) {{2}} amanhã, {{3}} às {{4}}, na Dental Beauty Kids.
+Estamos preparando tudo com carinho 💛
+Responda SIM pra confirmar ou NÃO se precisar remarcar 🙌</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_lembrete_2h_infantil</span><span class="cat utl">Utility</span><span class="vars">{{1}} resp. · {{2}} criança · {{3}} hora</span></div><div class="body">Oi, {{1}}! 😊
+A consulta do(a) {{2}} é hoje às {{3}}.
+Vai ser tudo bem tranquilo 💛
+Se precisar, é só me avisar!</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_nps_infantil</span><span class="cat utl">Utility</span><span class="vars">{{1}} resp. · {{2}} criança</span></div><div class="body">Oi, {{1}}! 😊
+Como foi a experiência do(a) {{2}} hoje com a gente? 💛
+De 0 a 10, o quanto você indicaria a Dental Beauty Kids?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_reengaj_12m_infantil</span><span class="cat mkt">Marketing</span><span class="vars">{{1}} resp. · {{2}} criança</span></div><div class="body">Oi, {{1}}! 😊
+Faz um tempinho que não vemos o(a) {{2}} por aqui 💛
+Aqui ele/ela é atendido de forma leve, com brincadeiras e sem o barulho da broca 🦷✨
+Que tal voltarmos a acompanhar esses dentinhos?</div></div>
+  <div class="card"><div class="chead"><span class="name">reg_reengaj_6m_infantil</span><span class="cat mkt">Marketing</span><span class="vars">{{1}} resp. · {{2}} criança</span></div><div class="body">Oi, {{1}}! 🙂
+Já faz 6 meses da última consulta do(a) {{2}}.
+Manter o acompanhamento em dia ajuda a prevenir cáries e evita medo do dentista 🦷💛
+Posso agendar um horário pra vocês?</div></div>
+
+  <div class="foot">50 templates · Marketing (44) + Utility (6) · Dental Beauty · Oral Multi — pronto para submissão à Meta</div>
+</body>
+</html>

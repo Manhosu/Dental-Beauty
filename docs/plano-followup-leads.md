@@ -1,11 +1,14 @@
 # Plano das automações de Follow-up — Atendimento Lead
 
-**Como montar cada uma** (CRM → Automações → Nova Automação):
-1. **Rótulo:** o nome abaixo · **Pipeline:** Atendimento Lead
-2. **Etapa que vai escutar:** a etapa da especialidade · **Quando:** `Por Tempo` → o nº de dias
-3. **Ação:** Enviar mensagem · cole o **texto** · **anexe a mídia** (arquivos em `midias-followup/`)
-4. Salvar.
+**Passo a passo EXATO do wizard** (CRM → Automações → **Nova Automação**):
+1. **Rótulo:** o nome (ex.: "FUP Implante D1") · **Pipeline:** `Atendimento Lead`
+2. **Etapa que vai escutar:** a etapa da especialidade (ex.: `Não agendado Implante e prótese`)
+3. **Quando executar:** clique **`Por Tempo`** → escolha a faixa **`1 – 7 dias`** (ou **`> 7 dias`** quando for o **D10**) → **Próximo**
+4. **Ação:** `Enviar WhatsApp` → **Próximo**
+5. **Mensagem:** Tipo = **`Mensagem Personalizada`** → cole o **texto** da tabela → **anexe a mídia** (arquivo da pasta `midias-followup/`) → **Próximo**
+6. **Agendamento:** defina o **tempo de espera EXATO** = o nº de **Dias** da linha (1, 2, 4, 7 ou 10) + horário de envio → **Salvar/Criar**
 
+> São **5 automações por especialidade** (uma por linha), todas na mesma etapa "Não agendado [especialidade]", mudando só o **nº de dias** (passo 6) e o **texto/mídia** (passo 5).
 > Mídias já convertidas p/ `.mp4` (WhatsApp) na pasta **`midias-followup/`**. Onde diz "—" não há mídia.
 
 ---

@@ -49,13 +49,14 @@ export const POST_PROCEDURE_INTERVALS = [3, 6, 12] as const;
 
 /**
  * Mapeia a categoria/procedimento atendido para o prazo de retorno (meses), conforme a tabela do
- * cliente: Periodontia 3m; Coroa/Prótese 12m; demais (limpeza, clareamento, restauração, canal,
- * implante, ortodontia, invisalign, odontopediatria, lente/faceta) 6m. Default = 6m.
+ * cliente: Periodontia 3m; Coroa/Prótese/Implante 12m; demais (limpeza, clareamento, restauração,
+ * canal, ortodontia, invisalign, odontopediatria, lente/faceta) 6m. Default = 6m.
+ * (Implante ajustado de 6m → 12m pelo cliente em 2026-07, junto dos textos aprovados.)
  */
 export function intervalMonthsForCategory(category?: string): number {
   const c = (category ?? '').toLowerCase();
   if (/periodont/.test(c)) return 3;
-  if (/pr[óo]tese|coroa/.test(c)) return 12;
+  if (/pr[óo]tese|coroa|implante/.test(c)) return 12;
   return 6;
 }
 

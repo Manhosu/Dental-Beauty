@@ -120,10 +120,11 @@ describe('réguas — jobs', () => {
     expect(dispatch).toHaveBeenCalledWith({ type: 'nps', phone: '5511', name: 'Ana' });
   });
 
-  it('intervalMonthsForCategory: Periodontia 3m, Prótese/Coroa 12m, demais 6m', () => {
+  it('intervalMonthsForCategory: Periodontia 3m, Prótese/Coroa/Implante 12m, demais 6m', () => {
     expect(intervalMonthsForCategory('Tratamento Periodontal')).toBe(3);
     expect(intervalMonthsForCategory('Prótese retorno laboratório')).toBe(12);
     expect(intervalMonthsForCategory('Coroa')).toBe(12);
+    expect(intervalMonthsForCategory('Implante unitário')).toBe(12);
     expect(intervalMonthsForCategory('Limpeza')).toBe(6);
     expect(intervalMonthsForCategory(undefined)).toBe(6);
   });

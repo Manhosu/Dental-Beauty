@@ -15,7 +15,7 @@ Decisão do cliente: **"procedimento executado pelo profissional = alta"**. Quan
 | Restaurações | 6 meses |
 | Canal | 6 meses |
 | Coroa / Prótese | 12 meses |
-| Implante | 6 meses |
+| Implante | 12 meses (ajustado de 6m pelo cliente em 2026-07) |
 | Tratamento Periodontal | 3 meses |
 | Ortodontia adulto | 6 meses |
 | Invisalign | 6 meses |
