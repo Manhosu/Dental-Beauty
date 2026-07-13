@@ -16,11 +16,11 @@
 ## 🦷 Implante — etapa "Não agendado Implante e prótese"
 | Dias | Texto | Mídia |
 |---|---|---|
-| **1** | Oi, [Nome]! Vi que você pediu informações sobre implante dentário 😊 Fiquei à disposição pra te explicar direitinho como funciona, valores e formas de pagamento. Quer que eu te envie um resumão ou prefere já ver horários disponíveis? | `implante-antes-depois.jpg` |
+| **1** | Oi, [Nome]! Vi que você pediu informações sobre implante dentário 😊 Estou à disposição pra te explicar direitinho como funciona, valores e formas de pagamento. Quer que eu te envie mais informações ou posso verificar os horários disponíveis? | `implante-antes-depois.jpg` |
 | **2** | Olá! Muita gente acha que implante é algo complicado, mas hoje o procedimento é bem mais tranquilo do que parece 🙂 Inclusive, a avaliação é o primeiro passo pra ver se é indicado no seu caso. Nossa estrutura é bem completa para te Receber! Posso reservar seu horário? | `estrutura-clinica.mp4` |
 | **4** | Oi, [Nome]! Essa semana atendemos vários pacientes que também tinham receio de fazer implante… e saíram super tranquilos 😊 Cada caso é único, por isso a avaliação faz toda diferença. Olha esse depoimento de nossa paciente 1 ano após o Tratamento. Quer que eu veja um horário pra você? | `implante-depoimento-rose.mp4` |
 | **7** | Oi, [Nome]! Passando aqui porque já faz 1 semana que você entrou em contato sobre implante 🙂 Queria saber se ainda faz sentido pra você ou se ficou alguma dúvida que eu possa te ajudar. | `implante-antes-depois-2.jpg` |
-| **10** | Oi, [Nome]! Vou encerrar seu atendimento por aqui pra não ficar te incomodando 😊 Mas se ainda quiser cuidar disso, me chama que te ajudo com tudo, tá? | — |
+| **10** | Oi, [Nome]! Vou encerrar seu atendimento por aqui pra não ficar te incomodando 😊 Mas se ainda quiser continuar com seu atendimento, me chama que te ajudo com tudo, tá? | — |
 
 ## ✨ Lentes — etapa "Não agendado Lentes"
 | Dias | Texto | Mídia |
@@ -46,7 +46,7 @@
 | **1** | Oi, [Nome]! Vi que você entrou em contato sobre atendimento infantil 😊 Aqui temos um cuidado especial pra deixar a criança tranquila, segura e confortável. Além de uma estrutura bem lúdica. Quer ver como funciona ou já agendar? | `odonto-estrutura.mp4` |
 | **2** | Oi, [Nome]! A primeira experiência da criança no dentista faz toda diferença 🙂 Por isso nosso atendimento é bem acolhedor, lúdico e pensado para os pequenos. Posso reservar um horário? | `odonto-primeira-consulta.mp4` |
 | **4** | Oi, [Nome]! Muitos pais ficam surpresos com o quanto os pequenos ficam à vontade quando o atendimento é feito do jeito certo 😊 Se quiser, te mostro como funciona a consulta. | `odonto-atendimento-crianca.mp4` |
-| **7** | Oi, [Nome]! Já faz 1 semana que você procurou atendimento para o(a) [Nome da criança] 🙂 Somos referência em atendimentos de crianças com Transtorno do Espectro Autista (TEA). Queria saber se ainda precisa ou se posso te ajudar com alguma dúvida. | `odonto-tea.mp4` |
+| **7** | Oi, [Nome]! Já faz 1 semana que você procurou atendimento para o seu filho(a) 🙂 Cuidamos de cada detalhe para que o atendimento seja diferenciado, inclusive somos referência em atendimentos de crianças com Transtorno do Espectro Autista (TEA), o que nos capacita para melhores experiências. Posso te ajudar com alguma dúvida? | `odonto-tea.mp4` |
 | **10** | Oi, [Nome]! Vou finalizar por aqui pra não te incomodar 😊 Mas quando precisar cuidar do sorriso do(a) [Nome da criança], estamos à disposição! | — |
 
 ## 🩺 Clínico Geral — etapa "Não agendado clínica geral"

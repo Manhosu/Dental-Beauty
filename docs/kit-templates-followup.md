@@ -25,7 +25,7 @@ Cada template segue o mesmo padrão; é só copiar os campos.
 - **Cabeçalho:** IMAGEM → `implante-antes-depois.jpg`
 - **Corpo:**
 ```
-Oi, {{1}}! Vi que você pediu informações sobre implante dentário 😊 Fiquei à disposição pra te explicar direitinho como funciona, valores e formas de pagamento. Quer que eu te envie um resumão ou prefere já ver horários disponíveis?
+Oi, {{1}}! Vi que você pediu informações sobre implante dentário 😊 Estou à disposição pra te explicar direitinho como funciona, valores e formas de pagamento. Quer que eu te envie mais informações ou posso verificar os horários disponíveis?
 ```
 
 ### 2) `fup_implante_d2`
@@ -53,7 +53,7 @@ Oi, {{1}}! Passando aqui porque já faz 1 semana que você entrou em contato sob
 - **Cabeçalho:** — (sem cabeçalho)
 - **Corpo:**
 ```
-Oi, {{1}}! Vou encerrar seu atendimento por aqui pra não ficar te incomodando 😊 Mas se ainda quiser cuidar disso, me chama que te ajudo com tudo, tá?
+Oi, {{1}}! Vou encerrar seu atendimento por aqui pra não ficar te incomodando 😊 Mas se ainda quiser continuar com seu atendimento, me chama que te ajudo com tudo, tá?
 ```
 
 ---
@@ -163,7 +163,7 @@ Oi, {{1}}! Muitos pais ficam surpresos com o quanto os pequenos ficam à vontade
 - **Cabeçalho:** VÍDEO → `odonto-tea.mp4`
 - **Corpo:** *(ajustado: "seu filho(a)" no lugar de "[Nome da criança]")*
 ```
-Oi, {{1}}! Já faz 1 semana que você procurou atendimento para o seu filho(a) 🙂 Somos referência em atendimentos de crianças com Transtorno do Espectro Autista (TEA). Queria saber se ainda precisa ou se posso te ajudar com alguma dúvida.
+Oi, {{1}}! Já faz 1 semana que você procurou atendimento para o seu filho(a) 🙂 Cuidamos de cada detalhe para que o atendimento seja diferenciado, inclusive somos referência em atendimentos de crianças com Transtorno do Espectro Autista (TEA), o que nos capacita para melhores experiências. Posso te ajudar com alguma dúvida?
 ```
 
 ### 20) `fup_odontopediatria_d10`
