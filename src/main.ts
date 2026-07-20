@@ -70,6 +70,15 @@ async function main(): Promise<void> {
       ...(env.CHATBOTIFY_REGUA_FLOW_NPS
         ? { nps: createHttpDispatcher({ ...base, flow: env.CHATBOTIFY_REGUA_FLOW_NPS }) }
         : {}),
+      // Reengajamento por inatividade (6/12 meses) só liga quando o fluxo existir.
+      ...(env.CHATBOTIFY_REGUA_FLOW_INATIVIDADE
+        ? {
+            inatividade: createHttpDispatcher({
+              ...base,
+              flow: env.CHATBOTIFY_REGUA_FLOW_INATIVIDADE,
+            }),
+          }
+        : {}),
     };
     startReguas({ clinicorp, dispatchers });
     logger.info(
@@ -77,6 +86,7 @@ async function main(): Promise<void> {
         noShow: !!env.CHATBOTIFY_REGUA_FLOW_NOSHOW,
         posProcedimento: !!env.CHATBOTIFY_REGUA_FLOW_POSPROC,
         nps: !!env.CHATBOTIFY_REGUA_FLOW_NPS,
+        inatividade: !!env.CHATBOTIFY_REGUA_FLOW_INATIVIDADE,
       },
       'réguas (cron-engine) ativadas',
     );

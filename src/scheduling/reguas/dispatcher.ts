@@ -2,7 +2,7 @@ import { withRetry } from '../../lib/retry';
 
 /** Payload interno por destinatário (vindo dos jobs das réguas). */
 export interface ReguaPayload {
-  type: 'aniversario' | 'no_show' | 'pos_procedimento' | 'nps';
+  type: 'aniversario' | 'no_show' | 'pos_procedimento' | 'nps' | 'inatividade';
   phone: string;
   name?: string;
   // Extras de no-show (lembrete de presença):
@@ -13,6 +13,8 @@ export interface ReguaPayload {
   unit?: string;
   // Extra de pós-procedimento (retorno): nome do procedimento/categoria atendida.
   procedure?: string;
+  // Extra de inatividade (reengajamento): há quantos meses o paciente não vem (6 ou 12).
+  months?: number;
 }
 
 export type ReguaDispatcher = (payload: ReguaPayload) => Promise<void>;
@@ -43,6 +45,8 @@ export function createHttpDispatcher(
       observacoes = `Lembrete de consulta ${payload.date} ${payload.fromTime ?? ''} ${payload.professionalName ?? ''}`.trim();
     } else if (payload.type === 'pos_procedimento') {
       observacoes = `Retorno recomendado${payload.procedure ? ` (${payload.procedure})` : ''}`.trim();
+    } else if (payload.type === 'inatividade') {
+      observacoes = `Reengajamento: sem consulta há ${payload.months ?? '?'} meses`;
     }
 
     await withRetry(async () => {

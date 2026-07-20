@@ -4,6 +4,7 @@ import {
   runNoShow,
   runPostProcedure,
   runNps,
+  runInactivity,
   intervalMonthsForCategory,
 } from '../../../src/scheduling/reguas/jobs';
 import { isoDate, monthsAgoIso, runDailyReguas } from '../../../src/scheduling/reguas/cronEngine';
@@ -120,6 +121,47 @@ describe('réguas — jobs', () => {
     expect(dispatch).toHaveBeenCalledWith({ type: 'nps', phone: '5511', name: 'Ana' });
   });
 
+  it('inatividade: dispara para ATENDIDO há 6/12m que NÃO voltou; exclui quem retornou', async () => {
+    const naDataAlvo = [
+      { id: '1', patientName: 'Sumiu', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID },
+      { id: '2', patientName: 'Voltou', mobilePhone: '5522', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID },
+      { id: '3', patientName: 'Faltou', mobilePhone: '5533', date: 'x', fromTime: '9', toTime: '10', statusId: 111 },
+    ];
+    const desdeEntao = [
+      { id: '9', patientName: 'Voltou', mobilePhone: '5522', date: 'y', fromTime: '9', toTime: '10' },
+    ];
+    const listAppointmentsByDate = vi.fn().mockImplementation((_from: string, to?: string) =>
+      Promise.resolve(to ? desdeEntao : naDataAlvo),
+    );
+    const clinicorp = fakeClinicorp({ listAppointmentsByDate });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runInactivity(clinicorp, dispatch, (m) => `2026-01-0${m === 6 ? 1 : 2}`, '2026-07-19');
+
+    // 'Sumiu' em cada bucket (6m e 12m); 'Voltou' excluído; 'Faltou' não é CHECKOUT.
+    expect(sent).toBe(2);
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'inatividade', phone: '5511', name: 'Sumiu', months: 6 }),
+    );
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'inatividade', phone: '5511', months: 12 }),
+    );
+    expect(dispatch).not.toHaveBeenCalledWith(expect.objectContaining({ phone: '5522' }));
+  });
+
+  it('inatividade: não dispara se o status CHECKOUT não existir', async () => {
+    const clinicorp = fakeClinicorp({
+      listAppointmentStatuses: vi.fn().mockResolvedValue([]),
+      listAppointmentsByDate: vi.fn().mockResolvedValue([
+        { id: '1', patientName: 'X', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID },
+      ]),
+    });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    expect(await runInactivity(clinicorp, dispatch, (m) => `d-${m}`, '2026-07-19')).toBe(0);
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
   it('intervalMonthsForCategory: Periodontia 3m, Prótese/Coroa/Implante 12m, demais 6m', () => {
     expect(intervalMonthsForCategory('Tratamento Periodontal')).toBe(3);
     expect(intervalMonthsForCategory('Prótese retorno laboratório')).toBe(12);
@@ -151,7 +193,7 @@ describe('réguas — cronEngine', () => {
 
     const res = await runDailyReguas(clinicorp, { aniversario, noShow }, new Date('2026-06-26T12:00:00.000Z'));
 
-    expect(res).toEqual({ aniversario: 1, noShow: 1, posProcedimento: 0, nps: 0 });
+    expect(res).toEqual({ aniversario: 1, noShow: 1, posProcedimento: 0, nps: 0, inatividade: 0 });
     expect(clinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2026-06-27');
   });
 
@@ -161,7 +203,7 @@ describe('réguas — cronEngine', () => {
 
     const res = await runDailyReguas(clinicorp, { aniversario }, new Date('2026-06-26T12:00:00.000Z'));
 
-    expect(res).toEqual({ aniversario: 0, noShow: 0, posProcedimento: 0, nps: 0 });
+    expect(res).toEqual({ aniversario: 0, noShow: 0, posProcedimento: 0, nps: 0, inatividade: 0 });
     expect(clinicorp.listAppointmentsByDate).not.toHaveBeenCalled();
   });
 
@@ -177,7 +219,7 @@ describe('réguas — cronEngine', () => {
     const res = await runDailyReguas(clinicorp, { aniversario, posProcedimento }, new Date('2026-06-29T12:00:00.000Z'));
 
     // Limpeza = 6 meses → dispara 1x (apenas no bucket de 6m); 3m e 12m não casam.
-    expect(res).toEqual({ aniversario: 0, noShow: 0, posProcedimento: 1, nps: 0 });
+    expect(res).toEqual({ aniversario: 0, noShow: 0, posProcedimento: 1, nps: 0, inatividade: 0 });
     expect(clinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2025-12-29'); // 6 meses antes
   });
 
@@ -193,7 +235,7 @@ describe('réguas — cronEngine', () => {
 
     const res = await runDailyReguas(clinicorp, { aniversario, nps }, new Date('2026-06-29T12:00:00.000Z'));
 
-    expect(res).toEqual({ aniversario: 0, noShow: 0, posProcedimento: 0, nps: 1 });
+    expect(res).toEqual({ aniversario: 0, noShow: 0, posProcedimento: 0, nps: 1, inatividade: 0 });
     expect(clinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2026-06-28'); // ontem (T-1)
     expect(nps).toHaveBeenCalledWith(expect.objectContaining({ type: 'nps', phone: '5511' }));
   });

@@ -1,6 +1,6 @@
 import type { ClinicorpClient } from '../../integrations/clinicorp/types';
 import type { ReguaDispatcher } from './dispatcher';
-import { runAniversariantes, runNoShow, runPostProcedure, runNps } from './jobs';
+import { runAniversariantes, runNoShow, runPostProcedure, runNps, runInactivity } from './jobs';
 import { logger } from '../../lib/logger';
 
 /** Dispatchers por régua (cada um aponta para o SEU fluxo Gatilho HTTP, com mensagem própria). */
@@ -9,6 +9,7 @@ export interface ReguaDispatchers {
   noShow?: ReguaDispatcher;
   posProcedimento?: ReguaDispatcher;
   nps?: ReguaDispatcher;
+  inatividade?: ReguaDispatcher;
 }
 
 /** Data YYYY-MM-DD deslocada por `daysFromNow` (UTC) a partir de `base`. */
@@ -33,7 +34,13 @@ export async function runDailyReguas(
   clinicorp: ClinicorpClient,
   dispatchers: ReguaDispatchers,
   now: Date,
-): Promise<{ aniversario: number; noShow: number; posProcedimento: number; nps: number }> {
+): Promise<{
+  aniversario: number;
+  noShow: number;
+  posProcedimento: number;
+  nps: number;
+  inatividade: number;
+}> {
   const aniversario = await runAniversariantes(clinicorp, dispatchers.aniversario);
   const noShow = dispatchers.noShow
     ? await runNoShow(clinicorp, dispatchers.noShow, isoDate(now, 1))
@@ -45,7 +52,16 @@ export async function runDailyReguas(
   const nps = dispatchers.nps
     ? await runNps(clinicorp, dispatchers.nps, isoDate(now, -1))
     : 0;
-  return { aniversario, noShow, posProcedimento, nps };
+  // Inatividade (reengajamento): atendidos há 6/12 meses que não voltaram desde então.
+  const inatividade = dispatchers.inatividade
+    ? await runInactivity(
+        clinicorp,
+        dispatchers.inatividade,
+        (m) => monthsAgoIso(now, m),
+        isoDate(now),
+      )
+    : 0;
+  return { aniversario, noShow, posProcedimento, nps, inatividade };
 }
 
 /**

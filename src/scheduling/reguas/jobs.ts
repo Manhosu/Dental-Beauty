@@ -60,6 +60,67 @@ export function intervalMonthsForCategory(category?: string): number {
   return 6;
 }
 
+/** Meses de inatividade que disparam reengajamento (réguas-e-campanhas.md §Réguas por inatividade). */
+export const INACTIVITY_INTERVALS = [6, 12] as const;
+
+/** Só os dígitos do telefone — chave de identidade do paciente entre agendamentos. */
+function phoneKey(phone?: string): string {
+  return (phone ?? '').replace(/\D/g, '');
+}
+
+/** Dia seguinte a uma data YYYY-MM-DD (UTC). */
+function nextDayIso(date: string): string {
+  const d = new Date(`${date}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+/**
+ * Régua de INATIVIDADE (reengajamento — réguas-e-campanhas.md): paciente ATENDIDO (CHECKOUT) há
+ * exatamente N meses (6 ou 12) e SEM nenhum agendamento desde então. Quem voltou depois da
+ * data-alvo não é inativo, então é excluído. `todayIso` fecha a janela de verificação.
+ */
+export async function runInactivity(
+  clinicorp: ClinicorpClient,
+  dispatch: ReguaDispatcher,
+  monthsAgoIso: (months: number) => string,
+  todayIso: string,
+): Promise<number> {
+  const statuses = await clinicorp.listAppointmentStatuses();
+  const checkoutId = statuses.find((s) => s.type === 'CHECKOUT')?.id;
+  if (checkoutId === undefined) return 0;
+
+  let sent = 0;
+  for (const months of INACTIVITY_INTERVALS) {
+    const target = monthsAgoIso(months);
+    const candidates = (await clinicorp.listAppointmentsByDate(target)).filter(
+      (a) => a.statusId === checkoutId && phoneKey(a.mobilePhone),
+    );
+    if (candidates.length === 0) continue;
+
+    // Quem tem qualquer agendamento APÓS a data-alvo voltou — logo, não está inativo.
+    const dayAfter = nextDayIso(target);
+    const since =
+      dayAfter <= todayIso ? await clinicorp.listAppointmentsByDate(dayAfter, todayIso) : [];
+    const voltaram = new Set(since.map((a) => phoneKey(a.mobilePhone)).filter(Boolean));
+
+    const jaEnviados = new Set<string>();
+    for (const a of candidates) {
+      const key = phoneKey(a.mobilePhone);
+      if (voltaram.has(key) || jaEnviados.has(key)) continue;
+      jaEnviados.add(key);
+      await dispatch({
+        type: 'inatividade',
+        phone: a.mobilePhone as string,
+        name: a.patientName,
+        months,
+      });
+      sent++;
+    }
+  }
+  return sent;
+}
+
 /**
  * Régua de pós-procedimento (README §3.4 / réguas-e-campanhas.md): para cada agendamento ATENDIDO
  * (StatusId == CHECKOUT) há `intervalMonthsForCategory` meses, dispara o convite de retorno.
