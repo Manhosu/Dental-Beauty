@@ -4,8 +4,13 @@ import { registerErrorHandler } from './middleware/errorHandler';
 import { handleInbound, type InboundDeps } from './webhooks/chatbotify.route';
 import { registerAgendamentoRoutes, type AgendamentoDeps } from './routes/agendamento';
 import { registerCatalogoRoutes } from './routes/catalogo';
+import { registerSonaxRoutes, type SonaxRouteDeps } from './routes/sonax';
 
-export function buildServer(deps: InboundDeps, scheduling?: AgendamentoDeps): FastifyInstance {
+export function buildServer(
+  deps: InboundDeps,
+  scheduling?: AgendamentoDeps,
+  sonax?: SonaxRouteDeps,
+): FastifyInstance {
   const app = Fastify({ logger: false });
   registerErrorHandler(app);
 
@@ -20,7 +25,9 @@ export function buildServer(deps: InboundDeps, scheduling?: AgendamentoDeps): Fa
       expected = process.env.API_KEY_SECRET;
     }
     if (!expected) return;
-    if (req.url.split('?')[0] === '/health') return;
+    const path = req.url.split('?')[0];
+    // /health e o webhook do Sonax não usam X-Api-Key (o Sonax autentica por token na URL).
+    if (path === '/health' || path === '/webhooks/sonax') return;
     if (req.headers['x-api-key'] !== expected) {
       return reply.status(401).send({ error: 'unauthorized' });
     }
@@ -38,6 +45,11 @@ export function buildServer(deps: InboundDeps, scheduling?: AgendamentoDeps): Fa
   if (scheduling) {
     registerAgendamentoRoutes(app, scheduling);
     registerCatalogoRoutes(app, { clinicorp: scheduling.clinicorp });
+  }
+
+  // Webhook do discador Sonax — só registra quando a integração CRM estiver configurada (dormente por padrão).
+  if (sonax) {
+    registerSonaxRoutes(app, sonax);
   }
 
   return app;

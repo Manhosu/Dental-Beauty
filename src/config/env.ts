@@ -27,6 +27,17 @@ const envSchema = z.object({
   CHATBOTIFY_REGUA_FLOW_POSPROC: z.string().optional(), // id do fluxo de PÓS-PROCEDIMENTO (retorno)
   CHATBOTIFY_REGUA_FLOW_NPS: z.string().optional(), // id do fluxo de NPS pós-consulta (pesquisa 0-10)
   CHATBOTIFY_REGUA_FLOW_INATIVIDADE: z.string().optional(), // id do fluxo de reengajamento (6/12 meses)
+  // Integração do discador Sonax → API CRM do Chatbotify (dormente até configurar as 3 vars abaixo).
+  CHATBOTIFY_CRM_API_BASE: z
+    .string()
+    .url()
+    .optional()
+    .or(z.literal(''))
+    .default('https://webhook.chatbotify.com.br/webhook/api_chatbotify'),
+  CHATBOTIFY_CRM_ACCOUNT_ID: z.string().optional(), // header `id` (UUID da conta WhatsApp)
+  CHATBOTIFY_CRM_API_TOKEN: z.string().optional(), // header `api_token`
+  // Token compartilhado que vai na URL do webhook configurada no painel Sonax (?token=...).
+  SONAX_WEBHOOK_TOKEN: z.string().optional(),
 });
 
 export type Env = z.infer<typeof envSchema>;

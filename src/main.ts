@@ -4,6 +4,7 @@ import { SlotLock } from './scheduling/lock';
 import { createLockRedis } from './scheduling/redisLock';
 import { SchedulingEngine } from './scheduling/schedulingEngine';
 import { HttpClinicorpClient } from './integrations/clinicorp/client';
+import { ChatbotifyCrmClient } from './integrations/chatbotify/crmClient';
 import { buildServer } from './http/server';
 import type { InboundDeps } from './http/webhooks/chatbotify.route';
 import { createHttpDispatcher } from './scheduling/reguas/dispatcher';
@@ -38,7 +39,21 @@ async function main(): Promise<void> {
     },
   };
 
-  const app = buildServer(inboundDeps, { engine, clinicorp });
+  // Integração do discador Sonax (webhook → CRM Chatbotify). Só liga quando as credenciais da API
+  // do Chatbotify estiverem configuradas; caso contrário fica dormente.
+  const sonaxDeps =
+    env.CHATBOTIFY_CRM_ACCOUNT_ID && env.CHATBOTIFY_CRM_API_TOKEN
+      ? {
+          crm: new ChatbotifyCrmClient({
+            baseUrl: env.CHATBOTIFY_CRM_API_BASE,
+            accountId: env.CHATBOTIFY_CRM_ACCOUNT_ID,
+            apiToken: env.CHATBOTIFY_CRM_API_TOKEN,
+          }),
+          ...(env.SONAX_WEBHOOK_TOKEN ? { token: env.SONAX_WEBHOOK_TOKEN } : {}),
+        }
+      : undefined;
+
+  const app = buildServer(inboundDeps, { engine, clinicorp }, sonaxDeps);
 
   await app.listen({ port: env.PORT, host: '0.0.0.0' });
   logger.info({ port: env.PORT }, 'servidor iniciado');
