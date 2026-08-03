@@ -45,3 +45,42 @@ Uma rotina programada faz buscas assíncronas diárias na API da Clinicorp para 
 1.  **Clean Code:** Desenvolva middlewares reutilizáveis para o tratamento de erros (`try/catch` centralizados) e validações com `Zod` para as requisições de Webhooks vindas do Chatbotify.
 2.  **Segurança e Logs:** Garanta o mascaramento de dados sensíveis de pacientes (LGPD) nos arquivos de logs do servidor.
 3.  **Resiliência:** Implemente mecanismos de *retry* exponencial em caso de instabilidades temporárias ou *rate limit* da API Clinicorp.
+
+---
+
+## 5. Desenvolvimento
+
+### Documentação do projeto
+- **Design ponta a ponta:** [docs/superpowers/specs/2026-06-13-agente-odontologico-design.md](docs/superpowers/specs/2026-06-13-agente-odontologico-design.md)
+- **Plano de implementação (Fase 0 + Agendamento):** [docs/superpowers/plans/2026-06-13-fase0-fundacao-e-agendamento.md](docs/superpowers/plans/2026-06-13-fase0-fundacao-e-agendamento.md)
+
+### Pré-requisitos
+- **Node.js 20+**
+- **Redis** rodando localmente (para filas BullMQ e lock de agendamento em runtime). A maior parte dos testes usa *fakes* e **não** exige Redis.
+
+### Setup
+```bash
+cp .env.example .env     # preencha os segredos (NUNCA commite o .env)
+npm install
+npm test                 # roda a suíte (Vitest)
+```
+
+### Variáveis de ambiente
+Veja `.env.example`. Segredos sensíveis (token Clinicorp, credenciais Chatbotify) vão **somente** no `.env`, que é ignorado pelo git. Validados em runtime por Zod (`src/config/env.ts`).
+
+### Estrutura
+- `src/config` — env validado por Zod
+- `src/lib` — utilitários transversais (erros, retry exponencial, logger com máscara LGPD)
+- `src/domain` — `NumberRegistry` (roteamento número↔papel de WhatsApp)
+- `src/http` — servidor Fastify, schema/rota de webhook do Chatbotify
+- `src/queue` — conexão Redis, filas BullMQ e worker `inbound`
+- `src/integrations` — interfaces de contrato dos clients Clinicorp/Chatbotify (implementação HTTP definida após os spikes)
+- `src/scheduling` — lock atômico Redis e `SchedulingEngine` (confirmação síncrona anti double-booking)
+
+### Scripts
+- `npm test` — executa todos os testes
+- `npm run test:watch` — modo watch
+- `npm run build` — compila TypeScript
+- `npm run lint` / `npm run format` — ESLint / Prettier
+
+> **Pendências de Fase 0 (spikes):** mapear a API real da Clinicorp e a conta do Chatbotify — ver `docs/superpowers/spikes/`. A implementação HTTP dos clients depende desses achados.

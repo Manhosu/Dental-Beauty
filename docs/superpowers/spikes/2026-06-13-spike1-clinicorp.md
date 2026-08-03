@@ -1,0 +1,102 @@
+# Spike 1 — Mapeamento da API Clinicorp
+
+**Status:** ✅ MAPEADO (via Swagger + chamadas read-only autenticadas, 2026-06-15).
+**Doc oficial:** https://sistema.clinicorp.com/api-docs/
+
+## Autenticação
+- **Esquema:** HTTP **Basic Auth**.
+  - **Username** = Usuário API (`CLINICORP_API_USER` = `oralmultiedentalbeautyoralmulti`).
+  - **Password** = Token API (`CLINICORP_API_TOKEN`).
+  - Header: `Authorization: Basic base64(user:token)`.
+- **Base URL real:** `https://api.clinicorp.com/rest/v1` (⚠️ NÃO é `sistema.clinicorp.com` — esse é só o portal do Swagger).
+- **`subscriber_id`** (query) é **obrigatório** na maioria dos endpoints. Para esta conta funciona qualquer um de: `oralmultiedentalbeauty` (canônico, bate com o namespace), `oralmulti`, `dentalbeauty`. **Usar `oralmultiedentalbeauty`** → vira config `CLINICORP_SUBSCRIBER_ID`.
+- Namespace da conta: `oralmultiedentalbeauty.br.rj.rio_de_janeiro`.
+
+## Dados reais confirmados (mascarados)
+- **Clínica (`GET /business/list`):** `{ id: 6247357829611520, Name: "Dental Beauty", Address: "...Recreio dos Bandeirantes, Rio de Janeiro - RJ", Email: financeiro@dentalbeauty.com.br }` → **business_id = 6247357829611520**.
+- **Profissionais (`GET /professional/list_all_professionals`):** 11 ativos, ex: Adriana-Ortodontia, Fábio-Odontopediatria, Leandro-Endodontista, Carolina-Periodontista, Haylane/Lívia-Protesista, Alinne-Lentes, Thaynara-Clínica Geral, Sergio Sinzato-Bucomaxilo. Campos: `{ id, name, cpf }`.
+- **Especialidades (`GET /procedures/list_specialties`):** ex: "Avaliação Implante", "Avaliação Lentes", "Avaliação Odontopediatria". Campos: `{ id, Description, Type:"EXPERTISE", Active:"X", Language, z_* }`.
+
+## Endpoints relevantes (base `https://api.clinicorp.com/rest/v1`)
+
+| Função | Método/Path | Params confirmados | Observação |
+|---|---|---|---|
+| Listar especialidades | `GET /procedures/list_specialties` | `subscriber_id` | ✔ testado, retorna dados |
+| Listar profissionais | `GET /professional/list_all_professionals` | `subscriber_id` | ✔ testado |
+| Listar clínicas | `GET /business/list` | `subscriber_id` | ✔ testado |
+| Horários por clínica | `GET /business/list_available_times` | `subscriber_id` (+?) | a confirmar params |
+| Dias disponíveis | `GET /appointment/get_avaliable_days` | `subscriber_id` + **código de acesso** | 400 pediu "código de acesso" |
+| Horários disponíveis | `GET /appointment/get_avaliable_times_calendar` | `subscriber_id` + **data `YYYY-MM-DD`** (+ código de acesso) | 400 pediu a data |
+| Ocupação da agenda | `GET /appointment/schedule_occupation` | `subscriber_id` (+?) | leitura de agenda |
+| Criar agend. online | `POST /appointment/create_online_scheduling` | corpo (a mapear) | fluxo de agendamento online |
+| Criar agend. por API | `POST /appointment/create_appointment_by_api` | corpo (a mapear) | criação direta |
+| Confirmar agend. | `POST /appointment/confirm_appointment` | corpo | confirmação de presença |
+| Cancelar agend. | `POST /appointment/cancel_appointment` | corpo | **libera vaga (anti no-show)** |
+| Buscar paciente | `GET /patient/get` | `subscriber_id` (+ telefone/id) | a confirmar |
+| Criar paciente | `POST /patient/create` | corpo | |
+| **Aniversariantes** | `GET /patient/birthdays` | `subscriber_id` (+ data?) | **régua aniversário nativa** |
+| Procedimentos do paciente | `GET /patient/list_appointments` | `subscriber_id` + paciente | histórico p/ réguas |
+| Leads CRM | `POST /crm/add_leads` | corpo | |
+
+## Corpo de criação de agendamento (`POST /appointment/create_appointment_by_api`)
+Request body (JSON) — exemplo do Swagger:
+```json
+{
+  "Patient_PersonId": 333333333333,
+  "PatientName": "João da Silva",
+  "MobilePhone": "(11) 91234-5678",
+  "Email": "email@dominio.com",
+  "fromTime": "10:00",
+  "toTime": "11:00",
+  "date": "2025-04-12T03:00:00.000Z",
+  "Clinic_BusinessId": 111111111111,
+  "Dentist_PersonId": 222222222222,
+  "ScheduleToId": 1234567890124,
+  "ScheduleToType": "CHAIR",
+  "Procedures": "Limpeza, Obturação",
+  "CategoryColor": "#FF5733",
+  "CategoryDescription": "Consulta odontológica de rotina"
+}
+```
+Resposta 200: `[{ "Status": "CREATED", "id": 987654321 }]` · 400 = inválido/não encontrado.
+- `Clinic_BusinessId` = **6247357829611520** (Dental Beauty).
+- `Dentist_PersonId` = id do profissional (de `/professional/list_all_professionals`).
+- `ScheduleToId`/`ScheduleToType` = cadeira (de `GET /business/list_chairs`), tipo `CHAIR`.
+- `date` ISO + `fromTime`/`toTime` `HH:mm`.
+
+## ✅ Disponibilidade RESOLVIDA (2026-06-17)
+O "código de acesso" é o **`code_link`** do Agendamento Online — para a Dental Beauty vale **`60903`** (ou o slug `dentalbeauty`). Descoberto inspecionando o link público `https://agenda.link/dentalbeauty` → `get_link_info` retornou `CodeLink: 60903`, `subscriber_id: oralmultiedentalbeautyoralmulti`, `BusinessId: 6247357829611520`.
+
+- **Dias disponíveis:** `GET /appointment/get_avaliable_days?subscriber_id=<id>&code_link=60903` → 200 (lista de dias úteis).
+- **Horários disponíveis:** `GET /appointment/get_avaliable_times_calendar?subscriber_id=<id>&code_link=60903&date=YYYY-MM-DD` → 200. Shape real do slot:
+  ```json
+  { "From":"11:00", "To":"12:00", "DayWeek":4, "BusinessId":6247357829611520, "ProfessionalId":4854067528859648 }
+  ```
+  (`From` pode vir sem zero à esquerda, ex `"8:00"`.)
+- **Config:** `CLINICORP_ACCESS_CODE=60903`, `CLINICORP_ACCESS_CODE_PARAM=code_link`. Já implementado no `HttpClinicorpClient.getAvailability` (mapeado para `AvailableSlot`).
+- **Verificado ponta a ponta** rodando o nosso próprio código contra a produção (`scripts/smoke-availability.mjs`): 13 horários reais para 2026-06-22. ✔
+
+### Observação sobre a agenda online (esclarece dúvida do cliente)
+O agendamento online **é por profissional** — `check_avaliable_times` retorna a grade semanal de cada profissional. Hoje o link expõe **3 profissionais** (Lívia-Protesista, Fábio-Odontopediatria, Adriana-Ortodontia) dos 11 da clínica. Para incluir mais profissionais/especialidades no fluxo, basta o cliente adicioná-los na configuração do Agendamento Online da Clinicorp.
+
+## ✅ Marcação + cancelamento VALIDADOS em produção (2026-06-17)
+Teste real (criado e cancelado na hora, sem lixo) com o nosso próprio `HttpClinicorpClient`:
+
+- **Criar:** `POST /appointment/create_appointment_by_api`. Enviar **só o profissional** (`Dentist_PersonId`) — **NÃO** enviar `ScheduleToId`/`ScheduleToType` junto, senão dá 400 *"não é possível ... Cadeira e Profissional ao mesmo tempo"*. Corpo mínimo: `PatientName, MobilePhone, fromTime, toTime, date (ISO), Clinic_BusinessId, Dentist_PersonId`. Resposta 200 = **objeto único** com `id` (não é `[{Status:'CREATED'}]` como no exemplo do Swagger).
+- **Cancelar:** `POST /appointment/cancel_appointment` `{ subscriber_id, id }` → 200 com `Deleted:"X"`. ✔
+- **Regra do paciente:** se o `PatientName` já existir, a API retorna `200 {"PatientNameAlreadyExists":true}` e **não cria**. Nesse caso é preciso resolver o paciente e enviar `Patient_PersonId`. O cliente lança `ExternalApiError 409` nesse caso.
+
+## Pendências (para o plano de implementação)
+1. **Resolução de paciente:** antes de marcar, buscar o paciente por telefone (`GET /patient/get`) → se existir, usar `Patient_PersonId`; senão, cria novo pelo nome. (Evita o guard `PatientNameAlreadyExists`.) Mapear params de `/patient/get`.
+2. **Webhooks Clinicorp:** verificar no painel ("Gestão de Webhook") se há push de eventos (criado/cancelado) — opcional para reduzir polling.
+
+## Ajustes nas interfaces (`src/integrations/clinicorp/types.ts`)
+- `AvailabilityQuery` precisa de: `subscriberId`, `accessCode`, `date` (YYYY-MM-DD), e opcional `professionalId`/`businessId`.
+- `AvailabilitySlot`: alinhar ao retorno real de `get_avaliable_times_calendar` (a capturar com a data + código de acesso).
+- `CreateAppointmentInput`: alinhar ao corpo real do endpoint de criação escolhido.
+- Adicionar config: `CLINICORP_SUBSCRIBER_ID`, `CLINICORP_ACCESS_CODE`.
+
+## Ferramentas de apoio criadas
+- `scripts/probe-clinicorp.mjs` — testa esquemas de auth (confirmou Basic).
+- `scripts/clinicorp-get.mjs` — GET autenticado read-only (usar com `subscriber_id`).
+- ⚠️ Rodar via **PowerShell** (o Git Bash converte `/path` em caminho Windows).

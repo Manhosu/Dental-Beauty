@@ -1,0 +1,114 @@
+import { Redis } from 'ioredis';
+import { getEnv } from './config/env';
+import { SlotLock } from './scheduling/lock';
+import { createLockRedis } from './scheduling/redisLock';
+import { SchedulingEngine } from './scheduling/schedulingEngine';
+import { HttpClinicorpClient } from './integrations/clinicorp/client';
+import { ChatbotifyCrmClient } from './integrations/chatbotify/crmClient';
+import { buildServer } from './http/server';
+import type { InboundDeps } from './http/webhooks/chatbotify.route';
+import { createHttpDispatcher } from './scheduling/reguas/dispatcher';
+import { startReguas } from './scheduling/reguas/cronEngine';
+import { logger } from './lib/logger';
+
+async function main(): Promise<void> {
+  const env = getEnv();
+
+  const redis = new Redis(env.REDIS_URL, { maxRetriesPerRequest: null });
+
+  const lock = new SlotLock(createLockRedis(redis));
+
+  const clinicorp = new HttpClinicorpClient({
+    baseUrl: env.CLINICORP_API_BASE,
+    user: env.CLINICORP_API_USER,
+    token: env.CLINICORP_API_TOKEN,
+    subscriberId: env.CLINICORP_SUBSCRIBER_ID,
+    businessId: env.CLINICORP_BUSINESS_ID,
+    accessCode: env.CLINICORP_ACCESS_CODE,
+    accessCodeParam: env.CLINICORP_ACCESS_CODE_PARAM,
+  });
+
+  const engine = new SchedulingEngine(clinicorp, lock);
+
+  // Minimal no-op InboundDeps stub — webhook processing is handled by the worker process.
+  const inboundDeps: InboundDeps = {
+    enqueue: async () => {},
+    idempotency: {
+      alreadyProcessed: async () => false,
+      markProcessed: async () => {},
+    },
+  };
+
+  // Integração do discador Sonax (webhook → CRM Chatbotify). Só liga quando as credenciais da API
+  // do Chatbotify estiverem configuradas; caso contrário fica dormente.
+  const sonaxDeps =
+    env.CHATBOTIFY_CRM_ACCOUNT_ID && env.CHATBOTIFY_CRM_API_TOKEN
+      ? {
+          crm: new ChatbotifyCrmClient({
+            baseUrl: env.CHATBOTIFY_CRM_API_BASE,
+            accountId: env.CHATBOTIFY_CRM_ACCOUNT_ID,
+            apiToken: env.CHATBOTIFY_CRM_API_TOKEN,
+          }),
+          ...(env.SONAX_WEBHOOK_TOKEN ? { token: env.SONAX_WEBHOOK_TOKEN } : {}),
+        }
+      : undefined;
+
+  const app = buildServer(inboundDeps, { engine, clinicorp }, sonaxDeps);
+
+  await app.listen({ port: env.PORT, host: '0.0.0.0' });
+  logger.info({ port: env.PORT }, 'servidor iniciado');
+
+  // Cron-Engine das réguas (§3.4) — só liga se habilitado e com a config completa do fluxo de disparo.
+  if (
+    env.REGUAS_ENABLED &&
+    env.CHATBOTIFY_REGUA_WEBHOOK_URL &&
+    env.CHATBOTIFY_REGUA_ACCOUNT_ID &&
+    env.CHATBOTIFY_REGUA_TOKEN &&
+    env.CHATBOTIFY_REGUA_FLOW
+  ) {
+    const base = {
+      url: env.CHATBOTIFY_REGUA_WEBHOOK_URL,
+      accountId: env.CHATBOTIFY_REGUA_ACCOUNT_ID,
+      token: env.CHATBOTIFY_REGUA_TOKEN,
+    };
+    const dispatchers = {
+      aniversario: createHttpDispatcher({ ...base, flow: env.CHATBOTIFY_REGUA_FLOW }),
+      // No-show só liga quando o 2º fluxo (mensagem de lembrete) existir.
+      ...(env.CHATBOTIFY_REGUA_FLOW_NOSHOW
+        ? { noShow: createHttpDispatcher({ ...base, flow: env.CHATBOTIFY_REGUA_FLOW_NOSHOW }) }
+        : {}),
+      // Pós-procedimento (retorno) só liga quando o 3º fluxo existir.
+      ...(env.CHATBOTIFY_REGUA_FLOW_POSPROC
+        ? { posProcedimento: createHttpDispatcher({ ...base, flow: env.CHATBOTIFY_REGUA_FLOW_POSPROC }) }
+        : {}),
+      // NPS pós-consulta só liga quando o fluxo de pesquisa existir.
+      ...(env.CHATBOTIFY_REGUA_FLOW_NPS
+        ? { nps: createHttpDispatcher({ ...base, flow: env.CHATBOTIFY_REGUA_FLOW_NPS }) }
+        : {}),
+      // Reengajamento por inatividade (6/12 meses) só liga quando o fluxo existir.
+      ...(env.CHATBOTIFY_REGUA_FLOW_INATIVIDADE
+        ? {
+            inatividade: createHttpDispatcher({
+              ...base,
+              flow: env.CHATBOTIFY_REGUA_FLOW_INATIVIDADE,
+            }),
+          }
+        : {}),
+    };
+    startReguas({ clinicorp, dispatchers });
+    logger.info(
+      {
+        noShow: !!env.CHATBOTIFY_REGUA_FLOW_NOSHOW,
+        posProcedimento: !!env.CHATBOTIFY_REGUA_FLOW_POSPROC,
+        nps: !!env.CHATBOTIFY_REGUA_FLOW_NPS,
+        inatividade: !!env.CHATBOTIFY_REGUA_FLOW_INATIVIDADE,
+      },
+      'réguas (cron-engine) ativadas',
+    );
+  }
+}
+
+main().catch((err) => {
+  logger.error({ err }, 'erro fatal na inicialização');
+  process.exit(1);
+});
