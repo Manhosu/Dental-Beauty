@@ -9,8 +9,7 @@ const inbound = {
 
 function crmMock(): SonaxCrmPort {
   return {
-    findOrCreateContactByPhone: vi.fn().mockResolvedValue({ contactId: 'ct1', created: false }),
-    addCallNote: vi.fn().mockResolvedValue(undefined),
+    upsertContactWithNote: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -23,8 +22,8 @@ describe('GET /webhooks/sonax', () => {
       url: '/webhooks/sonax?ID_CHAMADA=C1&NUMERO=5521999&STATUS_ATENDIMENTO=ATENDIDA&token=segredo',
     });
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toMatchObject({ ok: true, contactId: 'ct1', phase: 'answered' });
-    expect(crm.findOrCreateContactByPhone).toHaveBeenCalledWith('5521999');
+    expect(res.json()).toMatchObject({ ok: true, phase: 'answered', noted: true });
+    expect(crm.upsertContactWithNote).toHaveBeenCalledWith('5521999', expect.stringContaining('ATENDIDA'));
     await app.close();
   });
 
@@ -44,8 +43,7 @@ describe('GET /webhooks/sonax', () => {
 
   it('falha no CRM responde 200 ok:false (sem retry-storm)', async () => {
     const crm: SonaxCrmPort = {
-      findOrCreateContactByPhone: vi.fn().mockRejectedValue(new Error('crm down')),
-      addCallNote: vi.fn(),
+      upsertContactWithNote: vi.fn().mockRejectedValue(new Error('crm down')),
     };
     const app = buildServer(inbound, undefined, { crm, token: 'segredo' });
     const res = await app.inject({ method: 'GET', url: '/webhooks/sonax?ID_CHAMADA=C1&NUMERO=5521999&token=segredo' });

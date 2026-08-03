@@ -7,7 +7,6 @@ import {
   digits,
   type SonaxCrmPort,
 } from '../../../src/integrations/sonax/sonax';
-import { parseContactId } from '../../../src/integrations/chatbotify/crmClient';
 
 const base = {
   ID_CHAMADA: 'C1',
@@ -69,25 +68,14 @@ describe('sonax — schema + normalização', () => {
 });
 
 describe('sonax — handler', () => {
-  it('acha/cria contato e registra a nota da ligação', async () => {
+  it('faz upsert do contato pelo telefone com a nota da ligação', async () => {
     const crm: SonaxCrmPort = {
-      findOrCreateContactByPhone: vi.fn().mockResolvedValue({ contactId: 'ct1', created: true }),
-      addCallNote: vi.fn().mockResolvedValue(undefined),
+      upsertContactWithNote: vi.fn().mockResolvedValue(undefined),
     };
     const e = normalizeSonaxEvent(sonaxQuerySchema.parse({ ...base, STATUS_ATENDIMENTO: 'ATENDIDA' }));
     const r = await handleSonaxCall(e, crm);
 
-    expect(crm.findOrCreateContactByPhone).toHaveBeenCalledWith('21999998888');
-    expect(crm.addCallNote).toHaveBeenCalledWith('ct1', expect.stringContaining('ATENDIDA'));
-    expect(r).toEqual({ contactId: 'ct1', created: true, noted: true });
-  });
-});
-
-describe('parseContactId — tolerante a formatos', () => {
-  it('extrai id de dados[].data[].id, data.id e id direto', () => {
-    expect(parseContactId({ dados: [{ data: [{ id: 'abc' }] }] })).toBe('abc');
-    expect(parseContactId({ data: { id: 123 } })).toBe('123');
-    expect(parseContactId({ id: 'xyz' })).toBe('xyz');
-    expect(parseContactId({ nada: true })).toBeUndefined();
+    expect(crm.upsertContactWithNote).toHaveBeenCalledWith('21999998888', expect.stringContaining('ATENDIDA'));
+    expect(r).toEqual({ noted: true });
   });
 });

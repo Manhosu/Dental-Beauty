@@ -88,10 +88,12 @@ export function normalizeSonaxEvent(q: SonaxQuery): SonaxCallEvent {
 
 /** Porta de CRM que o handler usa. Implementada pelo ChatbotifyCrmClient (ou um mock nos testes). */
 export interface SonaxCrmPort {
-  /** Acha o contato pelo telefone; cria se não existir. */
-  findOrCreateContactByPhone(phone: string, name?: string): Promise<{ contactId: string; created: boolean }>;
-  /** Registra a ligação no contato (observação/nota). */
-  addCallNote(contactId: string, note: string): Promise<void>;
+  /**
+   * Cria OU atualiza o contato pelo telefone e grava a observação da ligação numa chamada só
+   * (a API do Chatbotify faz upsert por phone_number e não retorna corpo). `name` opcional —
+   * não enviar quando não tiver, para não sobrescrever o nome de um paciente já cadastrado.
+   */
+  upsertContactWithNote(phone: string, note: string, name?: string): Promise<void>;
 }
 
 /** Texto da nota registrada no contato a partir do evento. */
@@ -110,15 +112,14 @@ export function buildCallNote(e: SonaxCallEvent): string {
 }
 
 /**
- * Orquestra o que fazer quando o Sonax avisa de uma ligação: encontra/cria o paciente pelo telefone
- * e registra a ligação (status, duração, gravação) no contato do CRM. A movimentação de etapa do
- * funil fica de fora por ora (as etapas de ligação ainda não foram definidas com o cliente).
+ * Orquestra o que fazer quando o Sonax avisa de uma ligação: cria/atualiza o paciente pelo telefone
+ * e grava a ligação (status, duração, gravação) na observação do contato do CRM. A movimentação de
+ * etapa do funil fica de fora por ora (as etapas de ligação ainda não foram definidas com o cliente).
  */
 export async function handleSonaxCall(
   event: SonaxCallEvent,
   crm: SonaxCrmPort,
-): Promise<{ contactId: string; created: boolean; noted: boolean }> {
-  const { contactId, created } = await crm.findOrCreateContactByPhone(event.phone);
-  await crm.addCallNote(contactId, buildCallNote(event));
-  return { contactId, created, noted: true };
+): Promise<{ noted: boolean }> {
+  await crm.upsertContactWithNote(event.phone, buildCallNote(event));
+  return { noted: true };
 }
