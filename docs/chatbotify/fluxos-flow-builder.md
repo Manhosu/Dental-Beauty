@@ -64,7 +64,7 @@ Sequência após gerar/agendar retorno do orçamento:
 
 ## Pendências técnicas (nosso lado)
 - ✅ **Listagem de agendamentos por período — RESOLVIDO (2026-06-25).** O param do `/appointment/list` é **`from`/`to`** (`YYYY-MM-DD`). Exposto em **`GET /agendamento/agenda?date=YYYY-MM-DD[&to=YYYY-MM-DD]`** → `{ from, to, appointments[] }` com `id` (p/ cancelar), `patientName`, `mobilePhone`, `fromTime/toTime`, `professionalName`, `unit`. Fonte da régua de no-show. Validado em produção (14 agendamentos reais p/ 26/06). Filtra `Deleted`.
-- ⚠️ **Status "atendido/CHECKOUT" p/ pós-procedimento:** o registro de `/appointment/list` **não traz um campo Status**, e `/patient/list_appointments` retornou vazio nos params testados. Confirmar com a Clinicorp como obter "procedimento executado" (campo de status, `/appointment/get` por id, ou webhooks de CHECKOUT) antes de montar as réguas de pós-procedimento/inatividade.
+- ✅ **Status "atendido/CHECKOUT" — RESOLVIDO (2026-06-29).** O agendamento carrega `StatusId`; `/appointment/status_list` dá o vocabulário e `CHECKOUT` ("4-Atendido") identifica quem compareceu. Implementado em `listAppointmentStatuses` + `runPostProcedure`/`runNps`/`runInactivity`. ⚠️ Ainda **não validado com um dia real de produção** — se `StatusId` não vier no payload, essas 3 réguas retornam 0 em silêncio.
 - Itens prontos hoje: disponibilidade, book, cancelar, **agenda (listagem)**, aniversariantes, catálogo.
 
 ## Spike Flow Builder — RESULTADO (2026-06-25)
@@ -81,7 +81,8 @@ Capacidades do Flow Builder do Chatbotify (conta Disparos):
 ### Como montar o fluxo de envio no canvas (protocolo descoberto 2026-06-26)
 Os blocos da paleta usam **HTML5 drag-and-drop** com `dataTransfer.setData('application/reactflow', <tipo>)`. Tipo do **Gatilho HTTP** = `formTrigger`. Para automatizar: construir um `DataTransfer`, `setData('application/reactflow', tipo)`, e disparar `dragenter/dragover/drop` (DragEvent com esse dataTransfer) no `.react-flow__pane` na posição desejada. Conectar arestas (arrastar handle source→target) e configurar o bloco `Mensagem` (enviar p/ o telefone do payload, texto por `type`) ainda é trabalho de canvas. O fluxo deve ter **Gatilho HTTP → Mensagem**, ser ativado, e a URL do Gatilho HTTP vai pra `CHATBOTIFY_REGUA_WEBHOOK_URL` no Render + `REGUAS_ENABLED=true`.
 
-### Status "atendido" da Clinicorp — INVESTIGADO (2026-06-26)
+### Status "atendido" da Clinicorp — histórico da investigação (2026-06-26, superado em 29/06)
+> Registro do que se sabia ANTES de descobrir o `StatusId`. Mantido como histórico — ver o item ✅ acima.
 `/appointment/list` NÃO traz status CONFIRMED/CHECKOUT direto. O que existe por agendamento: `CategoryId` + `CategoryDescription` (texto livre, ex.: "AGENDAMENTO PENDENTE DE CONFIRMAÇÃO") + `tags` (ex.: "PAGAMENTO PENDENTE", Type "AppointmentMarker") + `ListTagsId`. `/appointment/get?id=` não respondeu JSON nos params testados. → **Pós-procedimento/inatividade dependem de confirmar com a Clinicorp/clínica qual Categoria/Tag = "atendido"**, ou habilitar webhook de evento (Gestão de Webhook da Clinicorp).
 - **Resolução de paciente por telefone** antes de marcar (evita conflito de nome) — `GET /patient/get`.
 - **Unidade Ipanema** na Clinicorp (API só expõe Recreio) — necessário para marcar em Ipanema.

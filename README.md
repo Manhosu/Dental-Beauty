@@ -51,12 +51,19 @@ Uma rotina programada faz buscas assíncronas diárias na API da Clinicorp para 
 ## 5. Desenvolvimento
 
 ### Documentação do projeto
+- 👉 **Comece aqui — estado atual, regras vigentes e o que falta:** [docs/ESTADO-ATUAL.md](docs/ESTADO-ATUAL.md)
 - **Design ponta a ponta:** [docs/superpowers/specs/2026-06-13-agente-odontologico-design.md](docs/superpowers/specs/2026-06-13-agente-odontologico-design.md)
 - **Plano de implementação (Fase 0 + Agendamento):** [docs/superpowers/plans/2026-06-13-fase0-fundacao-e-agendamento.md](docs/superpowers/plans/2026-06-13-fase0-fundacao-e-agendamento.md)
 
+> ⚠️ **Arquitetura C (vigente):** a conversa/IA/handoff/CRM vivem no **Chatbotify** (no-code). Este
+> repositório é o **microserviço de integração Clinicorp** + o **Cron-Engine das réguas** + o
+> **webhook do discador Sonax**. As seções 3.1, 3.3 e 3.4 acima descrevem o escopo funcional do
+> produto, não a divisão de implementação — veja o design revisado.
+
 ### Pré-requisitos
 - **Node.js 20+**
-- **Redis** rodando localmente (para filas BullMQ e lock de agendamento em runtime). A maior parte dos testes usa *fakes* e **não** exige Redis.
+- **Redis** rodando localmente — usado pelo **lock de agendamento** (anti double-booking) e pela
+  **trava anti-duplicidade das réguas**. A maior parte dos testes usa *fakes* e **não** exige Redis.
 
 ### Setup
 ```bash
@@ -71,11 +78,12 @@ Veja `.env.example`. Segredos sensíveis (token Clinicorp, credenciais Chatbotif
 ### Estrutura
 - `src/config` — env validado por Zod
 - `src/lib` — utilitários transversais (erros, retry exponencial, logger com máscara LGPD)
-- `src/domain` — `NumberRegistry` (roteamento número↔papel de WhatsApp)
-- `src/http` — servidor Fastify, schema/rota de webhook do Chatbotify
-- `src/queue` — conexão Redis, filas BullMQ e worker `inbound`
-- `src/integrations` — interfaces de contrato dos clients Clinicorp/Chatbotify (implementação HTTP definida após os spikes)
-- `src/scheduling` — lock atômico Redis e `SchedulingEngine` (confirmação síncrona anti double-booking)
+- `src/domain` — `businessHours` (quem atende agora), `unit` (Recreio/Ipanema pelo nome do
+  profissional), `NumberRegistry` (roteamento número↔papel)
+- `src/http` — servidor Fastify e rotas (agendamento, catálogo, atendimento, webhook Sonax)
+- `src/integrations` — `HttpClinicorpClient`, `ChatbotifyCrmClient` e o normalizador do Sonax
+- `src/scheduling` — lock atômico Redis, `SchedulingEngine` e as **réguas** (`reguas/`: cronEngine,
+  jobs, dispatcher, dedupe)
 
 ### Scripts
 - `npm test` — executa todos os testes
@@ -83,4 +91,5 @@ Veja `.env.example`. Segredos sensíveis (token Clinicorp, credenciais Chatbotif
 - `npm run build` — compila TypeScript
 - `npm run lint` / `npm run format` — ESLint / Prettier
 
-> **Pendências de Fase 0 (spikes):** mapear a API real da Clinicorp e a conta do Chatbotify — ver `docs/superpowers/spikes/`. A implementação HTTP dos clients depende desses achados.
+> **Status:** spikes concluídos, agendamento validado em produção, réguas implementadas e dormentes.
+> O que falta para o go-live está em [docs/ESTADO-ATUAL.md](docs/ESTADO-ATUAL.md#6-o-que-falta-para-o-go-live).

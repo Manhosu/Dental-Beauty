@@ -255,7 +255,36 @@ describe('réguas — dispatcher', () => {
     expect(url).toBe('https://flow.example/hook');
     expect(init.method).toBe('POST');
     expect(init.headers).toMatchObject({ id: 'acc', token: 'tok', flow: 'fl', 'Content-Type': 'application/json' });
-    // numero normalizado (só dígitos)
-    expect(JSON.parse(init.body as string)).toEqual({ nome: 'Ana', numero: '5521999998888' });
+    // numero normalizado (só dígitos) + variáveis do template aprovado na Meta
+    expect(JSON.parse(init.body as string)).toEqual({
+      nome: 'Ana',
+      numero: '5521999998888',
+      tipo: 'aniversario',
+      track: 'adulto',
+      var1: 'Ana',
+    });
+  });
+
+  it('trilha infantil manda track + var2 (nome da criança) para o template certo', async () => {
+    const fetchFn = vi.fn().mockResolvedValue(new Response('ok', { status: 200 }));
+    const dispatch = createHttpDispatcher(
+      { url: 'https://flow.example/hook', accountId: 'acc', token: 'tok', flow: 'fl' },
+      fetchFn,
+    );
+
+    await dispatch({
+      type: 'aniversario',
+      phone: '5521999998888',
+      name: 'Joãozinho',
+      track: 'infantil',
+      childName: 'Joãozinho',
+    });
+
+    const [, init] = fetchFn.mock.calls[0] as [string, RequestInit];
+    expect(JSON.parse(init.body as string)).toMatchObject({
+      track: 'infantil',
+      var1: 'Joãozinho',
+      var2: 'Joãozinho',
+    });
   });
 });

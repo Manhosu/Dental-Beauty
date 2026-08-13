@@ -25,8 +25,8 @@ GET https://dental-beauty-agenda.onrender.com/webhooks/sonax
 ## O que o backend faz
 1. Valida o `token`. Params inválidos → 400; token errado → 401.
 2. Normaliza o evento (`normalizeSonaxEvent`).
-3. `findOrCreateContactByPhone(NUMERO)` na API do Chatbotify.
-4. `addCallNote(contactId, nota)` — nota do tipo:
+3. `upsertContactWithNote(NUMERO, nota)` — **uma chamada só**: a API do Chatbotify faz upsert por
+   `phone_number` (cria se novo, atualiza se já existe) e responde 200 sem corpo. A nota fica assim:
    `[Ligação Sonax] encerrada · status: ATENDIDA · duração: 200s · gravação: https://… · id: C1`
 5. Responde **200 sempre** (mesmo em falha de CRM, pra não gerar retry-storm) — falhas ficam no log.
 
@@ -50,8 +50,12 @@ GET https://dental-beauty-agenda.onrender.com/webhooks/sonax
    `https://dental-beauty-agenda.onrender.com/webhooks/sonax?...&token=<SONAX_WEBHOOK_TOKEN>`.
 3. Testar com o `webhook.site` (como a Sonax sugeriu) e depois com a nossa URL real.
 
-## ⚠️ A verificar na 1ª ligação real
-Os **nomes exatos dos campos** da API CRM do Chatbotify (request de `/contatos/get|post|patch`) não
-estão 100% na doc pública — o `ChatbotifyCrmClient` usa nomes plausíveis (`telefone`/`numero`,
-`observacoes`) e o `parseContactId` é tolerante a vários formatos de resposta. Validar no 1º teste e
-ajustar se preciso (é um ajuste pontual no adapter; o resto — rota, parsing, orquestração — já está testado).
+## ✅ Contrato do CRM confirmado (2026-08-03)
+`POST /contatos/post` com headers `id` + `api_token` e corpo
+`{ whatsapp_account_id, phone_number, observations, name? }` — é **upsert por telefone** e a resposta
+vem vazia. Confirmado na doc oficial (Postman) e testado ao vivo.
+
+## ⚠️ Ainda pendente: a 1ª ligação real
+A ponte está construída e testada, mas **nenhuma ligação real passou por ela**. Além disso, a conta
+antiga do Chatbotify foi excluída — o `CHATBOTIFY_CRM_ACCOUNT_ID` e o `api_token` precisam vir da
+conta **nova** (`disparos_`). Fazer 1 ligação de teste e conferir a nota no contato.

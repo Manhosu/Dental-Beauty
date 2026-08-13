@@ -1,10 +1,17 @@
 import { withRetry } from '../../lib/retry';
 
+/** Trilha de texto da régua: os textos aprovados têm versão adulto e versão infantil. */
+export type ReguaTrack = 'adulto' | 'infantil';
+
 /** Payload interno por destinatário (vindo dos jobs das réguas). */
 export interface ReguaPayload {
   type: 'aniversario' | 'no_show' | 'pos_procedimento' | 'nps' | 'inatividade';
   phone: string;
   name?: string;
+  /** 'adulto' (default) ou 'infantil' — o fluxo escolhe o template da trilha certa. */
+  track?: ReguaTrack;
+  /** Nome da criança, quando a trilha é infantil e o dado está disponível. */
+  childName?: string;
   // Extras de no-show (lembrete de presença):
   appointmentId?: string;
   date?: string;
@@ -27,11 +34,31 @@ export interface ReguaWebhookConfig {
   flow: string; // header `flow` (id do fluxo)
 }
 
+/** Observação livre gravada no contato — contexto para o atendente humano. */
+function buildObservacoes(payload: ReguaPayload): string | undefined {
+  if (payload.type === 'no_show' && payload.date) {
+    return `Lembrete de consulta ${payload.date} ${payload.fromTime ?? ''} ${payload.professionalName ?? ''}`.trim();
+  }
+  if (payload.type === 'pos_procedimento') {
+    return `Retorno recomendado${payload.procedure ? ` (${payload.procedure})` : ''}`.trim();
+  }
+  if (payload.type === 'inatividade') {
+    return `Reengajamento: sem consulta há ${payload.months ?? '?'} meses`;
+  }
+  return undefined;
+}
+
 /**
  * Dispatcher HTTP para o "Gatilho HTTP" do Chatbotify. Formato confirmado pelo painel do bloco:
  * - Headers: Content-Type, id (conta), token, flow (id do fluxo).
- * - Body: { nome, numero } (numero = DDI+DDD+número sem espaços). O contato é criado e o fluxo
- *   roda, enviando a mensagem configurada no bloco "Mensagem".
+ * - Body: `{ nome, numero }` (numero = DDI+DDD+número sem espaços), mais os campos abaixo.
+ *
+ * Como os textos foram aprovados pela Meta como **templates** (WhatsApp Oficial), o corpo também
+ * carrega as variáveis posicionais que o template espera:
+ * - `var1` = nome do destinatário (adulto) ou do responsável (infantil);
+ * - `var2` = nome da criança (só na trilha infantil).
+ * `tipo` e `track` deixam o fluxo escolher o template certo sem precisar de um fluxo por texto.
+ *
  * Uma chamada por destinatário (a iteração da lista é do Cron-Engine, README §3.4).
  */
 export function createHttpDispatcher(
@@ -40,14 +67,9 @@ export function createHttpDispatcher(
 ): ReguaDispatcher {
   return async (payload: ReguaPayload): Promise<void> => {
     const numero = payload.phone.replace(/\D/g, '');
-    let observacoes: string | undefined;
-    if (payload.type === 'no_show' && payload.date) {
-      observacoes = `Lembrete de consulta ${payload.date} ${payload.fromTime ?? ''} ${payload.professionalName ?? ''}`.trim();
-    } else if (payload.type === 'pos_procedimento') {
-      observacoes = `Retorno recomendado${payload.procedure ? ` (${payload.procedure})` : ''}`.trim();
-    } else if (payload.type === 'inatividade') {
-      observacoes = `Reengajamento: sem consulta há ${payload.months ?? '?'} meses`;
-    }
+    const nome = payload.name ?? '';
+    const observacoes = buildObservacoes(payload);
+    const track: ReguaTrack = payload.track ?? 'adulto';
 
     await withRetry(async () => {
       const res = await fetchFn(cfg.url, {
@@ -59,8 +81,12 @@ export function createHttpDispatcher(
           flow: cfg.flow,
         },
         body: JSON.stringify({
-          nome: payload.name ?? '',
+          nome,
           numero,
+          tipo: payload.type,
+          track,
+          var1: nome,
+          ...(payload.childName ? { var2: payload.childName } : {}),
           ...(observacoes ? { observacoes } : {}),
         }),
       });

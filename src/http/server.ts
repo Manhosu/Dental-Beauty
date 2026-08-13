@@ -1,21 +1,29 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import { getEnv } from '../config/env';
 import { registerErrorHandler } from './middleware/errorHandler';
-import { handleInbound, type InboundDeps } from './webhooks/chatbotify.route';
 import { registerAgendamentoRoutes, type AgendamentoDeps } from './routes/agendamento';
 import { registerCatalogoRoutes } from './routes/catalogo';
 import { registerSonaxRoutes, type SonaxRouteDeps } from './routes/sonax';
+import { registerAtendimentoRoutes, type AtendimentoDeps } from './routes/atendimento';
 
-export function buildServer(
-  deps: InboundDeps,
-  scheduling?: AgendamentoDeps,
-  sonax?: SonaxRouteDeps,
-): FastifyInstance {
+export interface ServerDeps {
+  /** Agendamento + catálogo (Clinicorp). Ausente = servidor só com /health e /atendimento/status. */
+  scheduling?: AgendamentoDeps;
+  /** Webhook do discador Sonax — só registrado quando a integração CRM está configurada. */
+  sonax?: SonaxRouteDeps;
+  /** Horário comercial consultado pelo Flow Builder. */
+  atendimento?: AtendimentoDeps;
+}
+
+/** Rotas públicas (sem X-Api-Key). `/webhooks/sonax` autentica por token na URL. */
+const OPEN_PATHS = new Set(['/health', '/webhooks/sonax']);
+
+export function buildServer(deps: ServerDeps = {}): FastifyInstance {
   const app = Fastify({ logger: false });
   registerErrorHandler(app);
 
   // Proteção X-Api-Key: se API_KEY_SECRET estiver definida, exige o header em todas as rotas
-  // exceto /health. Se vazia/ausente (local/dev), não há enforcement.
+  // exceto as públicas. Se vazia/ausente (local/dev), não há enforcement.
   app.addHook('preHandler', async (req, reply) => {
     // Lê o segredo sem forçar a validação completa do env (mantém local/dev/testes abertos quando não há env completo).
     let expected: string | undefined;
@@ -26,8 +34,7 @@ export function buildServer(
     }
     if (!expected) return;
     const path = req.url.split('?')[0];
-    // /health e o webhook do Sonax não usam X-Api-Key (o Sonax autentica por token na URL).
-    if (path === '/health' || path === '/webhooks/sonax') return;
+    if (OPEN_PATHS.has(path)) return;
     if (req.headers['x-api-key'] !== expected) {
       return reply.status(401).send({ error: 'unauthorized' });
     }
@@ -35,21 +42,15 @@ export function buildServer(
 
   app.get('/health', async () => ({ status: 'ok' }));
 
-  app.post('/webhooks/chatbotify', async (req, reply) => {
-    const result = await handleInbound(req.body, deps);
-    if (result.status === 'invalid') return reply.status(400).send(result);
-    if (result.status === 'duplicate') return reply.status(200).send(result);
-    return reply.status(202).send(result);
-  });
+  registerAtendimentoRoutes(app, deps.atendimento);
 
-  if (scheduling) {
-    registerAgendamentoRoutes(app, scheduling);
-    registerCatalogoRoutes(app, { clinicorp: scheduling.clinicorp });
+  if (deps.scheduling) {
+    registerAgendamentoRoutes(app, deps.scheduling);
+    registerCatalogoRoutes(app, { clinicorp: deps.scheduling.clinicorp });
   }
 
-  // Webhook do discador Sonax — só registra quando a integração CRM estiver configurada (dormente por padrão).
-  if (sonax) {
-    registerSonaxRoutes(app, sonax);
+  if (deps.sonax) {
+    registerSonaxRoutes(app, deps.sonax);
   }
 
   return app;

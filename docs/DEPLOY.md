@@ -1,4 +1,13 @@
-# Deploy do Microserviço de Agendamento (VPS)
+# Deploy do Microserviço de Agendamento
+
+> ✅ **Deploy em produção hoje: Render** — serviço `dental-beauty-agenda`,
+> URL `https://dental-beauty-agenda.onrender.com`. As variáveis de ambiente ficam em
+> **Render → serviço → Environment**; a plataforma já entrega HTTPS (dispensa Nginx/Certbot).
+> O caminho VPS abaixo continua válido como alternativa/migração.
+>
+> ⚠️ **Atenção no Render:** o serviço pode reiniciar/hibernar. O Cron-Engine tem **catch-up de boot**
+> e **trava anti-duplicidade no Redis** justamente por causa disso — mas isso exige um Redis
+> persistente configurado em `REDIS_URL`.
 
 Guia para subir o microserviço de agendamento Clinicorp numa VPS, acessível por HTTPS para o Flow Builder do Chatbotify chamar.
 
@@ -100,4 +109,6 @@ docker compose up -d --build
 - `API_KEY_SECRET`: quando definida, todas as rotas (exceto `/health`) exigem o header `X-Api-Key` igual ao valor — o Flow Builder do Chatbotify deve enviar esse header em todos os blocos HTTP. Se a variável estiver vazia/ausente, não há enforcement (local/dev permanece aberto).
 
 ## Pendências
-- **`CLINICORP_ACCESS_CODE`**: código do Agendamento Online da Clinicorp (necessário para `disponibilidade`). Confirmar com o cliente + o nome exato do parâmetro na chamada.
+- ✅ **`CLINICORP_ACCESS_CODE` — RESOLVIDO:** é o `code_link` do Agendamento Online = **60903**
+  (param `code_link`). Já configurado.
+- Ver o checklist completo de variáveis por preencher em [ESTADO-ATUAL.md](ESTADO-ATUAL.md#7-riscos-conhecidos).

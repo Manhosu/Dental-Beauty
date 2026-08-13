@@ -3,15 +3,6 @@ import { buildServer } from '../../src/http/server';
 import type { SchedulingEngine, BookResult } from '../../src/scheduling/schedulingEngine';
 import type { ClinicorpClient, Birthday, Specialty, Professional } from '../../src/integrations/clinicorp/types';
 
-// No-op InboundDeps
-const noopInbound = {
-  enqueue: async () => {},
-  idempotency: {
-    alreadyProcessed: async () => false as const,
-    markProcessed: async () => {},
-  },
-};
-
 function makeFakeEngine(): SchedulingEngine {
   return {
     book: vi.fn().mockResolvedValue({ status: 'confirmed', appointmentId: 'x' } as BookResult),
@@ -44,7 +35,7 @@ describe('GET /pacientes/aniversariantes', () => {
     const fakeClinicorp = makeFakeClinicorp({
       listBirthdays: vi.fn().mockResolvedValue([birthday]),
     });
-    const app = buildServer(noopInbound, { engine: makeFakeEngine(), clinicorp: fakeClinicorp });
+    const app = buildServer({ scheduling: { engine: makeFakeEngine(), clinicorp: fakeClinicorp } });
 
     const res = await app.inject({
       method: 'GET',
@@ -59,7 +50,7 @@ describe('GET /pacientes/aniversariantes', () => {
 
   it('returns 200 with empty array when no birthdays', async () => {
     const fakeClinicorp = makeFakeClinicorp();
-    const app = buildServer(noopInbound, { engine: makeFakeEngine(), clinicorp: fakeClinicorp });
+    const app = buildServer({ scheduling: { engine: makeFakeEngine(), clinicorp: fakeClinicorp } });
 
     const res = await app.inject({
       method: 'GET',
@@ -83,7 +74,7 @@ describe('GET /catalogo/especialidades', () => {
     const fakeClinicorp = makeFakeClinicorp({
       listSpecialties: vi.fn().mockResolvedValue([specialty]),
     });
-    const app = buildServer(noopInbound, { engine: makeFakeEngine(), clinicorp: fakeClinicorp });
+    const app = buildServer({ scheduling: { engine: makeFakeEngine(), clinicorp: fakeClinicorp } });
 
     const res = await app.inject({
       method: 'GET',
@@ -98,7 +89,7 @@ describe('GET /catalogo/especialidades', () => {
 
   it('returns 200 with empty array when no specialties', async () => {
     const fakeClinicorp = makeFakeClinicorp();
-    const app = buildServer(noopInbound, { engine: makeFakeEngine(), clinicorp: fakeClinicorp });
+    const app = buildServer({ scheduling: { engine: makeFakeEngine(), clinicorp: fakeClinicorp } });
 
     const res = await app.inject({
       method: 'GET',
@@ -117,7 +108,7 @@ describe('GET /catalogo/profissionais', () => {
     const fakeClinicorp = makeFakeClinicorp({
       listProfessionals: vi.fn().mockResolvedValue([professional]),
     });
-    const app = buildServer(noopInbound, { engine: makeFakeEngine(), clinicorp: fakeClinicorp });
+    const app = buildServer({ scheduling: { engine: makeFakeEngine(), clinicorp: fakeClinicorp } });
 
     const res = await app.inject({
       method: 'GET',
@@ -132,7 +123,7 @@ describe('GET /catalogo/profissionais', () => {
 
   it('returns 200 with empty array when no professionals', async () => {
     const fakeClinicorp = makeFakeClinicorp();
-    const app = buildServer(noopInbound, { engine: makeFakeEngine(), clinicorp: fakeClinicorp });
+    const app = buildServer({ scheduling: { engine: makeFakeEngine(), clinicorp: fakeClinicorp } });
 
     const res = await app.inject({
       method: 'GET',

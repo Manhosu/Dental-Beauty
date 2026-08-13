@@ -1,5 +1,11 @@
 # Reconstrução do Agente — o que temos e o que falta
 
+> ✅ **RESOLVIDO (2026-07/08).** O agente foi reconstruído na conta nova (`disparos_`) com as 20
+> seções — ver [chatbotify/prompt-agente-ATUAL.txt](chatbotify/prompt-agente-ATUAL.txt). O cliente
+> ativou o módulo em 2 contas (destravando o limite de automações), as 25 automações de follow-up
+> foram recriadas e os 50 templates foram **aprovados pela Meta**. Este arquivo fica como registro
+> do incidente e da lição de processo.
+
 Contexto: em 19/07/2026 a conta antiga de Disparos ((21) 92000-2328) foi excluída no Chatbotify e **levou junto o agente "Atendimento Lead (TESTE)"** (prompt ~18k, 13 mídias, 1 documento, config de Requisições HTTP) **e as 25 automações de follow-up**. Verificadas as 4 contas restantes: nenhuma tem o agente.
 
 ## ✅ Recuperado / disponível

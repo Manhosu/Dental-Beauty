@@ -4,14 +4,6 @@ import { resetEnv } from '../../src/config/env';
 import type { SchedulingEngine } from '../../src/scheduling/schedulingEngine';
 import type { ClinicorpClient } from '../../src/integrations/clinicorp/types';
 
-const noopInbound = {
-  enqueue: async () => {},
-  idempotency: {
-    alreadyProcessed: async () => false as const,
-    markProcessed: async () => {},
-  },
-};
-
 const base = {
   NODE_ENV: 'test',
   PORT: '3000',
@@ -40,7 +32,7 @@ function makeFakeClinicorp(): ClinicorpClient {
 }
 
 function buildApp() {
-  return buildServer(noopInbound, { engine: makeFakeEngine(), clinicorp: makeFakeClinicorp() });
+  return buildServer({ scheduling: { engine: makeFakeEngine(), clinicorp: makeFakeClinicorp() } });
 }
 
 describe('X-Api-Key preHandler (API_KEY_SECRET set)', () => {

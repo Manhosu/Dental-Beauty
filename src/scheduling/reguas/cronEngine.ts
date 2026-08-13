@@ -65,18 +65,46 @@ export async function runDailyReguas(
 }
 
 /**
+ * Reivindica a execução do dia. Só quem receber `true` roda a rotina — evita execução dupla quando
+ * o processo reinicia (Render) ou quando há mais de uma instância. Sem claim, roda sempre.
+ */
+export type ClaimDailyRun = (dateIso: string) => Promise<boolean>;
+
+/**
  * Cron-Engine (README §3.4): agenda a rotina diária no horário alvo (UTC).
  * 12h UTC = 09h no horário de Brasília (BRT, UTC-3). Retorna uma função para parar.
+ *
+ * **Catch-up:** se o processo subir DEPOIS do horário alvo e a rotina do dia ainda não tiver
+ * rodado, ela roda no boot. Sem isso, um restart/hibernação em cima do horário faria o dia inteiro
+ * de réguas ser perdido silenciosamente — cenário real no Render.
  */
 export function startReguas(opts: {
   clinicorp: ClinicorpClient;
   dispatchers: ReguaDispatchers;
   hourUtc?: number;
+  claimDailyRun?: ClaimDailyRun;
 }): () => void {
   const hour = opts.hourUtc ?? 12;
-  let timer: NodeJS.Timeout;
+  const claim: ClaimDailyRun = opts.claimDailyRun ?? (async () => true);
+  let timer: NodeJS.Timeout | undefined;
+  let stopped = false;
+
+  const runOnce = async (now: Date): Promise<void> => {
+    const dateIso = isoDate(now);
+    if (!(await claim(dateIso))) {
+      logger.info({ dateIso }, 'réguas do dia já executadas por outra instância/execução');
+      return;
+    }
+    try {
+      const res = await runDailyReguas(opts.clinicorp, opts.dispatchers, now);
+      logger.info(res, 'réguas diárias executadas');
+    } catch (err) {
+      logger.error({ err }, 'falha nas réguas diárias');
+    }
+  };
 
   const scheduleNext = (): void => {
+    if (stopped) return;
     const now = new Date();
     const next = new Date(
       Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), hour, 0, 0),
@@ -84,15 +112,29 @@ export function startReguas(opts: {
     if (next.getTime() <= now.getTime()) next.setUTCDate(next.getUTCDate() + 1);
 
     timer = setTimeout(() => {
-      void runDailyReguas(opts.clinicorp, opts.dispatchers, new Date())
-        .then((res) => logger.info(res, 'réguas diárias executadas'))
-        .catch((err) => logger.error({ err }, 'falha nas réguas diárias'))
-        .finally(scheduleNext);
+      void runOnce(new Date()).finally(scheduleNext);
     }, next.getTime() - now.getTime());
 
     if (timer.unref) timer.unref();
   };
 
+  // Catch-up: o horário de hoje já passou → tenta rodar agora (o claim decide se é a 1ª vez).
+  const bootNow = new Date();
+  const targetToday = Date.UTC(
+    bootNow.getUTCFullYear(),
+    bootNow.getUTCMonth(),
+    bootNow.getUTCDate(),
+    hour,
+    0,
+    0,
+  );
+  if (bootNow.getTime() >= targetToday) {
+    void runOnce(bootNow);
+  }
+
   scheduleNext();
-  return () => clearTimeout(timer);
+  return () => {
+    stopped = true;
+    if (timer) clearTimeout(timer);
+  };
 }

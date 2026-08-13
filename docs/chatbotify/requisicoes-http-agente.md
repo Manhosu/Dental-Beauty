@@ -57,9 +57,41 @@ Aba do painel: **Configurar Agente → Requisições HTTP** (ativar o "Agente HT
 
 ---
 
+## 4) Horário comercial — quem atende agora (fluxo, não é ferramenta do agente)
+Decisão do cliente (2026-08): **dentro do horário comercial quem atende é a recepção humana**;
+**fora dele, a IA**. Réguas e follow-ups rodam sempre, independente do horário — eles não passam
+por aqui.
+
+- **Método:** `GET` · **URL:** `https://dental-beauty-agenda.onrender.com/atendimento/status`
+- **Headers:** `x-api-key: <chave>`
+- **Resposta 200:**
+```json
+{ "businessHours": true, "attendant": "recepcao", "localTime": "10:30", "weekday": 3,
+  "automationsAlwaysOn": true, "horario": { "inicio": "09:00", "fim": "18:00", "dias": [1,2,3,4,5] } }
+```
+
+**Como montar no Flow Builder** (fluxo que roda ao receber mensagem, ANTES do agente responder):
+```
+Gatilho (mensagem recebida)
+  └─ HTTP Request → GET /atendimento/status
+       └─ Condição: attendant == "recepcao"
+            ├─ sim → Controle de Agente: DESLIGAR  (a recepção assume; nenhuma resposta automática)
+            └─ não → Controle de Agente: LIGAR     (a IA atende normalmente)
+```
+
+> Isso também é a trava contra o problema relatado pelo cliente ("a IA entrou automaticamente e
+> enviou muita coisa errada"): mesmo que o agente seja reativado por engano, o fluxo o desliga
+> dentro do expediente.
+
+O horário fica em variáveis de ambiente no Render (`BUSINESS_HOURS_START`, `_END`, `_DAYS`,
+`_TZ_OFFSET`) — mudar o expediente **não exige deploy de código**. Default: seg–sex 09:00–18:00 BRT.
+
+---
+
 ## Extras disponíveis no backend (se precisar em fluxos/réguas)
 | Rota | Método | Uso |
 |---|---|---|
+| `/atendimento/status` | GET | Quem atende agora (recepção x IA) — ver §4 |
 | `/agendamento/agenda?date=AAAA-MM-DD[&to=AAAA-MM-DD]` | GET | Agendamentos do período (fonte no-show/lembrete). Retorna `{from,to,appointments[]}` |
 | `/catalogo/especialidades` | GET | Lista de especialidades (id, description) |
 | `/catalogo/profissionais` | GET | Lista de profissionais |

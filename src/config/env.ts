@@ -1,4 +1,9 @@
 import { z } from 'zod';
+import {
+  DEFAULT_BUSINESS_HOURS,
+  parseWeekdays,
+  type BusinessHoursConfig,
+} from '../domain/businessHours';
 
 const envSchema = z.object({
   NODE_ENV: z.enum(['development', 'test', 'production']).default('development'),
@@ -22,6 +27,12 @@ const envSchema = z.object({
   CHATBOTIFY_REGUA_WEBHOOK_URL: z.string().url().optional().or(z.literal('')),
   CHATBOTIFY_REGUA_ACCOUNT_ID: z.string().optional(),
   CHATBOTIFY_REGUA_TOKEN: z.string().optional(),
+  // Conta da RECEPÇÃO — decisão do cliente (2026-08): confirmação/lembrete de consulta e NPS saem
+  // pelo número da Recepção (templates Utility); campanhas (aniversário/retorno/reengajamento)
+  // continuam saindo pelo Disparos. Se estas 3 ficarem vazias, tudo sai pela conta padrão acima.
+  CHATBOTIFY_REGUA_RECEPCAO_WEBHOOK_URL: z.string().url().optional().or(z.literal('')),
+  CHATBOTIFY_REGUA_RECEPCAO_ACCOUNT_ID: z.string().optional(),
+  CHATBOTIFY_REGUA_RECEPCAO_TOKEN: z.string().optional(),
   CHATBOTIFY_REGUA_FLOW: z.string().optional(), // id do fluxo de ANIVERSÁRIO
   CHATBOTIFY_REGUA_FLOW_NOSHOW: z.string().optional(), // id do fluxo de NO-SHOW (2º fluxo)
   CHATBOTIFY_REGUA_FLOW_POSPROC: z.string().optional(), // id do fluxo de PÓS-PROCEDIMENTO (retorno)
@@ -38,9 +49,25 @@ const envSchema = z.object({
   CHATBOTIFY_CRM_API_TOKEN: z.string().optional(), // header `api_token`
   // Token compartilhado que vai na URL do webhook configurada no painel Sonax (?token=...).
   SONAX_WEBHOOK_TOKEN: z.string().optional(),
+  // Horário comercial da recepção (decisão do cliente 2026-08): dentro dele a recepção atende e a
+  // IA de conversa fica calada; fora dele a IA assume. Réguas/follow-ups rodam sempre.
+  BUSINESS_HOURS_START: z.string().optional(), // 'HH:mm' (default 09:00)
+  BUSINESS_HOURS_END: z.string().optional(), // 'HH:mm', exclusivo (default 18:00)
+  BUSINESS_HOURS_DAYS: z.string().optional(), // '1,2,3,4,5' (0=Dom..6=Sáb; default seg–sex)
+  BUSINESS_HOURS_TZ_OFFSET: z.coerce.number().optional(), // horas (default -3 = BRT)
 });
 
 export type Env = z.infer<typeof envSchema>;
+
+/** Config de horário comercial a partir do env, caindo no default quando não informada. */
+export function businessHoursFromEnv(env: Env): BusinessHoursConfig {
+  return {
+    start: env.BUSINESS_HOURS_START || DEFAULT_BUSINESS_HOURS.start,
+    end: env.BUSINESS_HOURS_END || DEFAULT_BUSINESS_HOURS.end,
+    days: parseWeekdays(env.BUSINESS_HOURS_DAYS, DEFAULT_BUSINESS_HOURS.days),
+    tzOffsetHours: env.BUSINESS_HOURS_TZ_OFFSET ?? DEFAULT_BUSINESS_HOURS.tzOffsetHours,
+  };
+}
 
 export function parseEnv(source: NodeJS.ProcessEnv | Record<string, unknown> = process.env): Env {
   return envSchema.parse(source);

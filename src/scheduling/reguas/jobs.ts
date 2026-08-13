@@ -1,6 +1,12 @@
 import type { ClinicorpClient } from '../../integrations/clinicorp/types';
 import type { ReguaDispatcher } from './dispatcher';
 
+/**
+ * Idade máxima tratada como público infantil (Dental Beauty Kids). Os textos aprovados têm trilha
+ * própria para criança — ver `textos-reguas-APROVADO.md`.
+ */
+export const INFANTIL_MAX_AGE = 12;
+
 /** Régua de aniversariantes: felicita cada paciente que faz aniversário (consulta diária). */
 export async function runAniversariantes(
   clinicorp: ClinicorpClient,
@@ -10,7 +16,14 @@ export async function runAniversariantes(
   let sent = 0;
   for (const b of birthdays) {
     if (!b.mobilePhone) continue;
-    await dispatch({ type: 'aniversario', phone: b.mobilePhone, name: b.name });
+    // A Clinicorp entrega a idade — é o que separa a arte/texto adulto do infantil.
+    const infantil = typeof b.age === 'number' && b.age <= INFANTIL_MAX_AGE;
+    await dispatch({
+      type: 'aniversario',
+      phone: b.mobilePhone,
+      name: b.name,
+      ...(infantil ? { track: 'infantil' as const, childName: b.name } : {}),
+    });
     sent++;
   }
   return sent;
