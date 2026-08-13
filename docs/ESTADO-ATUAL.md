@@ -99,10 +99,12 @@ Rodam **1×/dia às 12h UTC (09h BRT)**, em [src/scheduling/reguas/](../src/sche
   (`regua:sent:*`). Restart do processo não reenvia. Falha no envio libera a reserva para retentar.
 - **Sem dia perdido** — se o serviço subir **depois** das 09h e a rotina do dia ainda não tiver
   rodado, ela roda no boot (catch-up). Resolve a hibernação/restart do Render.
-- **Payload compatível com template** — o corpo leva `nome`, `numero`, `tipo`, `track`
-  (adulto/infantil), `var1` (nome) e `var2` (nome da criança), além de `observacoes`.
+- **Payload no contrato do Gatilho HTTP** — `nome`, `numero` e `observacoes` são os campos que a
+  plataforma realmente consome (confirmado no painel — ver §9). O dispatcher também envia `tipo`,
+  `track`, `var1` e `var2`, que hoje são **ignorados**: o texto vive no bloco Mensagem de cada fluxo.
 
-**Estado:** dormentes (`REGUAS_ENABLED=false`, IDs de fluxo vazios).
+**Estado:** dormentes (`REGUAS_ENABLED=false`). O fluxo de **aniversário adulto já existe**
+(`CHATBOTIFY_REGUA_FLOW`); os outros 4 ainda precisam ser criados no Flow Builder.
 
 ---
 
@@ -186,3 +188,60 @@ CHATBOTIFY_CRM_ACCOUNT_ID / CHATBOTIFY_CRM_API_TOKEN / SONAX_WEBHOOK_TOKEN
 | Discador Sonax | [integracao-sonax-discador.md](integracao-sonax-discador.md) |
 | Deploy | [DEPLOY.md](DEPLOY.md) |
 | Guia para o cliente | [GUIA-SISTEMA-DENTAL-BEAUTY.md](GUIA-SISTEMA-DENTAL-BEAUTY.md) |
+
+---
+
+## 9. Sessão de configuração no painel (2026-08-13)
+
+Acesso ao painel do Chatbotify com o DevTools. O que foi **verificado** e o que foi **alterado**.
+
+### ✅ Contrato do "Gatilho HTTP" — CONFIRMADO no painel
+Era a maior incógnita do projeto. O bloco documenta exatamente o que o backend já envia:
+
+```
+POST https://n8n-site-1-n8n-editor.8mabqk.easypanel.host/webhook/form_meta
+Headers: Content-Type · id (conta) · token · flow (id do fluxo)
+Body:    nome* · numero* · email · observacoes · gatilho
+```
+`*` obrigatório. O contato é criado/atualizado automaticamente na plataforma.
+
+> ⚠️ **Consequência de projeto:** o body aceita **só** esses campos. Os extras que o dispatcher
+> envia (`tipo`, `track`, `var1`, `var2`) são **ignorados** — não existe passagem de variável de
+> template por aqui. O texto da mensagem é configurado **no bloco Mensagem de cada fluxo**, e a
+> personalização usa o nome do contato. Logo: **um fluxo por régua e por trilha** (adulto/infantil),
+> cada um com seu `flow` id. A trilha infantil precisará de fluxos próprios.
+
+Cada fluxo escolhe a **Conta WhatsApp de envio** no próprio bloco (Recepcao / Orcamento / Disparos)
+— é assim que a separação "confirmação pela Recepção, campanha pelo Disparos" se materializa.
+
+### ✅ Horário comercial — CONFIGURADO (nativo, melhor que a solução via fluxo)
+O agente tem suporte nativo. Configuração aplicada e salva:
+- **Horário de Atendimento do Agente = "Fora do expediente"** → agente ativo só fora do comercial.
+- **Comportamento no Período Alternativo = "Não responder"** → no horário comercial a IA fica calada
+  e a recepção humana atende. Era "Responder" (a IA responderia) — corrigido.
+- **Horário Comercial:** seg–sex 09:00–18:00; sábado e domingo desligados. ⚠️ Ainda é o default —
+  confirmar com o cliente.
+
+Isso torna o `GET /atendimento/status` **redundante como gate principal**. O endpoint segue útil
+para consultar o expediente em fluxos e como verificação; a fonte de verdade agora é o painel.
+
+### ✅ Fluxo criado: "Régua — Aniversário (adulto)"
+`Gatilho HTTP → Mensagem`, conta de envio **Disparos**, texto aprovado do aniversário adulto.
+**Salvo e INATIVO** — não executa em produção. Faltam os fluxos das outras 4 réguas + trilha infantil.
+
+### 📋 Estado real do painel (difere do que a doc antiga registrava)
+| Item | Situação |
+|---|---|
+| Contas de WhatsApp | **3**: Recepcao (99128-2761), Orcamento (97552-0232), **Disparos (21) 99126-8267** |
+| Número de Disparos | **mudou** — o antigo 92000-2328 não existe mais |
+| Conta "Atendimento Lead" | **não existe** como conta de WhatsApp |
+| Modo de conexão | Todas em **Oficial (Meta)**, modo híbrido. Disparos: "Aguardando QR" no canal não-oficial |
+| Agente | 1 agente "Atendimento Lead", **na conta Disparos**, **DESATIVADO**, **Modo Teste com 2 números** |
+| Roteamento | ⚠️ Nenhuma conta tem agente prioritário selecionado |
+| Documentos do agente | **0** — o PDF de apoio nunca foi re-subido (13 mídias estão OK) |
+| Fluxos | eram **0** antes desta sessão |
+
+### 🔜 Próximo passo que exige decisão
+O bloco Gatilho HTTP tem **"Teste ao Vivo"**. É o teste que valida a régua ponta a ponta — mas
+dispara **mensagem real** no WhatsApp do número informado. Não executado: precisa de autorização e
+de um número de teste.
