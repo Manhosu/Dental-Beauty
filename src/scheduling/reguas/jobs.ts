@@ -1,5 +1,6 @@
 import type { ClinicorpClient } from '../../integrations/clinicorp/types';
 import type { ReguaDispatcher } from './dispatcher';
+import { logger } from '../../lib/logger';
 
 /**
  * Idade máxima tratada como público infantil (Dental Beauty Kids). Os textos aprovados têm trilha
@@ -7,15 +8,47 @@ import type { ReguaDispatcher } from './dispatcher';
  */
 export const INFANTIL_MAX_AGE = 12;
 
-/** Régua de aniversariantes: felicita cada paciente que faz aniversário (consulta diária). */
+/**
+ * Extrai dia e mês de uma data de nascimento. A Clinicorp não documenta o formato, então aceita
+ * ISO (`2026-08-17`, com ou sem hora) e `DD/MM/AAAA`. Retorna `null` quando não reconhece.
+ */
+export function parseDayMonth(birthDate: string): { day: number; month: number } | null {
+  const iso = /^(\d{4})-(\d{2})-(\d{2})/.exec(birthDate.trim());
+  if (iso) return { day: Number(iso[3]), month: Number(iso[2]) };
+  const br = /^(\d{1,2})\/(\d{1,2})\/(\d{4})/.exec(birthDate.trim());
+  if (br) return { day: Number(br[1]), month: Number(br[2]) };
+  return null;
+}
+
+/**
+ * O aniversário é HOJE? `GET /patient/birthdays` não aceita filtro de data, então não há garantia
+ * de que a lista traga só o dia corrente — sem esta checagem, uma lista mensal viraria dezenas de
+ * mensagens indevidas por dia. Data ilegível → `false` (não enviar na dúvida).
+ */
+export function isBirthdayToday(birthDate: string, today: Date): boolean {
+  const dm = parseDayMonth(birthDate);
+  if (dm === null) return false;
+  return dm.day === today.getUTCDate() && dm.month === today.getUTCMonth() + 1;
+}
+
+/**
+ * Régua de aniversariantes: felicita quem faz aniversário HOJE (consulta diária).
+ * Só dispara para registros com telefone E com a data batendo com o dia da execução.
+ */
 export async function runAniversariantes(
   clinicorp: ClinicorpClient,
   dispatch: ReguaDispatcher,
+  today: Date = new Date(),
 ): Promise<number> {
   const birthdays = await clinicorp.listBirthdays();
   let sent = 0;
+  let ignorados = 0;
   for (const b of birthdays) {
     if (!b.mobilePhone) continue;
+    if (!isBirthdayToday(b.birthDate, today)) {
+      ignorados++;
+      continue;
+    }
     // A Clinicorp entrega a idade — é o que separa a arte/texto adulto do infantil.
     const infantil = typeof b.age === 'number' && b.age <= INFANTIL_MAX_AGE;
     await dispatch({
@@ -25,6 +58,9 @@ export async function runAniversariantes(
       ...(infantil ? { track: 'infantil' as const, childName: b.name } : {}),
     });
     sent++;
+  }
+  if (ignorados > 0) {
+    logger.info({ sent, ignorados }, 'régua aniversário: registros fora da data foram ignorados');
   }
   return sent;
 }

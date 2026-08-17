@@ -34,13 +34,13 @@ describe('réguas — jobs', () => {
   it('aniversariantes: 1 disparo por paciente com telefone, pula quem não tem', async () => {
     const clinicorp = fakeClinicorp({
       listBirthdays: vi.fn().mockResolvedValue([
-        { patientId: 1, name: 'Ana', birthDate: 'x', age: 30, mobilePhone: '5521999' },
-        { patientId: 2, name: 'Sem Fone', birthDate: 'x', age: 40 },
+        { patientId: 1, name: 'Ana', birthDate: '1996-06-26', age: 30, mobilePhone: '5521999' },
+        { patientId: 2, name: 'Sem Fone', birthDate: '1986-06-26', age: 40 },
       ]),
     });
     const dispatch = vi.fn().mockResolvedValue(undefined);
 
-    const sent = await runAniversariantes(clinicorp, dispatch);
+    const sent = await runAniversariantes(clinicorp, dispatch, new Date('2026-06-26T12:00:00.000Z'));
 
     expect(sent).toBe(1);
     expect(dispatch).toHaveBeenCalledTimes(1);
@@ -185,7 +185,7 @@ describe('réguas — cronEngine', () => {
 
   it('runDailyReguas roda aniversário + no-show (T-24h) quando ambos configurados', async () => {
     const clinicorp = fakeClinicorp({
-      listBirthdays: vi.fn().mockResolvedValue([{ patientId: 1, name: 'Ana', birthDate: 'x', age: 30, mobilePhone: '5521999' }]),
+      listBirthdays: vi.fn().mockResolvedValue([{ patientId: 1, name: 'Ana', birthDate: '1996-06-26', age: 30, mobilePhone: '5521999' }]),
       listAppointmentsByDate: vi.fn().mockResolvedValue([{ id: '10', patientName: 'B', mobilePhone: '5521888', date: 'x', fromTime: '9:00', toTime: '9:30' }]),
     });
     const aniversario = vi.fn().mockResolvedValue(undefined);

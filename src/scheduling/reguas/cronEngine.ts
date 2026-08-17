@@ -41,7 +41,7 @@ export async function runDailyReguas(
   nps: number;
   inatividade: number;
 }> {
-  const aniversario = await runAniversariantes(clinicorp, dispatchers.aniversario);
+  const aniversario = await runAniversariantes(clinicorp, dispatchers.aniversario, now);
   const noShow = dispatchers.noShow
     ? await runNoShow(clinicorp, dispatchers.noShow, isoDate(now, 1))
     : 0;

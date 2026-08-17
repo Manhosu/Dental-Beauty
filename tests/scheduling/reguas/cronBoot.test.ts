@@ -10,7 +10,7 @@ function fakeClinicorp(): ClinicorpClient {
     listProfessionals: vi.fn(),
     listAppointmentsByDate: vi.fn().mockResolvedValue([]),
     listAppointmentStatuses: vi.fn().mockResolvedValue([]),
-    listBirthdays: vi.fn().mockResolvedValue([{ patientId: 1, name: 'Ana', birthDate: 'x', age: 30, mobilePhone: '5521999' }]),
+    listBirthdays: vi.fn().mockResolvedValue([{ patientId: 1, name: 'Ana', birthDate: '1990-08-13', age: 30, mobilePhone: '5521999' }]),
     listSpecialties: vi.fn(),
     findPatientByPhone: vi.fn(),
   } as unknown as ClinicorpClient;
