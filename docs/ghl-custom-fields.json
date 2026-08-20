@@ -1,0 +1,127 @@
+{
+  "Orçamento - Especialidade": {
+    "id": "2oDsg2vBJaW52Jr9Akcx",
+    "key": "contact.oramento__especialidade",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Trilha": {
+    "id": "6BaeEWxRs6YU30ltODMS",
+    "key": "contact.trilha",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Orçamento - Mês": {
+    "id": "8BuOkSAQgNYYm9uIgJg0",
+    "key": "contact.oramento__ms",
+    "tipo": "TEXT"
+  },
+  "Unidade": {
+    "id": "9LmL1zDWQcRrFaKiEMg9",
+    "key": "contact.unidade",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "NPS - Nota": {
+    "id": "CDZnT8oVibUiC7zAzxkK",
+    "key": "contact.nps__nota",
+    "tipo": "NUMERICAL"
+  },
+  "Orçamento - Status": {
+    "id": "CTI0ww9deglhZ3o12ISZ",
+    "key": "contact.oramento__status",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Nome da Criança": {
+    "id": "D8nLqe0F9X4XAzyycSnu",
+    "key": "contact.nome_da_criana",
+    "tipo": "TEXT"
+  },
+  "Orçamento - Retorno Agendado": {
+    "id": "F0tBqr8Prp92tb3KRJTy",
+    "key": "contact.oramento__retorno_agendado",
+    "tipo": "DATE"
+  },
+  "Código Clinicorp": {
+    "id": "FXOXU1BpsONnt7NhXv71",
+    "key": "contact.cdigo_clinicorp",
+    "tipo": "TEXT"
+  },
+  "Motivo Sem Acordo": {
+    "id": "MUm1fnS2h1D0vlLIFF3X",
+    "key": "contact.motivo_sem_acordo",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Já é paciente": {
+    "id": "OeeysIGDW183UBOIhTcc",
+    "key": "contact.j__paciente",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Nome do Responsável": {
+    "id": "RS8J9QI4eFwLnMDILbzg",
+    "key": "contact.nome_do_responsvel",
+    "tipo": "TEXT"
+  },
+  "Campanha/Parceiro": {
+    "id": "TnbIWwnsDKM31y6urweC",
+    "key": "contact.campanhaparceiro",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Bairro": {
+    "id": "U7XDwlXD0RJIWwkJzytW",
+    "key": "contact.bairro",
+    "tipo": "TEXT"
+  },
+  "Canal de Entrada": {
+    "id": "UItxkro5UmXi8GD5TZDB",
+    "key": "contact.canal_de_entrada",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Data do Último Atendimento": {
+    "id": "agOS7mVnrCHymK1grWLe",
+    "key": "contact.data_do_ltimo_atendimento",
+    "tipo": "DATE"
+  },
+  "Status da Negociação": {
+    "id": "jiOA0wbvzaPLA53R7NMo",
+    "key": "contact.status_da_negociao",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Data/Hora do Agendamento": {
+    "id": "jmdbqaSJPPEAQF60gqsk",
+    "key": "contact.datahora_do_agendamento",
+    "tipo": "DATE"
+  },
+  "Profissional": {
+    "id": "onA7P3e8wMAai1WHVT9m",
+    "key": "contact.profissional",
+    "tipo": "TEXT"
+  },
+  "Último Procedimento": {
+    "id": "qEtzu0Lewqmw3R7JqU3J",
+    "key": "contact.ltimo_procedimento",
+    "tipo": "TEXT"
+  },
+  "Orçamento - Observações": {
+    "id": "qV3bQpkhgwOaW9iwyItU",
+    "key": "contact.oramento__observaes",
+    "tipo": "LARGE_TEXT"
+  },
+  "Orçamento - Valor": {
+    "id": "s3mI27rqMFmZ3MkqjJq2",
+    "key": "contact.oramento__valor",
+    "tipo": "MONETORY"
+  },
+  "Resumo do Atendimento": {
+    "id": "tZqotPjWQSgCa7kZrG1m",
+    "key": "contact.resumo_do_atendimento",
+    "tipo": "LARGE_TEXT"
+  },
+  "Orçamento - Tipo de Cliente": {
+    "id": "wOBl0Ok1kTwJTBzMI3xa",
+    "key": "contact.oramento__tipo_de_cliente",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Especialidade": {
+    "id": "yFVtRuJkABXyxzL2Ecan",
+    "key": "contact.especialidade",
+    "tipo": "SINGLE_OPTIONS"
+  }
+}

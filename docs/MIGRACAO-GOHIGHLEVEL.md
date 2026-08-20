@@ -35,6 +35,25 @@ A área de WhatsApp da conta mostra a tela de venda (**"PAGAR $20 E ASSINAR"**).
 
 O cliente precisa assinar em **Configurações → WhatsApp**. Só depois disso a camada de mensagens anda.
 
+## ✅ Feito (2ª rodada)
+
+- **25 campos personalizados** criados via API (`POST /locations/{id}/customFields`) — cobrem os
+  três formulários da spec. Mapa nome→id/fieldKey em [`ghl-custom-fields.json`](ghl-custom-fields.json).
+  Script idempotente reutilizável: [`scripts/ghl-custom-fields.mjs`](../scripts/ghl-custom-fields.mjs).
+- **`GoHighLevelCrmClient`** (`src/integrations/ghl/client.ts`) — substitui o `ChatbotifyCrmClient`
+  no webhook do Sonax. A interface `SonaxCrmPort` não mudou; só a implementação. 7 testes.
+- **`createGhlDispatcher`** (`src/scheduling/reguas/ghlDispatcher.ts`) — entrega das réguas pelo
+  Inbound Webhook do GHL. 7 testes.
+- **Fiação com coexistência:** o `main.ts` escolhe GHL quando configurado e cai no Chatbotify caso
+  contrário — dá para virar a chave por variável de ambiente, sem deploy de código.
+
+### Payload enviado ao workflow (GHL)
+Diferente do Chatbotify, o corpo é **JSON livre** — o workflow mapeia o que quiser:
+`phone` · `name` · `first_name` · `tipo` · `track` · `nome_crianca` · `observacoes` ·
+`appointment_id` · `data` · `hora` · `profissional` · `unidade` · `procedimento` · `meses`
+
+> `first_name` existe porque os textos aprovados usam só o primeiro nome ("Oi, [Nome]!").
+
 ## Pendente
 
 1. Módulo WhatsApp + conexão da WABA + conferência dos 50 templates *(depende do cliente)*

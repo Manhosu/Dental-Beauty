@@ -5,8 +5,15 @@ import { createLockRedis } from './scheduling/redisLock';
 import { SchedulingEngine } from './scheduling/schedulingEngine';
 import { HttpClinicorpClient } from './integrations/clinicorp/client';
 import { ChatbotifyCrmClient } from './integrations/chatbotify/crmClient';
+import { GoHighLevelCrmClient } from './integrations/ghl/client';
+import type { SonaxCrmPort } from './integrations/sonax/sonax';
 import { buildServer } from './http/server';
-import { createHttpDispatcher, type ReguaWebhookConfig } from './scheduling/reguas/dispatcher';
+import {
+  createHttpDispatcher,
+  type ReguaDispatcher,
+  type ReguaWebhookConfig,
+} from './scheduling/reguas/dispatcher';
+import { createGhlDispatcher } from './scheduling/reguas/ghlDispatcher';
 import { isoDate, startReguas } from './scheduling/reguas/cronEngine';
 import { createRedisSentRegistry, withDedupe } from './scheduling/reguas/dedupe';
 import { logger } from './lib/logger';
@@ -30,19 +37,31 @@ async function main(): Promise<void> {
 
   const engine = new SchedulingEngine(clinicorp, lock);
 
-  // Integração do discador Sonax (webhook → CRM Chatbotify). Só liga quando as credenciais da API
-  // do Chatbotify estiverem configuradas; caso contrário fica dormente.
-  const sonaxDeps =
-    env.CHATBOTIFY_CRM_ACCOUNT_ID && env.CHATBOTIFY_CRM_API_TOKEN
-      ? {
-          crm: new ChatbotifyCrmClient({
+  // CRM do discador Sonax. Durante a migração as duas plataformas coexistem: se o GoHighLevel
+  // estiver configurado ele tem prioridade; senão cai no Chatbotify; sem nenhum, fica dormente.
+  const crm: SonaxCrmPort | undefined =
+    env.GHL_LOCATION_ID && env.GHL_PRIVATE_TOKEN
+      ? new GoHighLevelCrmClient({
+          baseUrl: env.GHL_API_BASE,
+          locationId: env.GHL_LOCATION_ID,
+          token: env.GHL_PRIVATE_TOKEN,
+          apiVersion: env.GHL_API_VERSION,
+        })
+      : env.CHATBOTIFY_CRM_ACCOUNT_ID && env.CHATBOTIFY_CRM_API_TOKEN
+        ? new ChatbotifyCrmClient({
             baseUrl: env.CHATBOTIFY_CRM_API_BASE,
             accountId: env.CHATBOTIFY_CRM_ACCOUNT_ID,
             apiToken: env.CHATBOTIFY_CRM_API_TOKEN,
-          }),
-          ...(env.SONAX_WEBHOOK_TOKEN ? { token: env.SONAX_WEBHOOK_TOKEN } : {}),
-        }
-      : undefined;
+          })
+        : undefined;
+
+  const sonaxDeps = crm
+    ? { crm, ...(env.SONAX_WEBHOOK_TOKEN ? { token: env.SONAX_WEBHOOK_TOKEN } : {}) }
+    : undefined;
+
+  if (crm) {
+    logger.info({ crm: env.GHL_LOCATION_ID ? 'gohighlevel' : 'chatbotify' }, 'CRM do Sonax ativo');
+  }
 
   const businessHours = businessHoursFromEnv(env);
   const app = buildServer({
@@ -54,7 +73,41 @@ async function main(): Promise<void> {
   await app.listen({ port: env.PORT, host: '0.0.0.0' });
   logger.info({ port: env.PORT }, 'servidor iniciado');
 
-  // Cron-Engine das réguas (§3.4) — só liga se habilitado e com a config completa do fluxo de disparo.
+  // Trava anti-duplicidade compartilhada (Redis) — sobrevive a restart do processo.
+  const sentRegistry = createRedisSentRegistry(redis);
+  const comDedupe = (d: ReguaDispatcher): ReguaDispatcher =>
+    withDedupe(d, sentRegistry, () => isoDate(new Date()));
+
+  // ── Réguas no GoHighLevel (plataforma nova) ────────────────────────────────────────────────
+  // Cada régua tem seu Inbound Webhook. A de aniversário é a mínima para ligar o motor.
+  if (env.REGUAS_ENABLED && env.GHL_REGUA_WEBHOOK_ANIVERSARIO) {
+    const hook = (url: string): ReguaDispatcher => comDedupe(createGhlDispatcher({ url }));
+    const dispatchers = {
+      aniversario: hook(env.GHL_REGUA_WEBHOOK_ANIVERSARIO),
+      ...(env.GHL_REGUA_WEBHOOK_NOSHOW ? { noShow: hook(env.GHL_REGUA_WEBHOOK_NOSHOW) } : {}),
+      ...(env.GHL_REGUA_WEBHOOK_POSPROC ? { posProcedimento: hook(env.GHL_REGUA_WEBHOOK_POSPROC) } : {}),
+      ...(env.GHL_REGUA_WEBHOOK_NPS ? { nps: hook(env.GHL_REGUA_WEBHOOK_NPS) } : {}),
+      ...(env.GHL_REGUA_WEBHOOK_INATIVIDADE ? { inatividade: hook(env.GHL_REGUA_WEBHOOK_INATIVIDADE) } : {}),
+    };
+    startReguas({
+      clinicorp,
+      dispatchers,
+      claimDailyRun: (dateIso) => sentRegistry.claim(`regua:run:${dateIso}`, 172_800),
+    });
+    logger.info(
+      {
+        plataforma: 'gohighlevel',
+        noShow: !!env.GHL_REGUA_WEBHOOK_NOSHOW,
+        posProcedimento: !!env.GHL_REGUA_WEBHOOK_POSPROC,
+        nps: !!env.GHL_REGUA_WEBHOOK_NPS,
+        inatividade: !!env.GHL_REGUA_WEBHOOK_INATIVIDADE,
+      },
+      'réguas (cron-engine) ativadas',
+    );
+    return;
+  }
+
+  // ── Réguas no Chatbotify (legado — mantido enquanto a migração não fecha) ───────────────────
   if (
     env.REGUAS_ENABLED &&
     env.CHATBOTIFY_REGUA_WEBHOOK_URL &&
@@ -82,10 +135,8 @@ async function main(): Promise<void> {
           }
         : campanha;
 
-    // Trava anti-duplicidade compartilhada (Redis) — sobrevive a restart do processo.
-    const sentRegistry = createRedisSentRegistry(redis);
-    const guarded = (cfg: ReguaWebhookConfig): ReturnType<typeof createHttpDispatcher> =>
-      withDedupe(createHttpDispatcher(cfg), sentRegistry, () => isoDate(new Date()));
+    const guarded = (cfg: ReguaWebhookConfig): ReguaDispatcher =>
+      comDedupe(createHttpDispatcher(cfg));
 
     const dispatchers = {
       aniversario: guarded({ ...campanha, flow: env.CHATBOTIFY_REGUA_FLOW }),

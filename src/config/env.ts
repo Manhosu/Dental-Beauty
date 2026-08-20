@@ -49,6 +49,18 @@ const envSchema = z.object({
   CHATBOTIFY_CRM_API_TOKEN: z.string().optional(), // header `api_token`
   // Token compartilhado que vai na URL do webhook configurada no painel Sonax (?token=...).
   SONAX_WEBHOOK_TOKEN: z.string().optional(),
+  // ── GoHighLevel (plataforma nova, migração 2026-08) ────────────────────────────────────────
+  // Enquanto as duas plataformas coexistem, o GHL só entra em ação quando estas vars existirem.
+  GHL_API_BASE: z.string().url().optional().or(z.literal('')).default('https://services.leadconnectorhq.com'),
+  GHL_API_VERSION: z.string().optional().default('2021-07-28'),
+  GHL_LOCATION_ID: z.string().optional(),
+  GHL_PRIVATE_TOKEN: z.string().optional(), // Private Integration (pit-...)
+  // URLs de Inbound Webhook — uma por workflow de régua. Sem headers: a URL já é o segredo.
+  GHL_REGUA_WEBHOOK_ANIVERSARIO: z.string().url().optional().or(z.literal('')),
+  GHL_REGUA_WEBHOOK_NOSHOW: z.string().url().optional().or(z.literal('')),
+  GHL_REGUA_WEBHOOK_POSPROC: z.string().url().optional().or(z.literal('')),
+  GHL_REGUA_WEBHOOK_NPS: z.string().url().optional().or(z.literal('')),
+  GHL_REGUA_WEBHOOK_INATIVIDADE: z.string().url().optional().or(z.literal('')),
   // Horário comercial da recepção (decisão do cliente 2026-08): dentro dele a recepção atende e a
   // IA de conversa fica calada; fora dele a IA assume. Réguas/follow-ups rodam sempre.
   BUSINESS_HOURS_START: z.string().optional(), // 'HH:mm' (default 09:00)
