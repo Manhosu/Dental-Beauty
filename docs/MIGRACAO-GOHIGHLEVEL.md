@@ -26,6 +26,22 @@
 - **Pipeline "Orçamento" — 8 etapas** (Agendado Retorno · D0 · D1 · D3 · D7 · D15 · Orçamento Aprovado · Não fechado)
 - IDs de pipeline e de cada etapa salvos em [`ghl-ids.json`](ghl-ids.json)
 
+## 🔴 Bloqueio: módulo WhatsApp não contratado — CONFIRMADO no construtor
+
+Testado ao vivo em 2026-08-19: as ações de WhatsApp **existem** no Workflow Builder
+(`WhatsApp`, `WhatsApp media`, `WhatsApp interactive messages`, `Whatsapp: customer service window
+check`, `Whatsapp: send flows`). Mas ao abrir a ação `WhatsApp`:
+
+- o campo **`SELECT WHATSAPP TEMPLATE` é obrigatório** — *"Select from templates which are approved
+  and have all the variables mapped"*;
+- a lista vem vazia e o painel avisa **"You do not have WhatsApp subscription!"**;
+- logo, **a ação não pode ser salva** → os 25 follow-ups e as 5 réguas **não podem ser montados**
+  antes da assinatura. Não é questão de ordem de trabalho: é impedimento técnico.
+
+> 💡 Bom sinal para o projeto: o GHL exige template e mapeia as variáveis nativamente, e ainda tem
+> uma ação dedicada de **checagem da janela de 24h**. É exatamente o problema que quebrava em
+> silêncio no Chatbotify — aqui a plataforma não deixa configurar errado.
+
 ## 🔴 Bloqueio: módulo WhatsApp não contratado
 
 A área de WhatsApp da conta mostra a tela de venda (**"PAGAR $20 E ASSINAR"**). Sem esse módulo:
