@@ -60,6 +60,7 @@ const envSchema = z.object({
   GHL_FIELD_TRILHA: z.string().optional(),
   GHL_FIELD_NOME_CRIANCA: z.string().optional(),
   GHL_FIELD_ULTIMO_PROCEDIMENTO: z.string().optional(),
+  GHL_FIELD_UNIDADE: z.string().optional(),
   // Horário comercial da recepção (decisão do cliente 2026-08): dentro dele a recepção atende e a
   // IA de conversa fica calada; fora dele a IA assume. Réguas/follow-ups rodam sempre.
   BUSINESS_HOURS_START: z.string().optional(), // 'HH:mm' (default 09:00)

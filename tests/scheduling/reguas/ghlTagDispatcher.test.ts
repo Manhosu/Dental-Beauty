@@ -3,6 +3,7 @@ import {
   buildCustomFields,
   createGhlTagDispatcher,
   tagForPayload,
+  unidadeParaOpcaoGhl,
   type GhlReguaFieldIds,
 } from '../../../src/scheduling/reguas/ghlTagDispatcher';
 import type { ReguaPayload } from '../../../src/scheduling/reguas/dispatcher';
@@ -12,6 +13,7 @@ const fields: GhlReguaFieldIds = {
   trilha: 'id-trilha',
   nomeCrianca: 'id-crianca',
   ultimoProcedimento: 'id-procedimento',
+  unidade: 'id-unidade',
 };
 
 type UpsertInput = Parameters<GoHighLevelCrmClient['upsertContactWithFields']>[0];
@@ -85,6 +87,31 @@ describe('buildCustomFields', () => {
       fields,
     );
     expect(campos).toContainEqual({ id: 'id-procedimento', field_value: 'Limpeza' });
+  });
+
+  it('normaliza a unidade para a grafia das opcoes do GHL', () => {
+    expect(unidadeParaOpcaoGhl('DENTAL BEAUTY RECREIO')).toBe('Recreio');
+    expect(unidadeParaOpcaoGhl('recreio')).toBe('Recreio');
+    expect(unidadeParaOpcaoGhl('Dental Beauty Ipanema')).toBe('Ipanema');
+    expect(unidadeParaOpcaoGhl('IPANEMA')).toBe('Ipanema');
+  });
+
+  it('não grava unidade quando não reconhece o nome, para não sujar o campo', () => {
+    expect(unidadeParaOpcaoGhl('Barra da Tijuca')).toBeUndefined();
+    expect(unidadeParaOpcaoGhl(undefined)).toBeUndefined();
+    const campos = buildCustomFields(
+      { type: 'nps', phone: '1', unit: 'Barra da Tijuca' },
+      fields,
+    );
+    expect(campos.map((c) => c.id)).not.toContain('id-unidade');
+  });
+
+  it('grava a unidade para a pesquisa escolher o link do Google certo', () => {
+    const campos = buildCustomFields(
+      { type: 'nps', phone: '1', unit: 'Dental Beauty Ipanema' },
+      fields,
+    );
+    expect(campos).toContainEqual({ id: 'id-unidade', field_value: 'Ipanema' });
   });
 });
 

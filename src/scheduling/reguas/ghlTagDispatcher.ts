@@ -24,6 +24,8 @@ export interface GhlReguaFieldIds {
   trilha: string;
   nomeCrianca: string;
   ultimoProcedimento: string;
+  /** Unidade do atendimento. A pesquisa de satisfação usa para escolher o link do Google certo. */
+  unidade: string;
 }
 
 export interface GhlTagDispatcherConfig {
@@ -59,6 +61,23 @@ function trilhaParaOpcaoGhl(track: ReguaPayload['track']): string {
   return track === 'infantil' ? 'Infantil' : 'Adulto';
 }
 
+/**
+ * Mesma história do campo "Unidade": as opções cadastradas são **"Recreio"** e **"Ipanema"**.
+ * A Clinicorp devolve o nome da unidade em formatos variados ("DENTAL BEAUTY RECREIO", "recreio"),
+ * então normalizamos. Sem casar com a opção, a pesquisa de satisfação não consegue escolher o link
+ * do Google certo — cada unidade tem o seu.
+ */
+export function unidadeParaOpcaoGhl(unit: string | undefined): string | undefined {
+  if (!unit) return undefined;
+  const normalizado = unit
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase();
+  if (normalizado.includes('recreio')) return 'Recreio';
+  if (normalizado.includes('ipanema')) return 'Ipanema';
+  return undefined;
+}
+
 /** Campos personalizados a gravar no contato antes de marcar a tag. */
 export function buildCustomFields(
   payload: ReguaPayload,
@@ -72,6 +91,10 @@ export function buildCustomFields(
   }
   if (payload.procedure) {
     campos.push({ id: ids.ultimoProcedimento, field_value: payload.procedure });
+  }
+  const unidade = unidadeParaOpcaoGhl(payload.unit);
+  if (unidade) {
+    campos.push({ id: ids.unidade, field_value: unidade });
   }
   return campos;
 }

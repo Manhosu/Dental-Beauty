@@ -86,7 +86,8 @@ async function main(): Promise<void> {
     crm instanceof GoHighLevelCrmClient &&
     env.GHL_FIELD_TRILHA &&
     env.GHL_FIELD_NOME_CRIANCA &&
-    env.GHL_FIELD_ULTIMO_PROCEDIMENTO
+    env.GHL_FIELD_ULTIMO_PROCEDIMENTO &&
+    env.GHL_FIELD_UNIDADE
   ) {
     const porTag = comDedupe(
       createGhlTagDispatcher({
@@ -95,6 +96,7 @@ async function main(): Promise<void> {
           trilha: env.GHL_FIELD_TRILHA,
           nomeCrianca: env.GHL_FIELD_NOME_CRIANCA,
           ultimoProcedimento: env.GHL_FIELD_ULTIMO_PROCEDIMENTO,
+          unidade: env.GHL_FIELD_UNIDADE,
         },
       }),
     );

@@ -41,6 +41,7 @@ O que vale: o backend grava os campos no contato e marca uma **tag**; o workflow
 | Pesquisa de satisfação | `regua-nps` |
 | Reengajamento 6 meses | `regua-inatividade-6` |
 | Reengajamento 12 meses | `regua-inatividade-12` |
+| Cuidado no dia seguinte | `regua-poscirurgia` |
 
 > No fim de cada workflow, **remover a tag** que o disparou. Sem isso a régua não volta a rodar
 > para o mesmo paciente no ano seguinte.
@@ -81,7 +82,7 @@ Campos usados só para ramificar, nunca no texto: `{{contact.trilha}}` e
 > ela também está esperando a segunda rodada do cron (lembrete de 2h). As outras quatro réguas não
 > dependem disso.
 
-## Estrutura: 5 workflows, 25 mensagens
+## Estrutura: 6 workflows
 
 Um workflow por régua, cada um disparado pela sua tag. Dentro dele, ramificação por
 `{{contact.trilha}}` (e por procedimento quando precisa).
@@ -93,6 +94,7 @@ Um workflow por régua, cada um disparado pela sua tag. Dentro dele, ramificaç�
 | `RÉGUA — Retorno pós-procedimento` | `regua-posprocedimento` | trilha × procedimento | 13 |
 | `RÉGUA — Pesquisa de satisfação` | `regua-nps` | trilha | 2 |
 | `RÉGUA — Reengajamento` | `regua-inatividade-6` e `-12` | trilha × tag | 4 |
+| `RÉGUA — Cuidado no dia seguinte` | `regua-poscirurgia` | nenhum | 1 |
 
 ---
 
@@ -307,8 +309,15 @@ Qual dia da semana encaixa melhor na rotina da família?
 
 Gatilho: Tag de contato · `regua-nps`
 
-A nota que o paciente responder é tratada pelo agente, não pelo workflow. As respostas por faixa
-estão na seção **Sugestões novas**, e vão no prompt do agente.
+> **Reformulada em 11/11/2026 pelo cliente.** Saiu o NPS de 0 a 10 e entrou uma escala de
+> **1 a 5 estrelas**. Quem dá 5 recebe o convite para avaliar no Google; **4 ou menos** vira
+> conversa: perguntamos o que houve e avisamos que alguém da equipe entra em contato em breve.
+
+**Quando dispara:** não é depois de toda consulta. É depois da **avaliação**, ou no decorrer do
+tratamento para quem ainda não avaliou. Quem já respondeu não recebe de novo (o campo
+`NPS - Nota` fica preenchido e serve de trava).
+
+A nota que o paciente responde é tratada pelo agente, não pelo workflow.
 
 ## 4.1 · trilha = adulto
 
@@ -316,7 +325,7 @@ estão na seção **Sugestões novas**, e vão no prompt do agente.
 Olá, {{contact.first_name}}! 🤍
 Foi um prazer receber você na Dental Beauty!
 Queremos que cada visita seja marcada por acolhimento, confiança e uma experiência verdadeiramente especial, e a sua opinião nos ajuda a evoluir.
-De 0 a 10, o quanto você indicaria a Dental Beauty para alguém de quem você gosta?
+De 1 a 5 estrelas, como foi a sua experiência com a gente? ⭐
 ```
 
 ## 4.2 · trilha = infantil
@@ -325,7 +334,36 @@ De 0 a 10, o quanto você indicaria a Dental Beauty para alguém de quem você g
 Olá, família de {{contact.nome_da_criana}}! 💖
 Foi uma alegria receber vocês no Reino dos Guardiões!
 Se quiser, conte também o que {{contact.nome_da_criana}} achou da aventura: adoramos saber.
-E, para nos ajudar a evoluir: de 0 a 10, o quanto você indicaria a Dental Beauty Kids para outra família?
+E, para nos ajudar a evoluir: de 1 a 5 estrelas, como foi a experiência de vocês? ⭐
+```
+
+## 4.3 · Respostas por nota (vão no prompt do agente)
+
+O agente grava a nota em `NPS - Nota` e responde conforme a faixa. O link do Google **muda por
+unidade**, então o agente escolhe pelo campo `{{contact.unidade}}`.
+
+### 5 estrelas · unidade = Recreio
+
+```
+Que alegria ler isso, {{contact.first_name}}! 🤍
+Se puder, conte em poucas palavras como foi a sua experiência no Google. Isso ajuda outras pessoas a nos conhecerem com confiança:
+https://g.page/r/CQZuDgYFDS09EBM/review
+```
+
+### 5 estrelas · unidade = Ipanema
+
+```
+Que alegria ler isso, {{contact.first_name}}! 🤍
+Se puder, conte em poucas palavras como foi a sua experiência no Google. Isso ajuda outras pessoas a nos conhecerem com confiança:
+https://g.page/r/CUGB4w0QxtsmEBM/review
+```
+
+### 4 estrelas ou menos
+
+```
+Agradecemos a sinceridade, {{contact.first_name}}. 🤍
+Queremos entender o que aconteceu e fazer diferente. Pode contar aqui o que faltou?
+Uma pessoa da nossa equipe entra em contato com você em breve.
 ```
 
 ---
@@ -379,57 +417,31 @@ Qual dia da semana combina com a rotina de vocês para essa próxima missão?
 
 ---
 
-# Sugestões novas — aguardando decisão do cliente
+# Sugestões novas
 
-Nada aqui entra sem aprovação. São de duas naturezas diferentes:
+As três respostas de nota saíram daqui: viraram a escala de 1 a 5 e estão na
+[régua 4](#43--respostas-por-nota-vão-no-prompt-do-agente).
 
-## Vão no prompt do agente (não são workflow)
+## 6 · RÉGUA — Cuidado no dia seguinte · **aprovada em 11/11/2026**
 
-O agente já recebe a nota do paciente na conversa do NPS. Basta ensiná-lo a responder por faixa.
-Custo: edição do prompt, sem automação nova.
+Gatilho: Tag de contato · `regua-poscirurgia`
 
-### Nota 9 ou 10
+Decisão do cliente: **automatizar para todos**, adulto e infantil, que fizeram cirurgia, extração
+ou canal. O objetivo é saber se a pessoa está bem no dia seguinte.
 
-> ⚠️ Falta confirmar o link. Candidato: `https://g.page/r/CQZuDgYFDS09EBM/review`
-
-```
-Que alegria ler isso, {{contact.first_name}}! 🤍
-Se puder, conte em poucas palavras como foi a sua experiência no Google. Isso ajuda outras pessoas a nos conhecerem com confiança:
-[link do Google]
-```
-
-### Nota 7 ou 8
-
-```
-Agradecemos a sua nota, {{contact.first_name}}! ✨
-O que faltou para ser um 10? Sua resposta nos ajuda a cuidar ainda melhor de você.
-```
-
-### Nota 0 a 6
-
-> ⚠️ `[prazo]` não foi definido por ninguém. Sugestão: 24 horas úteis.
-
-```
-{{contact.first_name}}, agradecemos a sinceridade. 🤍
-Queremos entender o que aconteceu e fazer diferente. Uma pessoa da nossa equipe vai falar com você em até [prazo].
-```
-
-## Precisam de régua nova no backend (escopo novo)
-
-Nenhuma das duas tem gatilho no motor hoje.
-
-### Cuidado no dia seguinte a cirurgia, extração ou canal
-
-Gatilho que falta: consulta atendida ontem **cujo procedimento seja cirúrgico**. O motor já sabe
-ler consultas atendidas (é o que a régua de NPS usa), então o trabalho é filtrar por categoria de
-procedimento e criar o dispatcher.
+**Falta no backend:** o motor já lê consultas atendidas (é o que a régua de satisfação usa). O
+trabalho é filtrar por procedimento cirúrgico e criar o job. Na Clinicorp o campo de especialidade
+tem `Canal` e `Frenectomia`; é preciso confirmar como aparecem cirurgia e extração.
 
 ```
 Olá, {{contact.first_name}}! 🤍 Passando para saber como você está depois do procedimento de ontem.
 Se sentir algo diferente do que o dentista explicou, é só nos chamar por aqui que nossa equipe orienta você.
 ```
 
-### Criança que concluiu o tratamento
+> O cliente não pediu versão infantil diferente, então a mesma mensagem vale para as duas trilhas.
+> Se quiser, dá para escrever uma versão no tom do Reino dos Guardiões.
+
+## Criança que concluiu o tratamento · ainda sem resposta
 
 Gatilho que falta: **tratamento marcado como concluído** na Clinicorp. Precisa verificar se a API
 expõe esse estado; se não expuser, depende de marcação manual.
