@@ -102,10 +102,17 @@ Um workflow por régua, cada um disparado pela sua tag. Dentro dele, ramificaç�
 
 Gatilho: Tag de contato · `regua-aniversario`
 
-> **Status: rascunho em 11/11/2026.** Workflow `efa7fba5-f84c-42f6-872d-7f2c0224654b`.
-> Gatilho de tag pronto (`Tag adicionada includes "regua-aniversario"`) e ramificação por
-> `{{contact.trilha}}` pronta: Adulto / Infantil / Sem trilha. **Faltam as duas mensagens** e a
-> remoção da tag no fim de cada ramo.
+> **Pronta, como rascunho, em 11/11/2026.** Workflow `efa7fba5-f84c-42f6-872d-7f2c0224654b`.
+>
+> ```
+> Tag adicionada includes "regua-aniversario"
+>   └─ Trilha: adulto ou infantil
+>        ├─ Adulto    → mensagem adulto   → remove a tag → FIM
+>        ├─ Infantil  → mensagem infantil → remove a tag → FIM
+>        └─ Sem trilha - nao envia → FIM
+> ```
+>
+> Serve de molde para as outras cinco.
 >
 > Armadilha do construtor: no campo de escolher tag, **Enter recarrega o painel e descarta tudo
 > que não foi salvo**. Tem que clicar na opção da lista.
