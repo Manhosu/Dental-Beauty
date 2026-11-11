@@ -47,6 +47,7 @@ export function tagForPayload(payload: ReguaPayload): string {
     no_show: 'regua-confirmacao',
     pos_procedimento: 'regua-posprocedimento',
     nps: 'regua-nps',
+    pos_cirurgia: 'regua-poscirurgia',
   };
   return porTipo[payload.type];
 }

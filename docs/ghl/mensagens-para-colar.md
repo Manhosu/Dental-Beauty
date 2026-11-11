@@ -320,9 +320,13 @@ Gatilho: Tag de contato · `regua-nps`
 > **1 a 5 estrelas**. Quem dá 5 recebe o convite para avaliar no Google; **4 ou menos** vira
 > conversa: perguntamos o que houve e avisamos que alguém da equipe entra em contato em breve.
 
-**Quando dispara:** não é depois de toda consulta. É depois da **avaliação**, ou no decorrer do
-tratamento para quem ainda não avaliou. Quem já respondeu não recebe de novo (o campo
-`NPS - Nota` fica preenchido e serve de trava).
+**Quando dispara:** o motor marca a tag para quem compareceu, mas o **primeiro passo do workflow é
+uma condição em `{{contact.nps__nota}}`**: só segue quem tem o campo **vazio**. Quem já deu nota
+sai do fluxo.
+
+Isso atende o pedido do cliente ("pós avaliação ou no decorrer do tratamento, de quem não avaliou
+ainda") sem precisar adivinhar qual consulta era a avaliação: cada paciente é convidado uma vez
+só, e se ele não responder a pergunta volta na consulta seguinte.
 
 A nota que o paciente responde é tratada pelo agente, não pelo workflow.
 
@@ -436,17 +440,29 @@ Gatilho: Tag de contato · `regua-poscirurgia`
 Decisão do cliente: **automatizar para todos**, adulto e infantil, que fizeram cirurgia, extração
 ou canal. O objetivo é saber se a pessoa está bem no dia seguinte.
 
-**Falta no backend:** o motor já lê consultas atendidas (é o que a régua de satisfação usa). O
-trabalho é filtrar por procedimento cirúrgico e criar o job. Na Clinicorp o campo de especialidade
-tem `Canal` e `Frenectomia`; é preciso confirmar como aparecem cirurgia e extração.
+Backend pronto: `runPosCirurgia` lê as consultas atendidas de ontem e filtra pelo procedimento.
+O casamento é por radical no texto livre da Clinicorp: `cirurg`, `exodontia`, `extraçã/extraçõ`,
+`canal`, `endodont`, `frenectomia`.
+
+> **Implante ficou de fora de propósito.** A colocação é cirúrgica, mas a mesma categoria cobre as
+> etapas protéticas. Incluir mandaria "como você está depois do procedimento de ontem?" para quem
+> só foi ajustar a prótese. Se o cliente quiser incluir, é uma linha em
+> `isProcedimentoCirurgico`.
+
+## 6.1 · trilha = adulto
 
 ```
 Olá, {{contact.first_name}}! 🤍 Passando para saber como você está depois do procedimento de ontem.
 Se sentir algo diferente do que o dentista explicou, é só nos chamar por aqui que nossa equipe orienta você.
 ```
 
-> O cliente não pediu versão infantil diferente, então a mesma mensagem vale para as duas trilhas.
-> Se quiser, dá para escrever uma versão no tom do Reino dos Guardiões.
+## 6.2 · trilha = infantil
+
+```
+🧚 Olá, família de {{contact.nome_da_criana}}! 💖
+Passando para saber como {{contact.nome_da_criana}} está se sentindo depois do procedimento de ontem.
+Se notarem algo diferente do que o dentista explicou, é só chamar por aqui que nossa equipe orienta vocês.
+```
 
 ## Criança que concluiu o tratamento · ainda sem resposta
 

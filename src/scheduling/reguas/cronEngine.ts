@@ -1,6 +1,13 @@
 import type { ClinicorpClient } from '../../integrations/clinicorp/types';
 import type { ReguaDispatcher } from './dispatcher';
-import { runAniversariantes, runNoShow, runPostProcedure, runNps, runInactivity } from './jobs';
+import {
+  runAniversariantes,
+  runNoShow,
+  runPostProcedure,
+  runNps,
+  runInactivity,
+  runPosCirurgia,
+} from './jobs';
 import { logger } from '../../lib/logger';
 
 /** Dispatchers por régua (cada um aponta para o SEU fluxo Gatilho HTTP, com mensagem própria). */
@@ -10,6 +17,7 @@ export interface ReguaDispatchers {
   posProcedimento?: ReguaDispatcher;
   nps?: ReguaDispatcher;
   inatividade?: ReguaDispatcher;
+  posCirurgia?: ReguaDispatcher;
 }
 
 /** Data YYYY-MM-DD deslocada por `daysFromNow` (UTC) a partir de `base`. */
@@ -40,6 +48,7 @@ export async function runDailyReguas(
   posProcedimento: number;
   nps: number;
   inatividade: number;
+  posCirurgia: number;
 }> {
   const aniversario = await runAniversariantes(clinicorp, dispatchers.aniversario, now);
   const noShow = dispatchers.noShow
@@ -61,7 +70,11 @@ export async function runDailyReguas(
         isoDate(now),
       )
     : 0;
-  return { aniversario, noShow, posProcedimento, nps, inatividade };
+  // Cuidado no dia seguinte a cirurgia/extração/canal: atendidos de ONTEM (T-1).
+  const posCirurgia = dispatchers.posCirurgia
+    ? await runPosCirurgia(clinicorp, dispatchers.posCirurgia, isoDate(now, -1))
+    : 0;
+  return { aniversario, noShow, posProcedimento, nps, inatividade, posCirurgia };
 }
 
 /**

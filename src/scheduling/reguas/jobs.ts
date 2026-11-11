@@ -109,6 +109,28 @@ export function intervalMonthsForCategory(category?: string): number {
   return 6;
 }
 
+/**
+ * Procedimento que justifica a mensagem de cuidado no dia seguinte: cirurgia, extração ou canal
+ * (decisão do cliente em 11/11/2026, para adulto e infantil).
+ *
+ * A Clinicorp devolve a categoria como texto livre, então casamos por radical. Cobre as variações
+ * que aparecem na agenda: "Cirurgia", "Exodontia", "Extração", "Canal", "Endodontia". Frenectomia
+ * entra por ser cirúrgica e por existir como categoria própria na clínica.
+ *
+ * **Implante ficou de fora de propósito.** A colocação é cirúrgica, mas a mesma categoria cobre as
+ * etapas protéticas, que não são. Incluir mandaria "como você está depois do procedimento de
+ * ontem?" para quem só foi ajustar a prótese. Se o cliente quiser incluir, é só acrescentar o
+ * radical aqui.
+ */
+export function isProcedimentoCirurgico(category?: string): boolean {
+  const c = (category ?? '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase();
+  if (c.trim() === '') return false;
+  return /cirurg|exodontia|extraca|extraco|canal|endodont|frenectomia/.test(c);
+}
+
 /** Meses de inatividade que disparam reengajamento (réguas-e-campanhas.md §Réguas por inatividade). */
 export const INACTIVITY_INTERVALS = [6, 12] as const;
 
@@ -217,9 +239,11 @@ export async function runPostProcedure(
  * A **unidade** vai no payload porque o link do Google muda por unidade: Recreio e Ipanema têm
  * links diferentes. Sem ela o agente não tem como escolher.
  *
- * ⚠️ Pendente: o cliente pediu que a pesquisa **não saia depois de toda consulta**, e sim depois
- * da avaliação ou no decorrer do tratamento, só para quem ainda não avaliou. Hoje este job ainda
- * dispara para todo mundo que compareceu.
+ * O cliente pediu que a pesquisa não saia depois de toda consulta, e sim depois da avaliação ou no
+ * decorrer do tratamento, **só para quem ainda não avaliou**. Quem filtra isso é o workflow, com
+ * uma condição em `NPS - Nota`: se o campo já está preenchido, o paciente não recebe de novo.
+ * Resolver assim evita ter que adivinhar qual consulta era a avaliação, e dá o mesmo resultado:
+ * cada paciente é convidado uma vez só.
  */
 export async function runNps(
   clinicorp: ClinicorpClient,
@@ -239,6 +263,40 @@ export async function runNps(
       type: 'nps',
       phone: a.mobilePhone,
       name: a.patientName,
+      ...(a.unit !== undefined ? { unit: a.unit } : {}),
+    });
+    sent++;
+  }
+  return sent;
+}
+
+/**
+ * Cuidado no dia seguinte a cirurgia, extração ou canal (aprovada pelo cliente em 11/11/2026).
+ * Mesma leitura da pesquisa de satisfação — consulta ATENDIDA na data-alvo — filtrando pelos
+ * procedimentos cirúrgicos. Vale para adulto e infantil, e o workflow escolhe o texto pela trilha.
+ *
+ * `date` = a data-alvo (ontem).
+ */
+export async function runPosCirurgia(
+  clinicorp: ClinicorpClient,
+  dispatch: ReguaDispatcher,
+  date: string,
+): Promise<number> {
+  const statuses = await clinicorp.listAppointmentStatuses();
+  const checkoutId = statuses.find((s) => s.type === 'CHECKOUT')?.id;
+  if (checkoutId === undefined) return 0; // sem o status mapeado, não dispara
+
+  const appointments = await clinicorp.listAppointmentsByDate(date);
+  let sent = 0;
+  for (const a of appointments) {
+    if (a.statusId !== checkoutId) continue; // só quem compareceu
+    if (!isProcedimentoCirurgico(a.categoryDescription)) continue;
+    if (!a.mobilePhone) continue;
+    await dispatch({
+      type: 'pos_cirurgia',
+      phone: a.mobilePhone,
+      name: a.patientName,
+      ...(a.categoryDescription !== undefined ? { procedure: a.categoryDescription } : {}),
       ...(a.unit !== undefined ? { unit: a.unit } : {}),
     });
     sent++;

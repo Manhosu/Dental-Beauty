@@ -109,6 +109,7 @@ async function main(): Promise<void> {
         posProcedimento: porTag,
         nps: porTag,
         inatividade: porTag,
+        posCirurgia: porTag,
       },
       claimDailyRun: (dateIso) => sentRegistry.claim(`regua:run:${dateIso}`, 172_800),
     });

@@ -5,7 +5,7 @@ export type ReguaTrack = 'adulto' | 'infantil';
 
 /** Payload interno por destinatário (vindo dos jobs das réguas). */
 export interface ReguaPayload {
-  type: 'aniversario' | 'no_show' | 'pos_procedimento' | 'nps' | 'inatividade';
+  type: 'aniversario' | 'no_show' | 'pos_procedimento' | 'nps' | 'inatividade' | 'pos_cirurgia';
   phone: string;
   name?: string;
   /** 'adulto' (default) ou 'infantil' — o fluxo escolhe o template da trilha certa. */
