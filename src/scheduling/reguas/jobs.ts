@@ -207,8 +207,19 @@ export async function runPostProcedure(
 }
 
 /**
- * NPS pós-consulta: no dia seguinte à consulta ATENDIDA (StatusId == CHECKOUT), dispara a pesquisa
- * "de 0 a 10". A IA trata a resposta (nota alta → link do Google Maps). `date` = a data-alvo (ontem).
+ * Pesquisa de satisfação no dia seguinte à consulta ATENDIDA (StatusId == CHECKOUT).
+ * `date` = a data-alvo (ontem).
+ *
+ * A escala é de **1 a 5 estrelas** (decisão do cliente em 11/11/2026, antes era NPS de 0 a 10).
+ * Quem dá 5 recebe o convite para avaliar no Google; 4 ou menos vira conversa. Quem responde o
+ * agente trata — aqui só disparamos a pergunta.
+ *
+ * A **unidade** vai no payload porque o link do Google muda por unidade: Recreio e Ipanema têm
+ * links diferentes. Sem ela o agente não tem como escolher.
+ *
+ * ⚠️ Pendente: o cliente pediu que a pesquisa **não saia depois de toda consulta**, e sim depois
+ * da avaliação ou no decorrer do tratamento, só para quem ainda não avaliou. Hoje este job ainda
+ * dispara para todo mundo que compareceu.
  */
 export async function runNps(
   clinicorp: ClinicorpClient,
@@ -224,7 +235,12 @@ export async function runNps(
   for (const a of appointments) {
     if (a.statusId !== checkoutId) continue; // só quem compareceu
     if (!a.mobilePhone) continue;
-    await dispatch({ type: 'nps', phone: a.mobilePhone, name: a.patientName });
+    await dispatch({
+      type: 'nps',
+      phone: a.mobilePhone,
+      name: a.patientName,
+      ...(a.unit !== undefined ? { unit: a.unit } : {}),
+    });
     sent++;
   }
   return sent;
