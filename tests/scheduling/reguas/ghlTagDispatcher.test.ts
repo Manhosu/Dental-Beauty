@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+﻿import { describe, expect, it, vi } from 'vitest';
 import {
   buildCustomFields,
   createGhlTagDispatcher,
@@ -59,9 +59,9 @@ describe('tagForPayload', () => {
 });
 
 describe('buildCustomFields', () => {
-  it('sempre grava a trilha, com adulto como padrão', () => {
+  it('grava a trilha na grafia das opcoes do GHL, com Adulto como padrão', () => {
     expect(buildCustomFields({ type: 'aniversario', phone: '1' }, fields)).toEqual([
-      { id: 'id-trilha', field_value: 'adulto' },
+      { id: 'id-trilha', field_value: 'Adulto' },
     ]);
   });
 
@@ -70,7 +70,7 @@ describe('buildCustomFields', () => {
       { type: 'aniversario', phone: '1', track: 'infantil', childName: 'Ana' },
       fields,
     );
-    expect(campos).toContainEqual({ id: 'id-trilha', field_value: 'infantil' });
+    expect(campos).toContainEqual({ id: 'id-trilha', field_value: 'Infantil' });
     expect(campos).toContainEqual({ id: 'id-crianca', field_value: 'Ana' });
   });
 
@@ -98,7 +98,7 @@ describe('createGhlTagDispatcher', () => {
     expect(client.upsertContactWithFields).toHaveBeenCalledWith({
       phone: '21999998888',
       name: 'Maria Silva',
-      customFields: [{ id: 'id-trilha', field_value: 'adulto' }],
+      customFields: [{ id: 'id-trilha', field_value: 'Adulto' }],
     });
     expect(client.addTags).toHaveBeenCalledWith('contato-1', ['regua-aniversario']);
   });

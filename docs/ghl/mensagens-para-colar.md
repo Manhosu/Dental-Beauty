@@ -68,8 +68,13 @@ Antes de marcar a tag, o backend grava os dados nos campos personalizados do con
 | `[dia]` | `{{contact.regua__dia}}` | agenda · **campo ainda não existe** |
 | `[hora]` | `{{contact.regua__hora}}` | agenda · **campo ainda não existe** |
 
-Campos usados só para ramificar, nunca no texto: `{{contact.trilha}}` (`adulto`/`infantil`) e
+Campos usados só para ramificar, nunca no texto: `{{contact.trilha}}` e
 `{{contact.ltimo_procedimento}}`.
+
+> **Cuidado com a grafia da Trilha.** O campo é de opção única e as opções cadastradas são
+> **"Adulto"** e **"Infantil"**, com inicial maiúscula. A API aceita gravar minúsculo sem reclamar,
+> mas a condição do workflow compara com a opção: minúsculo faria todo mundo cair no ramo
+> "Sem trilha" e ninguém receberia mensagem. O dispatcher já converte.
 
 > **Pendência:** "Régua - Dia" e "Régua - Hora" precisam ser criados como campos de texto na
 > location, e o dispatcher precisa passar a gravá-los. Só a régua de confirmação depende deles, e
@@ -95,9 +100,13 @@ Um workflow por régua, cada um disparado pela sua tag. Dentro dele, ramificaç�
 
 Gatilho: Tag de contato · `regua-aniversario`
 
-> **Status: rascunho em 11/11/2026.** Workflow `efa7fba5-f84c-42f6-872d-7f2c0224654b`, com a
-> ramificação Adulto / Infantil / Sem trilha já montada. Falta trocar o gatilho (foi criado como
-> webhook antes da decisão de usar tag) e colar as duas mensagens.
+> **Status: rascunho em 11/11/2026.** Workflow `efa7fba5-f84c-42f6-872d-7f2c0224654b`.
+> Gatilho de tag pronto (`Tag adicionada includes "regua-aniversario"`) e ramificação por
+> `{{contact.trilha}}` pronta: Adulto / Infantil / Sem trilha. **Faltam as duas mensagens** e a
+> remoção da tag no fim de cada ramo.
+>
+> Armadilha do construtor: no campo de escolher tag, **Enter recarrega o painel e descarta tudo
+> que não foi salvo**. Tem que clicar na opção da lista.
 
 ## 1.1 · trilha = adulto
 

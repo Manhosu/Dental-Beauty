@@ -49,12 +49,24 @@ export function tagForPayload(payload: ReguaPayload): string {
   return porTipo[payload.type];
 }
 
+/**
+ * O campo "Trilha" no GHL é de opção única e as opções cadastradas são **"Adulto"** e
+ * **"Infantil"**, com inicial maiúscula. A API aceita qualquer string no valor, mas a condição do
+ * workflow compara com a opção — gravar minúsculo faria todo mundo cair no ramo "Sem trilha" e
+ * ninguém receberia mensagem. Por isso a conversão aqui.
+ */
+function trilhaParaOpcaoGhl(track: ReguaPayload['track']): string {
+  return track === 'infantil' ? 'Infantil' : 'Adulto';
+}
+
 /** Campos personalizados a gravar no contato antes de marcar a tag. */
 export function buildCustomFields(
   payload: ReguaPayload,
   ids: GhlReguaFieldIds,
 ): GhlCustomField[] {
-  const campos: GhlCustomField[] = [{ id: ids.trilha, field_value: payload.track ?? 'adulto' }];
+  const campos: GhlCustomField[] = [
+    { id: ids.trilha, field_value: trilhaParaOpcaoGhl(payload.track) },
+  ];
   if (payload.childName) {
     campos.push({ id: ids.nomeCrianca, field_value: payload.childName });
   }
