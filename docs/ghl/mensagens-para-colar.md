@@ -94,30 +94,67 @@ Tudo em **rascunho**. Nada publicado.
 | `RÉGUA — Reengajamento 6 meses` | ✅ pronta |
 | `RÉGUA — Reengajamento 12 meses` | ✅ pronta |
 | `RÉGUA — Confirmação de consulta` | ✅ pronta (só a de 24h; a de 2h ficou de fora) |
-| `RÉGUA — Retorno pós-procedimento` | ⚠️ **estrutura pronta, faltam as 13 mensagens** |
+| `RÉGUA — Retorno pós-procedimento` | ✅ pronta, com as 13 mensagens |
 
-### O que falta no retorno pós-procedimento
+### Como ficou o retorno pós-procedimento
 
-Já está montado: gatilho `regua-posprocedimento`, remoção da tag logo no início (uma só, serve o
-fluxo inteiro), ramificação por trilha e, dentro de **Adulto**, o If/else `Procedimento (adulto)`
-com os 11 ramos — Limpeza, Clareamento, Restauração, Canal, Coroa ou Prótese, Implante,
-Periodontal, Ortodontia adulto, Invisalign, Lente ou faceta, e "Procedimento nao mapeado - nao
-envia".
+Workflow `571fa3ad-e253-4d2c-a62c-e0bfcd47cb36`.
 
-Falta:
+```
+Tag adicionada includes "regua-posprocedimento"
+  └─ Remove a tag para valer no proximo retorno
+       └─ Trilha: adulto ou infantil
+            ├─ Adulto → Procedimento (adulto)
+            │    ├─ Limpeza             → Retorno Limpeza 6 meses
+            │    ├─ Clareamento         → Retorno Clareamento 6 meses
+            │    ├─ Restauracao         → Retorno Restauracao 6 meses
+            │    ├─ Canal               → Retorno Canal 6 meses
+            │    ├─ Coroa ou Protese    → Retorno Coroa ou Protese 12 meses
+            │    ├─ Implante            → Retorno Implante 12 meses
+            │    ├─ Periodontal         → Retorno Periodontal 3 meses
+            │    ├─ Ortodontia adulto   → Retorno Ortodontia adulto 6 meses
+            │    ├─ Invisalign          → Retorno Invisalign 6 meses
+            │    ├─ Lente ou faceta     → Retorno Lente ou faceta 6 meses
+            │    └─ Procedimento nao mapeado - nao envia → FIM
+            ├─ Infantil → Procedimento (infantil)
+            │    ├─ Limpeza infantil     → Retorno Limpeza infantil
+            │    ├─ Restauracao infantil → Retorno Restauracao infantil
+            │    ├─ Ortodontia infantil  → Retorno Ortodontia infantil
+            │    └─ Procedimento nao mapeado - nao envia → FIM
+            └─ Sem trilha - nao envia → FIM
+```
 
-1. Colar as **10 mensagens do adulto**, uma em cada ramo (textos na seção 3 deste documento).
-2. No ramo **Infantil**, trocar a mensagem que sobrou do aniversário por um If/else
-   `Procedimento (infantil)` com 3 ramos (Limpeza, Restauração, Ortodontia) e colar as 3 mensagens.
+A remoção da tag está **uma vez só, logo no início** — serve o fluxo inteiro, inclusive os ramos
+que não enviam nada. Sem isso o paciente ficaria com a tag presa e a régua não voltaria a rodar.
 
 Os ramos casam por **Contém** no campo `Último Procedimento`, com o radical entre aspas:
 `Limpeza`, `Clareamento`, `Restaura`, `Canal`, `tese`, `Implante`, `Periodont`, `Ortodontia`,
-`Invisalign`, `Lente`.
+`Invisalign`, `Lente`. No infantil: `Limpeza`, `Restaura`, `Ortodontia`.
+
+> **A ordem dos ramos importa:** o GHL pega o **primeiro** que casar, e hoje `Ortodontia` (8º) vem
+> antes de `Invisalign` (9º). Se a Clinicorp escrever "Ortodontia Invisalign", o paciente recebe o
+> texto genérico de ortodontia em vez do de alinhadores. Não é erro grave — a mensagem continua
+> fazendo sentido —, mas se a agenda real usar essa grafia vale subir o Invisalign pelo botão
+> "Reordenar filiais".
 
 > ⚠️ Dois casamentos merecem conferência quando a agenda real passar por aqui: **`tese`** foi
 > escolhido para pegar "Prótese" (não pega "Coroa" sozinho) e **`Lente`** não pega "Faceta"
 > sozinha. Se a Clinicorp usar essas palavras separadas, o paciente cai no ramo "não mapeado" e
 > não recebe nada — que é o comportamento seguro, mas deixa de enviar.
+
+### O que ficou em aberto
+
+1. **Antes de publicar**, escolher o número de saída em cada workflow:
+   Configurações do fluxo → Comunicação → Número de origem → canal **#3 (Disparos)**.
+2. **"Régua - Dia" e "Régua - Hora"** ainda não existem como campos na location. Só a régua de
+   confirmação depende deles (ver pendência acima).
+3. **Reengajamento x campanha da consultoria:** eles já têm a campanha "6+ meses sem vir"
+   publicada. Confirmar a divisão antes de publicar, senão o paciente recebe as duas.
+4. **"Criança que concluiu o tratamento"** continua sem resposta do cliente (texto pronto no fim
+   deste documento). Depende de a Clinicorp expor o estado "tratamento concluído".
+5. **Dois rascunhos `New Workflow`** (criados em 08/10 e 09/11) estão na lista da subconta. Não
+   são das réguas — são anteriores a esta montagem —, então ficaram de pé. Quem souber a origem
+   que apague.
 
 ### Lembrete de 2h antes: fora por enquanto
 
@@ -126,7 +163,7 @@ no dia anterior, então não há como acertar "2 horas antes" com uma espera de 
 fazer direito: gravar a data/hora da consulta num campo de data do contato e usar a espera
 "Até uma data/hora específica → Antes desta data". É trabalho de backend mais configuração.
 
-## Estrutura: 6 workflows
+## Estrutura: 7 workflows
 
 Um workflow por régua, cada um disparado pela sua tag. Dentro dele, ramificação por
 `{{contact.trilha}}` (e por procedimento quando precisa).
