@@ -1,10 +1,50 @@
 # Mensagens prontas para colar no GoHighLevel
 
 Os textos [v3 aprovados](../textos-reguas-v3-APROVADO.md) com os campos já trocados pelas tags do
-GHL. É copiar e colar na ação **WhatsApp API Não Oficial** (app 4zapy) de cada workflow.
+GHL. É copiar e colar na ação **SMS** de cada workflow.
 
 > Montar tudo como **não publicado**. Publicar só depois do ok do cliente.
 > Canal de teste: **#3 — Disparos**.
+
+## Como enviar WhatsApp neste painel (verificado em 11/11/2026)
+
+A ação a usar é a **SMS** nativa ("Envia uma mensagem de texto para o contato"), não a do app
+4zapy. O 4zapy está ligado como provedor de conversas da subconta, então o que sai pela ação SMS é
+entregue como WhatsApp. É assim que a consultoria monta todos os disparos deles.
+
+A ação **WhatsApp API Não Oficial** (4zapy) não serve: o endpoint de campos dinâmicos do app
+devolve `{"inputs":[]}`, ou seja, nenhum campo de texto aparece no formulário. Testado nos três
+tipos de mensagem.
+
+O número de saída não fica na ação, e sim em **Configurações do fluxo → Comunicação → Número de
+origem**. É onde se escolhe o canal #3 (Disparos) para o teste.
+
+### Subconta certa
+
+`ZCMG4O9K8UhFYmvx4i4b` = **Dental Beauty** (a principal, onde ficam os disparos).
+Existe também `W0oKvITQdvDXRnOdtJln` = Dental Beauty Recepção, que é outra subconta — não é lá.
+
+### O gatilho Webhook é pago
+
+O "Webhook recebido" é **acionador premium**: o GHL cobra por execução. Como as réguas disparam
+todo dia, isso vira custo recorrente na conta do cliente. Decidir com ele antes de publicar.
+
+Alternativa sem custo por execução: o backend grava uma tag no contato (via API, que o
+`GoHighLevelCrmClient` já sabe fazer) e o workflow usa o gatilho **Tag de contato**, que é grátis.
+É o padrão que a consultoria usa. Custo: trocar o dispatcher no backend.
+
+### Montar o gatilho Webhook exige uma amostra
+
+O GHL não salva o gatilho sem uma "referência de mapeamento". O caminho é: criar o gatilho, mandar
+um POST de exemplo com o payload completo para a URL gerada, clicar em **Obter solicitações de
+amostra** e selecionar a requisição que chegou. Só depois os campos ficam disponíveis como tags.
+
+### Padrão anti-bloqueio da consultoria
+
+Nos disparos em massa eles usam, entre o gatilho e o envio: **"Liberar 1 paciente a cada 4
+minutos"** (drip) e **rodízio aleatório entre 9 variações do texto**. Vale replicar nas réguas de
+volume (reengajamento, pós-procedimento). Aniversário e confirmação são volume baixo e não
+precisam.
 
 ## Como os campos chegam
 
@@ -42,6 +82,11 @@ por `track` (e por `procedimento` ou `meses` quando precisa).
 # 1 · RÉGUA — Aniversário
 
 Gatilho: Inbound Webhook · `GHL_REGUA_WEBHOOK_ANIVERSARIO`
+
+> **Status: montado como rascunho em 11/11/2026.** Workflow
+> `efa7fba5-f84c-42f6-872d-7f2c0224654b`. Gatilho salvo com a amostra vinculada, ramificação
+> Adulto / Infantil / Sem trilha pronta. Faltam as duas mensagens, que dependem da decisão sobre
+> o gatilho premium. URL do webhook em `.env`.
 
 ## 1.1 · track = adulto
 
