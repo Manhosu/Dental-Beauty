@@ -13,7 +13,7 @@ import {
   type ReguaDispatcher,
   type ReguaWebhookConfig,
 } from './scheduling/reguas/dispatcher';
-import { createGhlDispatcher } from './scheduling/reguas/ghlDispatcher';
+import { createGhlTagDispatcher } from './scheduling/reguas/ghlTagDispatcher';
 import { isoDate, startReguas } from './scheduling/reguas/cronEngine';
 import { createRedisSentRegistry, withDedupe } from './scheduling/reguas/dedupe';
 import { logger } from './lib/logger';
@@ -79,31 +79,38 @@ async function main(): Promise<void> {
     withDedupe(d, sentRegistry, () => isoDate(new Date()));
 
   // ── Réguas no GoHighLevel (plataforma nova) ────────────────────────────────────────────────
-  // Cada régua tem seu Inbound Webhook. A de aniversário é a mínima para ligar o motor.
-  if (env.REGUAS_ENABLED && env.GHL_REGUA_WEBHOOK_ANIVERSARIO) {
-    const hook = (url: string): ReguaDispatcher => comDedupe(createGhlDispatcher({ url }));
-    const dispatchers = {
-      aniversario: hook(env.GHL_REGUA_WEBHOOK_ANIVERSARIO),
-      ...(env.GHL_REGUA_WEBHOOK_NOSHOW ? { noShow: hook(env.GHL_REGUA_WEBHOOK_NOSHOW) } : {}),
-      ...(env.GHL_REGUA_WEBHOOK_POSPROC ? { posProcedimento: hook(env.GHL_REGUA_WEBHOOK_POSPROC) } : {}),
-      ...(env.GHL_REGUA_WEBHOOK_NPS ? { nps: hook(env.GHL_REGUA_WEBHOOK_NPS) } : {}),
-      ...(env.GHL_REGUA_WEBHOOK_INATIVIDADE ? { inatividade: hook(env.GHL_REGUA_WEBHOOK_INATIVIDADE) } : {}),
-    };
+  // Disparo por TAG no contato, não por Inbound Webhook: no painel do cliente o gatilho de webhook
+  // é premium e o GHL cobra por execução. Ver docs/ghl/mensagens-para-colar.md.
+  if (
+    env.REGUAS_ENABLED &&
+    crm instanceof GoHighLevelCrmClient &&
+    env.GHL_FIELD_TRILHA &&
+    env.GHL_FIELD_NOME_CRIANCA &&
+    env.GHL_FIELD_ULTIMO_PROCEDIMENTO
+  ) {
+    const porTag = comDedupe(
+      createGhlTagDispatcher({
+        client: crm,
+        fields: {
+          trilha: env.GHL_FIELD_TRILHA,
+          nomeCrianca: env.GHL_FIELD_NOME_CRIANCA,
+          ultimoProcedimento: env.GHL_FIELD_ULTIMO_PROCEDIMENTO,
+        },
+      }),
+    );
+    // Um dispatcher só: a tag muda por tipo de régua, então o mesmo caminho serve para todas.
     startReguas({
       clinicorp,
-      dispatchers,
+      dispatchers: {
+        aniversario: porTag,
+        noShow: porTag,
+        posProcedimento: porTag,
+        nps: porTag,
+        inatividade: porTag,
+      },
       claimDailyRun: (dateIso) => sentRegistry.claim(`regua:run:${dateIso}`, 172_800),
     });
-    logger.info(
-      {
-        plataforma: 'gohighlevel',
-        noShow: !!env.GHL_REGUA_WEBHOOK_NOSHOW,
-        posProcedimento: !!env.GHL_REGUA_WEBHOOK_POSPROC,
-        nps: !!env.GHL_REGUA_WEBHOOK_NPS,
-        inatividade: !!env.GHL_REGUA_WEBHOOK_INATIVIDADE,
-      },
-      'réguas (cron-engine) ativadas',
-    );
+    logger.info({ plataforma: 'gohighlevel', gatilho: 'tag' }, 'réguas (cron-engine) ativadas');
     return;
   }
 

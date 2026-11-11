@@ -55,12 +55,11 @@ const envSchema = z.object({
   GHL_API_VERSION: z.string().optional().default('2021-07-28'),
   GHL_LOCATION_ID: z.string().optional(),
   GHL_PRIVATE_TOKEN: z.string().optional(), // Private Integration (pit-...)
-  // URLs de Inbound Webhook — uma por workflow de régua. Sem headers: a URL já é o segredo.
-  GHL_REGUA_WEBHOOK_ANIVERSARIO: z.string().url().optional().or(z.literal('')),
-  GHL_REGUA_WEBHOOK_NOSHOW: z.string().url().optional().or(z.literal('')),
-  GHL_REGUA_WEBHOOK_POSPROC: z.string().url().optional().or(z.literal('')),
-  GHL_REGUA_WEBHOOK_NPS: z.string().url().optional().or(z.literal('')),
-  GHL_REGUA_WEBHOOK_INATIVIDADE: z.string().url().optional().or(z.literal('')),
+  // Ids dos campos personalizados usados pelas réguas (ver docs/ghl-custom-fields.json). Não são
+  // segredo: identificam campos dentro da location. Sem eles as réguas do GHL ficam dormentes.
+  GHL_FIELD_TRILHA: z.string().optional(),
+  GHL_FIELD_NOME_CRIANCA: z.string().optional(),
+  GHL_FIELD_ULTIMO_PROCEDIMENTO: z.string().optional(),
   // Horário comercial da recepção (decisão do cliente 2026-08): dentro dele a recepção atende e a
   // IA de conversa fica calada; fora dele a IA assume. Réguas/follow-ups rodam sempre.
   BUSINESS_HOURS_START: z.string().optional(), // 'HH:mm' (default 09:00)

@@ -27,6 +27,12 @@ interface UpsertResponse {
   id?: string;
 }
 
+/** Campo personalizado no formato que o upsert aceita (`field_value`, não `value`). */
+export interface GhlCustomField {
+  id: string;
+  field_value: string;
+}
+
 const DEFAULT_VERSION = '2021-07-28';
 
 export class GoHighLevelCrmClient implements SonaxCrmPort {
@@ -73,6 +79,39 @@ export class GoHighLevelCrmClient implements SonaxCrmPort {
       throw new ExternalApiError('GoHighLevel não devolveu o id do contato no upsert', 502);
     }
     return id;
+  }
+
+  /**
+   * Upsert com campos personalizados, usado pelas réguas para gravar no contato os dados que o
+   * texto da mensagem vai interpolar (trilha, nome da criança, procedimento...).
+   *
+   * **Nunca manda `tags` aqui.** A doc do GHL é explícita: o campo `tags` do upsert *sobrescreve*
+   * todas as tags do contato. Como a consultoria usa tags para segmentar os disparos deles
+   * (`disparocrianca-n2-11/26` e afins), mandar tags neste corpo apagaria o trabalho deles em todo
+   * paciente que a régua tocasse. Tag se adiciona pelo endpoint próprio: `addTags`.
+   */
+  async upsertContactWithFields(input: {
+    phone: string;
+    name?: string;
+    customFields?: GhlCustomField[];
+  }): Promise<string> {
+    const data = await this.request<UpsertResponse>('/contacts/upsert', {
+      locationId: this.config.locationId,
+      phone: input.phone,
+      ...(input.name ? { name: input.name } : {}),
+      ...(input.customFields?.length ? { customFields: input.customFields } : {}),
+    });
+    const id = data.contact?.id ?? data.id;
+    if (!id) {
+      throw new ExternalApiError('GoHighLevel não devolveu o id do contato no upsert', 502);
+    }
+    return id;
+  }
+
+  /** Acrescenta tags ao contato sem remover as que já existem. */
+  async addTags(contactId: string, tags: string[]): Promise<void> {
+    if (tags.length === 0) return;
+    await this.request(`/contacts/${contactId}/tags`, { tags });
   }
 
   /** Anexa uma nota ao contato (histórico da ligação do discador). */
