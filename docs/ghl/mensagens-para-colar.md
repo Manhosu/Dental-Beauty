@@ -93,12 +93,38 @@ Tudo em **rascunho**. Nada publicado.
 | `RÉGUA — Cuidado no dia seguinte` | ✅ pronta |
 | `RÉGUA — Reengajamento 6 meses` | ✅ pronta |
 | `RÉGUA — Reengajamento 12 meses` | ✅ pronta |
-| `RÉGUA — Confirmação de consulta` | ⚠️ **só o esqueleto** |
-| `RÉGUA — Retorno pós-procedimento` | ⚠️ **só o esqueleto** |
+| `RÉGUA — Confirmação de consulta` | ✅ pronta (só a de 24h; a de 2h ficou de fora) |
+| `RÉGUA — Retorno pós-procedimento` | ⚠️ **estrutura pronta, faltam as 13 mensagens** |
 
-> **Não publicar os dois últimos.** São cópias da régua de aniversário: ainda escutam a tag
-> `regua-aniversario` e contêm os textos de aniversário. Publicar faria o aniversário disparar três
-> workflows ao mesmo tempo. Trocar gatilho e textos antes de qualquer coisa.
+### O que falta no retorno pós-procedimento
+
+Já está montado: gatilho `regua-posprocedimento`, remoção da tag logo no início (uma só, serve o
+fluxo inteiro), ramificação por trilha e, dentro de **Adulto**, o If/else `Procedimento (adulto)`
+com os 11 ramos — Limpeza, Clareamento, Restauração, Canal, Coroa ou Prótese, Implante,
+Periodontal, Ortodontia adulto, Invisalign, Lente ou faceta, e "Procedimento nao mapeado - nao
+envia".
+
+Falta:
+
+1. Colar as **10 mensagens do adulto**, uma em cada ramo (textos na seção 3 deste documento).
+2. No ramo **Infantil**, trocar a mensagem que sobrou do aniversário por um If/else
+   `Procedimento (infantil)` com 3 ramos (Limpeza, Restauração, Ortodontia) e colar as 3 mensagens.
+
+Os ramos casam por **Contém** no campo `Último Procedimento`, com o radical entre aspas:
+`Limpeza`, `Clareamento`, `Restaura`, `Canal`, `tese`, `Implante`, `Periodont`, `Ortodontia`,
+`Invisalign`, `Lente`.
+
+> ⚠️ Dois casamentos merecem conferência quando a agenda real passar por aqui: **`tese`** foi
+> escolhido para pegar "Prótese" (não pega "Coroa" sozinho) e **`Lente`** não pega "Faceta"
+> sozinha. Se a Clinicorp usar essas palavras separadas, o paciente cai no ramo "não mapeado" e
+> não recebe nada — que é o comportamento seguro, mas deixa de enviar.
+
+### Lembrete de 2h antes: fora por enquanto
+
+O cliente marcou como opcional e ele não cabe no desenho atual. O motor dispara uma vez por dia,
+no dia anterior, então não há como acertar "2 horas antes" com uma espera de duração fixa. Para
+fazer direito: gravar a data/hora da consulta num campo de data do contato e usar a espera
+"Até uma data/hora específica → Antes desta data". É trabalho de backend mais configuração.
 
 ## Estrutura: 6 workflows
 
