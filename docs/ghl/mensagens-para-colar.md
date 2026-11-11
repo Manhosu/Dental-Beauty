@@ -82,6 +82,24 @@ Campos usados só para ramificar, nunca no texto: `{{contact.trilha}}` e
 > ela também está esperando a segunda rodada do cron (lembrete de 2h). As outras quatro réguas não
 > dependem disso.
 
+## Estado da montagem (11/11/2026)
+
+Tudo em **rascunho**. Nada publicado.
+
+| Workflow | Estado |
+| --- | --- |
+| `RÉGUA — Aniversário` | ✅ pronta |
+| `RÉGUA — Pesquisa de satisfação` | ✅ pronta, com a trava de quem já avaliou |
+| `RÉGUA — Cuidado no dia seguinte` | ✅ pronta |
+| `RÉGUA — Reengajamento 6 meses` | ✅ pronta |
+| `RÉGUA — Reengajamento 12 meses` | ✅ pronta |
+| `RÉGUA — Confirmação de consulta` | ⚠️ **só o esqueleto** |
+| `RÉGUA — Retorno pós-procedimento` | ⚠️ **só o esqueleto** |
+
+> **Não publicar os dois últimos.** São cópias da régua de aniversário: ainda escutam a tag
+> `regua-aniversario` e contêm os textos de aniversário. Publicar faria o aniversário disparar três
+> workflows ao mesmo tempo. Trocar gatilho e textos antes de qualquer coisa.
+
 ## Estrutura: 6 workflows
 
 Um workflow por régua, cada um disparado pela sua tag. Dentro dele, ramificação por
