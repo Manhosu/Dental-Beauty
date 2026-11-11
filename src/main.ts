@@ -1,4 +1,4 @@
-import { Redis } from 'ioredis';
+﻿import { Redis } from 'ioredis';
 import { businessHoursFromEnv, getEnv } from './config/env';
 import { SlotLock } from './scheduling/lock';
 import { createLockRedis } from './scheduling/redisLock';
@@ -87,7 +87,9 @@ async function main(): Promise<void> {
     env.GHL_FIELD_TRILHA &&
     env.GHL_FIELD_NOME_CRIANCA &&
     env.GHL_FIELD_ULTIMO_PROCEDIMENTO &&
-    env.GHL_FIELD_UNIDADE
+    env.GHL_FIELD_UNIDADE &&
+    env.GHL_FIELD_REGUA_DIA &&
+    env.GHL_FIELD_REGUA_HORA
   ) {
     const porTag = comDedupe(
       createGhlTagDispatcher({
@@ -97,6 +99,8 @@ async function main(): Promise<void> {
           nomeCrianca: env.GHL_FIELD_NOME_CRIANCA,
           ultimoProcedimento: env.GHL_FIELD_ULTIMO_PROCEDIMENTO,
           unidade: env.GHL_FIELD_UNIDADE,
+          reguaDia: env.GHL_FIELD_REGUA_DIA,
+          reguaHora: env.GHL_FIELD_REGUA_HORA,
         },
       }),
     );

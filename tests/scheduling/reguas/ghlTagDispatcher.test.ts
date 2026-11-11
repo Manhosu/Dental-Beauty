@@ -4,6 +4,8 @@ import {
   createGhlTagDispatcher,
   tagForPayload,
   unidadeParaOpcaoGhl,
+  diaParaTexto,
+  horaParaTexto,
   type GhlReguaFieldIds,
 } from '../../../src/scheduling/reguas/ghlTagDispatcher';
 import type { ReguaPayload } from '../../../src/scheduling/reguas/dispatcher';
@@ -14,6 +16,8 @@ const fields: GhlReguaFieldIds = {
   nomeCrianca: 'id-crianca',
   ultimoProcedimento: 'id-procedimento',
   unidade: 'id-unidade',
+  reguaDia: 'id-dia',
+  reguaHora: 'id-hora',
 };
 
 type UpsertInput = Parameters<GoHighLevelCrmClient['upsertContactWithFields']>[0];
@@ -104,6 +108,31 @@ describe('buildCustomFields', () => {
       fields,
     );
     expect(campos.map((c) => c.id)).not.toContain('id-unidade');
+  });
+
+  it('formata dia e hora da consulta para o texto da confirmação', () => {
+    expect(diaParaTexto('2026-11-12T03:00:00.000Z')).toBe('12/11');
+    expect(diaParaTexto('2026-11-12')).toBe('12/11');
+    expect(diaParaTexto('2026-01-05')).toBe('05/01');
+    expect(horaParaTexto('9:00')).toBe('09:00');
+    expect(horaParaTexto('14:30')).toBe('14:30');
+    expect(horaParaTexto('9:00 - 9:30')).toBe('09:00');
+  });
+
+  it('não inventa dia nem hora quando o dado não veio ou veio quebrado', () => {
+    expect(diaParaTexto(undefined)).toBeUndefined();
+    expect(diaParaTexto('x')).toBeUndefined();
+    expect(horaParaTexto(undefined)).toBeUndefined();
+    expect(horaParaTexto('manhã')).toBeUndefined();
+  });
+
+  it('grava dia e hora na confirmação de consulta', () => {
+    const campos = buildCustomFields(
+      { type: 'no_show', phone: '1', date: '2026-11-12T03:00:00.000Z', fromTime: '9:00' },
+      fields,
+    );
+    expect(campos).toContainEqual({ id: 'id-dia', field_value: '12/11' });
+    expect(campos).toContainEqual({ id: 'id-hora', field_value: '09:00' });
   });
 
   it('grava a unidade para a pesquisa escolher o link do Google certo', () => {

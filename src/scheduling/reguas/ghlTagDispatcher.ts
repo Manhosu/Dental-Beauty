@@ -26,6 +26,10 @@ export interface GhlReguaFieldIds {
   ultimoProcedimento: string;
   /** Unidade do atendimento. A pesquisa de satisfação usa para escolher o link do Google certo. */
   unidade: string;
+  /** Dia da consulta, já formatado para o texto da confirmação. */
+  reguaDia: string;
+  /** Hora da consulta, já formatada para o texto da confirmação. */
+  reguaHora: string;
 }
 
 export interface GhlTagDispatcherConfig {
@@ -79,6 +83,30 @@ export function unidadeParaOpcaoGhl(unit: string | undefined): string | undefine
   return undefined;
 }
 
+/**
+ * Dia da consulta no formato que vai no texto ("12/11"). A Clinicorp devolve a data em ISO
+ * ("2026-11-12T03:00:00.000Z") ou já como YYYY-MM-DD; os dois casos entram aqui.
+ *
+ * Lê a data **em UTC de propósito**: o campo da Clinicorp vem com o fuso embutido e converter de
+ * novo mudaria o dia da consulta para quem é atendido de manhã cedo.
+ */
+export function diaParaTexto(date: string | undefined): string | undefined {
+  if (!date) return undefined;
+  const d = new Date(date.length === 10 ? `${date}T12:00:00Z` : date);
+  if (Number.isNaN(d.getTime())) return undefined;
+  const dd = String(d.getUTCDate()).padStart(2, '0');
+  const mm = String(d.getUTCMonth() + 1).padStart(2, '0');
+  return `${dd}/${mm}`;
+}
+
+/** Hora da consulta normalizada para HH:mm ("9:00" vira "09:00"). */
+export function horaParaTexto(fromTime: string | undefined): string | undefined {
+  if (!fromTime) return undefined;
+  const m = /^(\d{1,2}):(\d{2})/.exec(fromTime.trim());
+  if (!m) return undefined;
+  return `${m[1]!.padStart(2, '0')}:${m[2]}`;
+}
+
 /** Campos personalizados a gravar no contato antes de marcar a tag. */
 export function buildCustomFields(
   payload: ReguaPayload,
@@ -96,6 +124,14 @@ export function buildCustomFields(
   const unidade = unidadeParaOpcaoGhl(payload.unit);
   if (unidade) {
     campos.push({ id: ids.unidade, field_value: unidade });
+  }
+  const dia = diaParaTexto(payload.date);
+  if (dia) {
+    campos.push({ id: ids.reguaDia, field_value: dia });
+  }
+  const hora = horaParaTexto(payload.fromTime);
+  if (hora) {
+    campos.push({ id: ids.reguaHora, field_value: hora });
   }
   return campos;
 }

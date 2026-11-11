@@ -1,4 +1,4 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 import {
   DEFAULT_BUSINESS_HOURS,
   parseWeekdays,
@@ -61,6 +61,8 @@ const envSchema = z.object({
   GHL_FIELD_NOME_CRIANCA: z.string().optional(),
   GHL_FIELD_ULTIMO_PROCEDIMENTO: z.string().optional(),
   GHL_FIELD_UNIDADE: z.string().optional(),
+  GHL_FIELD_REGUA_DIA: z.string().optional(),
+  GHL_FIELD_REGUA_HORA: z.string().optional(),
   // Horário comercial da recepção (decisão do cliente 2026-08): dentro dele a recepção atende e a
   // IA de conversa fica calada; fora dele a IA assume. Réguas/follow-ups rodam sempre.
   BUSINESS_HOURS_START: z.string().optional(), // 'HH:mm' (default 09:00)
