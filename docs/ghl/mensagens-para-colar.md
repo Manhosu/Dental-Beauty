@@ -92,20 +92,20 @@ Tudo em **rascunho**. Nada publicado.
 | --- | --- |
 | `RÉGUA — Aniversário` | ✅ pronta |
 | `RÉGUA — Pesquisa de satisfação` | ✅ pronta, escala 0 a 5, sem a trava de "já avaliou" |
-| `RÉGUA — Cuidado no dia seguinte` | ⚠️ pronta — falta só acrescentar o ✨ no fim do texto |
+| `RÉGUA — Cuidado no dia seguinte` | ✅ pronta |
 | `RÉGUA — Reengajamento 6 meses` | ✅ pronta |
 | `RÉGUA — Reengajamento 12 meses` | ✅ pronta |
 | `RÉGUA — Confirmação de consulta` | ✅ pronta, agora com 96h de antecedência |
 | `RÉGUA — Retorno pós-procedimento` | ✅ pronta, com as 13 mensagens |
-| `RÉGUA — Lembrete do dia` | ❌ **falta montar** — backend pronto, workflow não existe |
+| `RÉGUA — Lembrete do dia` | ✅ pronta (7h30) |
 
 ### Mudanças pedidas pela cliente em 12/11/2026
 
 1. **Confirmação passou de 24h para 96h.** Com quatro dias, quem responde NÃO ainda dá tempo de a
    recepção oferecer a vaga. O texto perdeu o "amanhã": agora é "Sua consulta está agendada para:".
-2. **O lembrete de 2h virou um aviso às 7h30** para todos os pacientes do dia. Backend pronto
-   (segunda rodada do cron, tag `regua-lembrete-hoje`); **o workflow ainda não foi montado.**
-   O texto é o que estava reservado para o lembrete de 2h.
+2. **O lembrete de 2h virou um aviso às 7h30** para todos os pacientes do dia. Régua própria,
+   montada a partir de uma cópia da confirmação (tag `regua-lembrete-hoje`, segunda rodada do
+   cron). O texto é o que estava reservado para o lembrete de 2h.
 3. **Pesquisa de satisfação:** saiu "de 1 a 5 estrelas, como foi a experiência" e entrou
    **"de 0 a 5, o quanto você indicaria a Dental Beauty"**. As respostas viraram três faixas:
    5 → link do Google; 4 → "o que faltou para ser 5?"; 0 a 3 → um atendente entra em contato.
@@ -186,17 +186,16 @@ Os ramos casam por **Contém** no campo `Último Procedimento`, com o radical en
 5. **Dois rascunhos `New Workflow`** (criados em 08/10 e 09/11) estão na lista da subconta. Não
    são das réguas — são anteriores a esta montagem —, então ficaram de pé. Quem souber a origem
    que apague.
-6. **Montar a régua `Lembrete do dia`** (7h30). O backend já marca a tag; falta o workflow.
-7. **Acrescentar o ✨** no fim do texto do cuidado no dia seguinte, como ela ajustou no documento.
 
-### Lembrete de 2h antes: fora por enquanto
+### Por que o lembrete de 2h antes não existiu
 
-O cliente marcou como opcional e ele não cabe no desenho atual. O motor dispara uma vez por dia,
-no dia anterior, então não há como acertar "2 horas antes" com uma espera de duração fixa. Para
-fazer direito: gravar a data/hora da consulta num campo de data do contato e usar a espera
-"Até uma data/hora específica → Antes desta data". É trabalho de backend mais configuração.
+Ele não cabia no desenho: o motor dispara uma vez por dia, então não há como acertar "2 horas
+antes" com uma espera de duração fixa. A cliente resolveu por outro caminho em 12/11 — um aviso
+às 7h30 para todos os pacientes do dia —, que cabe numa segunda rodada diária e está montado
+(régua 2b). Se um dia o lembrete de 2h voltar à pauta, o caminho é gravar a data/hora da consulta
+num campo de data do contato e usar a espera "Até uma data/hora específica → Antes desta data".
 
-## Estrutura: 7 workflows
+## Estrutura: 8 workflows
 
 Um workflow por régua, cada um disparado pela sua tag. Dentro dele, ramificação por
 `{{contact.trilha}}` (e por procedimento quando precisa).
@@ -204,11 +203,12 @@ Um workflow por régua, cada um disparado pela sua tag. Dentro dele, ramificaç�
 | Workflow | Tag que dispara | Ramos | Mensagens |
 | --- | --- | --- | --- |
 | `RÉGUA — Aniversário` | `regua-aniversario` | trilha | 2 |
-| `RÉGUA — Confirmação de consulta` | `regua-confirmacao` | trilha × 24h/2h | 4 |
+| `RÉGUA — Confirmação de consulta` | `regua-confirmacao` | trilha | 2 |
+| `RÉGUA — Lembrete do dia` | `regua-lembrete-hoje` | trilha | 2 |
 | `RÉGUA — Retorno pós-procedimento` | `regua-posprocedimento` | trilha × procedimento | 13 |
 | `RÉGUA — Pesquisa de satisfação` | `regua-nps` | trilha | 2 |
 | `RÉGUA — Reengajamento` | `regua-inatividade-6` e `-12` | trilha × tag | 4 |
-| `RÉGUA — Cuidado no dia seguinte` | `regua-poscirurgia` | nenhum | 1 |
+| `RÉGUA — Cuidado no dia seguinte` | `regua-poscirurgia` | trilha | 2 |
 
 ---
 
@@ -285,14 +285,14 @@ Pode confirmar a presença com um SIM? Se precisar remarcar, responda NÃO que e
 
 ---
 
-# 2b · RÉGUA — Lembrete do dia · **falta montar**
+# 2b · RÉGUA — Lembrete do dia
 
 Gatilho: Tag de contato · `regua-lembrete-hoje` · dispara às **7h30**, para todos os pacientes
-com consulta naquele dia.
+com consulta naquele dia. Workflow `e98741ba-e3a3-4d93-9c3a-10de387bafa7`.
 
-Backend pronto: `runLembreteHoje` lê a agenda de hoje e marca a tag na rodada matinal
-(10h30 UTC = 7h30 de Brasília). Falta criar o workflow — mesma forma da confirmação: gatilho por
-tag → If/else de trilha → mensagem → remove a tag.
+`runLembreteHoje` lê a agenda de hoje e marca a tag na rodada matinal (10h30 UTC = 7h30 de
+Brasília). Mesma forma da confirmação: gatilho por tag → If/else de trilha → mensagem → remove a
+tag ("Remove a tag para valer amanha", senão o paciente não receberia o lembrete na próxima vez).
 
 ## 2b.1 · trilha = adulto
 
@@ -588,7 +588,7 @@ O casamento é por radical no texto livre da Clinicorp: `cirurg`, `exodontia`, `
 
 ```
 Olá, {{contact.first_name}}! 🤍 Passando para saber como você está depois do procedimento de ontem.
-Se sentir algo diferente do que o dentista explicou, é só nos chamar por aqui que nossa equipe orienta você.
+Se sentir algo diferente do que o dentista explicou, é só nos chamar por aqui que nossa equipe orienta você. ✨
 ```
 
 ## 6.2 · trilha = infantil
