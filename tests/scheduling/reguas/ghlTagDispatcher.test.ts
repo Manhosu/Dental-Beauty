@@ -37,6 +37,11 @@ describe('tagForPayload', () => {
     expect(tagForPayload({ type: 'nps', phone: '1' })).toBe('regua-nps');
   });
 
+  it('separa a confirmação de 96h do lembrete da manhã: são textos diferentes', () => {
+    expect(tagForPayload({ type: 'no_show', phone: '1' })).toBe('regua-confirmacao');
+    expect(tagForPayload({ type: 'lembrete_hoje', phone: '1' })).toBe('regua-lembrete-hoje');
+  });
+
   it('separa reengajamento por faixa de meses', () => {
     expect(tagForPayload({ type: 'inatividade', phone: '1', months: 6 })).toBe(
       'regua-inatividade-6',
@@ -133,6 +138,15 @@ describe('buildCustomFields', () => {
     );
     expect(campos).toContainEqual({ id: 'id-dia', field_value: '12/11' });
     expect(campos).toContainEqual({ id: 'id-hora', field_value: '09:00' });
+  });
+
+  it('grava dia e hora também no lembrete da manhã, que usa a hora no texto', () => {
+    const campos = buildCustomFields(
+      { type: 'lembrete_hoje', phone: '1', date: '2026-11-12', fromTime: '14:30' },
+      fields,
+    );
+    expect(campos).toContainEqual({ id: 'id-dia', field_value: '12/11' });
+    expect(campos).toContainEqual({ id: 'id-hora', field_value: '14:30' });
   });
 
   it('grava a unidade para a pesquisa escolher o link do Google certo', () => {

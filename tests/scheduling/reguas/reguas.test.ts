@@ -2,6 +2,7 @@
 import {
   runAniversariantes,
   runNoShow,
+  runLembreteHoje,
   runPostProcedure,
   runNps,
   runInactivity,
@@ -9,7 +10,16 @@ import {
   intervalMonthsForCategory,
   isProcedimentoCirurgico,
 } from '../../../src/scheduling/reguas/jobs';
-import { isoDate, monthsAgoIso, runDailyReguas } from '../../../src/scheduling/reguas/cronEngine';
+import {
+  CONFIRMACAO_DIAS_ANTES,
+  isoDate,
+  monthsAgoIso,
+  runDailyReguas,
+} from '../../../src/scheduling/reguas/cronEngine';
+import {
+  createMemoryVisitCounter,
+  visitaPedePesquisa,
+} from '../../../src/scheduling/reguas/visitCounter';
 import { createHttpDispatcher } from '../../../src/scheduling/reguas/dispatcher';
 import type { ClinicorpClient } from '../../../src/integrations/clinicorp/types';
 
@@ -121,6 +131,87 @@ describe('réguas — jobs', () => {
     expect(sent).toBe(1);
     expect(clinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2026-06-28');
     expect(dispatch).toHaveBeenCalledWith({ type: 'nps', phone: '5511', name: 'Ana' });
+  });
+
+  it('lembrete da manhã: avisa todo mundo da agenda de hoje, com tipo próprio', async () => {
+    const clinicorp = fakeClinicorp({
+      listAppointmentsByDate: vi.fn().mockResolvedValue([
+        { id: '1', patientName: 'Ana', mobilePhone: '5511', date: '2026-06-29', fromTime: '9:00', toTime: '10' },
+        { id: '2', patientName: 'SemFone', date: '2026-06-29', fromTime: '14:00', toTime: '15' },
+      ]),
+    });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runLembreteHoje(clinicorp, dispatch, '2026-06-29');
+
+    expect(sent).toBe(1);
+    expect(clinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2026-06-29');
+    // Tipo próprio: é o que separa o texto "sua consulta é hoje" do texto de 96h antes.
+    expect(dispatch).toHaveBeenCalledWith(
+      expect.objectContaining({ type: 'lembrete_hoje', phone: '5511', fromTime: '9:00' }),
+    );
+  });
+
+  it('lembrete da manhã: não filtra por status — quem ainda não veio não tem CHECKOUT', async () => {
+    const clinicorp = fakeClinicorp({
+      listAppointmentsByDate: vi.fn().mockResolvedValue([
+        { id: '1', patientName: 'Ana', mobilePhone: '5511', date: 'x', fromTime: '9:00', toTime: '10', statusId: 111 },
+      ]),
+    });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    expect(await runLembreteHoje(clinicorp, dispatch, '2026-06-29')).toBe(1);
+  });
+
+  it('pesquisa de satisfação: sai na 1ª vinda e só volta na 4ª', async () => {
+    const clinicorp = fakeClinicorp({
+      listAppointmentsByDate: vi.fn().mockResolvedValue([
+        { id: '1', patientName: 'Ana', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID },
+      ]),
+    });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+    const counter = createMemoryVisitCounter();
+
+    const enviados: number[] = [];
+    for (let vinda = 1; vinda <= 5; vinda++) {
+      enviados.push(await runNps(clinicorp, dispatch, '2026-06-28', counter));
+    }
+
+    expect(enviados).toEqual([1, 0, 0, 1, 0]);
+    expect(dispatch).toHaveBeenCalledTimes(2);
+  });
+
+  it('pesquisa de satisfação: sem contador, mantém o envio a cada consulta (caminho legado)', async () => {
+    const clinicorp = fakeClinicorp({
+      listAppointmentsByDate: vi.fn().mockResolvedValue([
+        { id: '1', patientName: 'Ana', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID },
+      ]),
+    });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    expect(await runNps(clinicorp, dispatch, '2026-06-28')).toBe(1);
+    expect(await runNps(clinicorp, dispatch, '2026-06-28')).toBe(1);
+  });
+
+  it('pesquisa de satisfação: a contagem é por paciente, não global', async () => {
+    const clinicorp = fakeClinicorp({
+      listAppointmentsByDate: vi.fn().mockResolvedValue([
+        { id: '1', patientName: 'Ana', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID },
+        { id: '2', patientName: 'Bia', mobilePhone: '5522', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID },
+        { id: '3', patientName: 'Caio', mobilePhone: '5533', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID },
+      ]),
+    });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    // Todo mundo na 1ª vinda: os três recebem.
+    expect(await runNps(clinicorp, dispatch, '2026-06-28', createMemoryVisitCounter())).toBe(3);
+  });
+
+  it('visitaPedePesquisa: 1ª, 4ª, 7ª — e nunca com total zerado', () => {
+    expect([1, 2, 3, 4, 5, 6, 7].map((n) => visitaPedePesquisa(n))).toEqual([
+      true, false, false, true, false, false, true,
+    ]);
+    expect(visitaPedePesquisa(0)).toBe(false);
   });
 
   it('inatividade: dispara para ATENDIDO há 6/12m que NÃO voltou; exclui quem retornou', async () => {
@@ -243,7 +334,7 @@ describe('réguas — cronEngine', () => {
     expect(monthsAgoIso(new Date('2026-06-29T12:00:00.000Z'), 12)).toBe('2025-06-29');
   });
 
-  it('runDailyReguas roda aniversário + no-show (T-24h) quando ambos configurados', async () => {
+  it('runDailyReguas roda aniversário + confirmação (96h antes) quando ambos configurados', async () => {
     const clinicorp = fakeClinicorp({
       listBirthdays: vi.fn().mockResolvedValue([{ patientId: 1, name: 'Ana', birthDate: '1996-06-26', age: 30, mobilePhone: '5521999' }]),
       listAppointmentsByDate: vi.fn().mockResolvedValue([{ id: '10', patientName: 'B', mobilePhone: '5521888', date: 'x', fromTime: '9:00', toTime: '9:30' }]),
@@ -254,7 +345,21 @@ describe('réguas — cronEngine', () => {
     const res = await runDailyReguas(clinicorp, { aniversario, noShow }, new Date('2026-06-26T12:00:00.000Z'));
 
     expect(res).toEqual({ aniversario: 1, noShow: 1, posProcedimento: 0, nps: 0, inatividade: 0, posCirurgia: 0 });
-    expect(clinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2026-06-27');
+    // 96h = 4 dias à frente (mudança do cliente em 12/11/2026; antes era o dia seguinte).
+    expect(clinicorp.listAppointmentsByDate).toHaveBeenCalledWith('2026-06-30');
+    expect(CONFIRMACAO_DIAS_ANTES).toBe(4);
+  });
+
+  it('o lembrete da manhã não sai na rodada diária: ele tem rodada própria às 7h30', async () => {
+    const clinicorp = fakeClinicorp({
+      listAppointmentsByDate: vi.fn().mockResolvedValue([{ id: '10', patientName: 'B', mobilePhone: '5521888', date: 'x', fromTime: '9:00', toTime: '9:30' }]),
+    });
+    const aniversario = vi.fn().mockResolvedValue(undefined);
+    const lembreteHoje = vi.fn().mockResolvedValue(undefined);
+
+    await runDailyReguas(clinicorp, { aniversario, lembreteHoje }, new Date('2026-06-26T12:00:00.000Z'));
+
+    expect(lembreteHoje).not.toHaveBeenCalled();
   });
 
   it('runDailyReguas pula no-show e pós-procedimento quando não há dispatcher', async () => {

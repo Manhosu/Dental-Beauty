@@ -1,5 +1,6 @@
 import type { ClinicorpClient } from '../../integrations/clinicorp/types';
 import type { ReguaDispatcher } from './dispatcher';
+import { visitaPedePesquisa, type VisitCounter } from './visitCounter';
 import { logger } from '../../lib/logger';
 
 /**
@@ -66,20 +67,21 @@ export async function runAniversariantes(
 }
 
 /**
- * Régua anti no-show: para cada agendamento da data alvo, pede confirmação de presença.
- * Uso T-24h: passar a data de amanhã. (T-2h pode ser uma execução horária no futuro.)
+ * Varre a agenda de uma data e dispara um aviso por paciente. Serve as duas réguas de lembrete,
+ * que leem a mesma coisa e mudam só o texto — por isso o `type` entra como parâmetro.
  */
-export async function runNoShow(
+async function runLembreteAgenda(
   clinicorp: ClinicorpClient,
   dispatch: ReguaDispatcher,
   date: string,
+  type: 'no_show' | 'lembrete_hoje',
 ): Promise<number> {
   const appointments = await clinicorp.listAppointmentsByDate(date);
   let sent = 0;
   for (const a of appointments) {
     if (!a.mobilePhone) continue;
     await dispatch({
-      type: 'no_show',
+      type,
       phone: a.mobilePhone,
       name: a.patientName,
       appointmentId: a.id,
@@ -91,6 +93,33 @@ export async function runNoShow(
     sent++;
   }
   return sent;
+}
+
+/**
+ * Régua de confirmação: para cada agendamento da data alvo, pede confirmação de presença.
+ * Roda com **96h de antecedência** (`CONFIRMACAO_DIAS_ANTES`) — o cliente mudou de 24h para 4 dias
+ * em 12/11/2026, para dar tempo de remarcar a vaga quando o paciente responde NÃO.
+ */
+export async function runNoShow(
+  clinicorp: ClinicorpClient,
+  dispatch: ReguaDispatcher,
+  date: string,
+): Promise<number> {
+  return runLembreteAgenda(clinicorp, dispatch, date, 'no_show');
+}
+
+/**
+ * Lembrete da manhã: às 7h30 avisa todo mundo que tem consulta **hoje** (decisão do cliente em
+ * 12/11/2026, no lugar do lembrete de 2h antes, que não cabia numa varredura diária).
+ *
+ * `date` = hoje. É a mesma leitura da confirmação, com texto próprio ("sua consulta é hoje, às X").
+ */
+export async function runLembreteHoje(
+  clinicorp: ClinicorpClient,
+  dispatch: ReguaDispatcher,
+  date: string,
+): Promise<number> {
+  return runLembreteAgenda(clinicorp, dispatch, date, 'lembrete_hoje');
 }
 
 /** Meses distintos da tabela de retorno do escopo (réguas-e-campanhas.md). */
@@ -232,23 +261,24 @@ export async function runPostProcedure(
  * Pesquisa de satisfação no dia seguinte à consulta ATENDIDA (StatusId == CHECKOUT).
  * `date` = a data-alvo (ontem).
  *
- * A escala é de **1 a 5 estrelas** (decisão do cliente em 11/11/2026, antes era NPS de 0 a 10).
- * Quem dá 5 recebe o convite para avaliar no Google; 4 ou menos vira conversa. Quem responde o
- * agente trata — aqui só disparamos a pergunta.
+ * A escala é de **0 a 5** ("o quanto você indicaria a Dental Beauty"), decisão do cliente em
+ * 12/11/2026. Nota 5 recebe o convite para avaliar no Google; 4 leva a pergunta "o que faltou para
+ * ser 5?"; de 0 a 3 entra um atendente humano. Quem responde o agente trata — aqui só disparamos a
+ * pergunta.
  *
  * A **unidade** vai no payload porque o link do Google muda por unidade: Recreio e Ipanema têm
  * links diferentes. Sem ela o agente não tem como escolher.
  *
- * O cliente pediu que a pesquisa não saia depois de toda consulta, e sim depois da avaliação ou no
- * decorrer do tratamento, **só para quem ainda não avaliou**. Quem filtra isso é o workflow, com
- * uma condição em `NPS - Nota`: se o campo já está preenchido, o paciente não recebe de novo.
- * Resolver assim evita ter que adivinhar qual consulta era a avaliação, e dá o mesmo resultado:
- * cada paciente é convidado uma vez só.
+ * **Frequência:** o cliente vetou o envio depois de toda consulta — para quem está em tratamento,
+ * a mesma pergunta a cada sessão incomoda. A régua passou a sair **a cada 3 vindas**, contadas por
+ * `counter` (ver `visitCounter.ts`). Sem `counter` o comportamento antigo continua valendo, que é
+ * o que o caminho legado do Chatbotify usa.
  */
 export async function runNps(
   clinicorp: ClinicorpClient,
   dispatch: ReguaDispatcher,
   date: string,
+  counter?: VisitCounter,
 ): Promise<number> {
   const statuses = await clinicorp.listAppointmentStatuses();
   const checkoutId = statuses.find((s) => s.type === 'CHECKOUT')?.id;
@@ -256,9 +286,17 @@ export async function runNps(
 
   const appointments = await clinicorp.listAppointmentsByDate(date);
   let sent = 0;
+  let pulados = 0;
   for (const a of appointments) {
     if (a.statusId !== checkoutId) continue; // só quem compareceu
     if (!a.mobilePhone) continue;
+    if (counter) {
+      const total = await counter.increment(a.mobilePhone);
+      if (!visitaPedePesquisa(total)) {
+        pulados++;
+        continue;
+      }
+    }
     await dispatch({
       type: 'nps',
       phone: a.mobilePhone,
@@ -266,6 +304,9 @@ export async function runNps(
       ...(a.unit !== undefined ? { unit: a.unit } : {}),
     });
     sent++;
+  }
+  if (pulados > 0) {
+    logger.info({ sent, pulados }, 'pesquisa de satisfação: fora da vez (a cada 3 vindas)');
   }
   return sent;
 }

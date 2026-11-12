@@ -16,6 +16,7 @@ import {
 import { createGhlTagDispatcher } from './scheduling/reguas/ghlTagDispatcher';
 import { isoDate, startReguas } from './scheduling/reguas/cronEngine';
 import { createRedisSentRegistry, withDedupe } from './scheduling/reguas/dedupe';
+import { createRedisVisitCounter } from './scheduling/reguas/visitCounter';
 import { logger } from './lib/logger';
 
 async function main(): Promise<void> {
@@ -110,12 +111,17 @@ async function main(): Promise<void> {
       dispatchers: {
         aniversario: porTag,
         noShow: porTag,
+        lembreteHoje: porTag,
         posProcedimento: porTag,
         nps: porTag,
         inatividade: porTag,
         posCirurgia: porTag,
       },
+      // A pesquisa de satisfação sai a cada 3 vindas; a contagem fica no Redis para sobreviver a
+      // restart — em memória, cada deploy zeraria todo mundo e a pesquisa voltaria a sair sempre.
+      npsCounter: createRedisVisitCounter(redis),
       claimDailyRun: (dateIso) => sentRegistry.claim(`regua:run:${dateIso}`, 172_800),
+      claimMorningRun: (dateIso) => sentRegistry.claim(`regua:run:manha:${dateIso}`, 172_800),
     });
     logger.info({ plataforma: 'gohighlevel', gatilho: 'tag' }, 'réguas (cron-engine) ativadas');
     return;

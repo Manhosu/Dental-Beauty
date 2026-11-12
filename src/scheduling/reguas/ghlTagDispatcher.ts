@@ -49,6 +49,7 @@ export function tagForPayload(payload: ReguaPayload): string {
   const porTipo: Record<Exclude<ReguaPayload['type'], 'inatividade'>, string> = {
     aniversario: 'regua-aniversario',
     no_show: 'regua-confirmacao',
+    lembrete_hoje: 'regua-lembrete-hoje',
     pos_procedimento: 'regua-posprocedimento',
     nps: 'regua-nps',
     pos_cirurgia: 'regua-poscirurgia',

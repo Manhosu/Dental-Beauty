@@ -5,7 +5,14 @@ export type ReguaTrack = 'adulto' | 'infantil';
 
 /** Payload interno por destinatário (vindo dos jobs das réguas). */
 export interface ReguaPayload {
-  type: 'aniversario' | 'no_show' | 'pos_procedimento' | 'nps' | 'inatividade' | 'pos_cirurgia';
+  type:
+    | 'aniversario'
+    | 'no_show'
+    | 'lembrete_hoje'
+    | 'pos_procedimento'
+    | 'nps'
+    | 'inatividade'
+    | 'pos_cirurgia';
   phone: string;
   name?: string;
   /** 'adulto' (default) ou 'infantil' — o fluxo escolhe o template da trilha certa. */
@@ -36,7 +43,7 @@ export interface ReguaWebhookConfig {
 
 /** Observação livre gravada no contato — contexto para o atendente humano. */
 function buildObservacoes(payload: ReguaPayload): string | undefined {
-  if (payload.type === 'no_show' && payload.date) {
+  if ((payload.type === 'no_show' || payload.type === 'lembrete_hoje') && payload.date) {
     return `Lembrete de consulta ${payload.date} ${payload.fromTime ?? ''} ${payload.professionalName ?? ''}`.trim();
   }
   if (payload.type === 'pos_procedimento') {
