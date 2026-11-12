@@ -36,7 +36,8 @@ O que vale: o backend grava os campos no contato e marca uma **tag**; o workflow
 | Régua | Tag que dispara |
 | --- | --- |
 | Aniversário | `regua-aniversario` |
-| Confirmação de consulta | `regua-confirmacao` |
+| Confirmação de consulta (96h antes) | `regua-confirmacao` |
+| Lembrete da manhã (7h30, consultas de hoje) | `regua-lembrete-hoje` |
 | Retorno pós-procedimento | `regua-posprocedimento` |
 | Pesquisa de satisfação | `regua-nps` |
 | Reengajamento 6 meses | `regua-inatividade-6` |
@@ -66,8 +67,13 @@ Antes de marcar a tag, o backend grava os dados nos campos personalizados do con
 | --- | --- | --- |
 | `[Nome]` | `{{contact.first_name}}` | cadastro do contato |
 | `[ nome do filho(a) ]` | `{{contact.nome_da_criana}}` | Clinicorp |
-| `[dia]` | `{{contact.regua__dia}}` | agenda · **campo ainda não existe** |
-| `[hora]` | `{{contact.regua__hora}}` | agenda · **campo ainda não existe** |
+| `[dia]` | `{{contact.rgua__dia}}` | agenda |
+| `[hora]` | `{{contact.rgua__hora}}` | agenda |
+
+> **Atenção à grafia da tag:** é `rgua`, sem o "e" — o GHL monta a chave do campo tirando os
+> acentos de "Régua - Dia" e o "é" some junto. Digitar `{{contact.regua__dia}}` não resolve para o
+> campo certo. Os ids estão no `.env` (`GHL_FIELD_REGUA_DIA` / `GHL_FIELD_REGUA_HORA`) e os dois
+> campos **existem** na location.
 
 Campos usados só para ramificar, nunca no texto: `{{contact.trilha}}` e
 `{{contact.ltimo_procedimento}}`.
@@ -77,24 +83,47 @@ Campos usados só para ramificar, nunca no texto: `{{contact.trilha}}` e
 > mas a condição do workflow compara com a opção: minúsculo faria todo mundo cair no ramo
 > "Sem trilha" e ninguém receberia mensagem. O dispatcher já converte.
 
-> **Pendência:** "Régua - Dia" e "Régua - Hora" precisam ser criados como campos de texto na
-> location, e o dispatcher precisa passar a gravá-los. Só a régua de confirmação depende deles, e
-> ela também está esperando a segunda rodada do cron (lembrete de 2h). As outras quatro réguas não
-> dependem disso.
 
-## Estado da montagem (11/11/2026)
+## Estado da montagem (12/11/2026)
 
 Tudo em **rascunho**. Nada publicado.
 
 | Workflow | Estado |
 | --- | --- |
 | `RÉGUA — Aniversário` | ✅ pronta |
-| `RÉGUA — Pesquisa de satisfação` | ✅ pronta, com a trava de quem já avaliou |
-| `RÉGUA — Cuidado no dia seguinte` | ✅ pronta |
+| `RÉGUA — Pesquisa de satisfação` | ✅ pronta, escala 0 a 5, sem a trava de "já avaliou" |
+| `RÉGUA — Cuidado no dia seguinte` | ⚠️ pronta — falta só acrescentar o ✨ no fim do texto |
 | `RÉGUA — Reengajamento 6 meses` | ✅ pronta |
 | `RÉGUA — Reengajamento 12 meses` | ✅ pronta |
-| `RÉGUA — Confirmação de consulta` | ✅ pronta (só a de 24h; a de 2h ficou de fora) |
+| `RÉGUA — Confirmação de consulta` | ✅ pronta, agora com 96h de antecedência |
 | `RÉGUA — Retorno pós-procedimento` | ✅ pronta, com as 13 mensagens |
+| `RÉGUA — Lembrete do dia` | ❌ **falta montar** — backend pronto, workflow não existe |
+
+### Mudanças pedidas pela cliente em 12/11/2026
+
+1. **Confirmação passou de 24h para 96h.** Com quatro dias, quem responde NÃO ainda dá tempo de a
+   recepção oferecer a vaga. O texto perdeu o "amanhã": agora é "Sua consulta está agendada para:".
+2. **O lembrete de 2h virou um aviso às 7h30** para todos os pacientes do dia. Backend pronto
+   (segunda rodada do cron, tag `regua-lembrete-hoje`); **o workflow ainda não foi montado.**
+   O texto é o que estava reservado para o lembrete de 2h.
+3. **Pesquisa de satisfação:** saiu "de 1 a 5 estrelas, como foi a experiência" e entrou
+   **"de 0 a 5, o quanto você indicaria a Dental Beauty"**. As respostas viraram três faixas:
+   5 → link do Google; 4 → "o que faltou para ser 5?"; 0 a 3 → um atendente entra em contato.
+4. **A pesquisa não sai mais depois de toda consulta.** Agora é **a cada 3 vindas** — a trava
+   "NPS - Nota está em branco" saiu do gatilho, porque ela impediria a segunda rodada. O
+   espaçamento é contado no backend (`visitCounter.ts`).
+5. **"Criança que concluiu o tratamento" está descartada por ora.** A Clinicorp não tem campo de
+   alta: a conclusão só aparece escrita na ficha clínica, em texto livre. Sem um campo estruturado
+   não há como disparar sozinho.
+
+> **Decisão minha, a confirmar com a cliente:** a pesquisa sai na **1ª vinda** que o sistema
+> observa e depois a cada três (1ª, 4ª, 7ª…). Começar na primeira é de propósito — quem vem uma
+> vez só é justamente de quem se quer a avaliação no Google, e esperar a 3ª deixaria esse paciente
+> de fora para sempre. Se ela preferir só a partir da 3ª, é uma linha em `visitaPedePesquisa`.
+
+> **Inconsistência no documento dela:** o texto infantil da pesquisa ficou "de 0 a 10" enquanto o
+> adulto virou "de 0 a 5". Como as três respostas (5 / 4 / 0 a 3) só fazem sentido numa escala de
+> 0 a 5, montei o infantil **também em 0 a 5**. Vale confirmar.
 
 ### Como ficou o retorno pós-procedimento
 
@@ -150,11 +179,15 @@ Os ramos casam por **Contém** no campo `Último Procedimento`, com o radical en
    confirmação depende deles (ver pendência acima).
 3. **Reengajamento x campanha da consultoria:** eles já têm a campanha "6+ meses sem vir"
    publicada. Confirmar a divisão antes de publicar, senão o paciente recebe as duas.
-4. **"Criança que concluiu o tratamento"** continua sem resposta do cliente (texto pronto no fim
-   deste documento). Depende de a Clinicorp expor o estado "tratamento concluído".
+4. **Os nomes dos procedimentos na agenda.** A cliente avisou que, na Clinicorp, os procedimentos
+   são classificados **pelo nome da especialidade**, e se ofereceu para indicar quais são. Até a
+   lista chegar, os ramos do retorno pós-procedimento casam por radical e podem não bater com a
+   grafia real. **Pedir a lista.**
 5. **Dois rascunhos `New Workflow`** (criados em 08/10 e 09/11) estão na lista da subconta. Não
    são das réguas — são anteriores a esta montagem —, então ficaram de pé. Quem souber a origem
    que apague.
+6. **Montar a régua `Lembrete do dia`** (7h30). O backend já marca a tag; falta o workflow.
+7. **Acrescentar o ✨** no fim do texto do cuidado no dia seguinte, como ela ajustou no documento.
 
 ### Lembrete de 2h antes: fora por enquanto
 
@@ -223,45 +256,55 @@ Sua família Dental Beauty Kids 💖
 
 # 2 · RÉGUA — Confirmação de consulta
 
-Gatilho: Tag de contato · `regua-confirmacao`
+Gatilho: Tag de contato · `regua-confirmacao` · **96h antes** (4 dias)
 
-> **Pendência técnica:** hoje o motor dispara um evento só, 24h antes. O lembrete de 2h precisa de
-> uma segunda rodada diária no cron. Montar os 4 ramos mesmo assim; os de 2h ficam inertes até a
-> rodada existir.
+Workflow `0ba77435-ad9f-4331-93e9-22af8fcc30ab`. Montada: as duas mensagens já estão com o texto
+de 96h, sem o "amanhã".
 
-## 2.1 · 24h antes · trilha = adulto
+## 2.1 · 96h antes · trilha = adulto
 
 ```
 ✨ Olá, {{contact.first_name}}!
 Estamos preparando tudo para receber você com muito carinho na Dental Beauty. 🤍
-Sua consulta está agendada para amanhã:
-📅 {{contact.regua__dia}}
-🕒 {{contact.regua__hora}}
+Sua consulta está agendada para:
+📅 {{contact.rgua__dia}}
+🕒 {{contact.rgua__hora}}
 Pode confirmar sua presença com um SIM? Se precisar de outro horário, responda NÃO que encontramos uma nova opção para você.
 ```
 
-## 2.2 · 24h antes · trilha = infantil
+## 2.2 · 96h antes · trilha = infantil
 
 ```
 ✨ Olá, família de {{contact.nome_da_criana}}!
 Estamos preparando tudo com muito carinho para a próxima aventura no Reino dos Guardiões. 💖
-A consulta está agendada para amanhã:
-📅 {{contact.regua__dia}}
-🕒 {{contact.regua__hora}}
+A consulta está agendada para:
+📅 {{contact.rgua__dia}}
+🕒 {{contact.rgua__hora}}
 Pode confirmar a presença com um SIM? Se precisar remarcar, responda NÃO que encontramos outro horário.
 ```
 
-## 2.3 · 2h antes · trilha = adulto
+---
+
+# 2b · RÉGUA — Lembrete do dia · **falta montar**
+
+Gatilho: Tag de contato · `regua-lembrete-hoje` · dispara às **7h30**, para todos os pacientes
+com consulta naquele dia.
+
+Backend pronto: `runLembreteHoje` lê a agenda de hoje e marca a tag na rodada matinal
+(10h30 UTC = 7h30 de Brasília). Falta criar o workflow — mesma forma da confirmação: gatilho por
+tag → If/else de trilha → mensagem → remove a tag.
+
+## 2b.1 · trilha = adulto
 
 ```
-Olá, {{contact.first_name}}! ✨ Sua consulta é hoje, às {{contact.regua__hora}}.
+Olá, {{contact.first_name}}! ✨ Sua consulta é hoje, às {{contact.rgua__hora}}.
 Nossa equipe já está esperando por você. Se surgir qualquer imprevisto, é só nos avisar por aqui. 🤍
 ```
 
-## 2.4 · 2h antes · trilha = infantil
+## 2b.2 · trilha = infantil
 
 ```
-🧚 Olá, família de {{contact.nome_da_criana}}! A consulta é hoje, às {{contact.regua__hora}}.
+🧚 Olá, família de {{contact.nome_da_criana}}! A consulta é hoje, às {{contact.rgua__hora}}.
 Estamos esperando vocês com carinho. Qualquer imprevisto, é só nos avisar por aqui. 💖
 ```
 
@@ -397,17 +440,16 @@ Qual dia da semana encaixa melhor na rotina da família?
 
 Gatilho: Tag de contato · `regua-nps`
 
-> **Reformulada em 11/11/2026 pelo cliente.** Saiu o NPS de 0 a 10 e entrou uma escala de
-> **1 a 5 estrelas**. Quem dá 5 recebe o convite para avaliar no Google; **4 ou menos** vira
-> conversa: perguntamos o que houve e avisamos que alguém da equipe entra em contato em breve.
+> **Reformulada duas vezes pela cliente.** Em 11/11 saiu o NPS de 0 a 10 e entrou "1 a 5
+> estrelas"; em 12/11 virou **"de 0 a 5, o quanto você indicaria a Dental Beauty"** — pergunta de
+> recomendação, não de experiência. Workflow `a621c15b-6e0e-461b-abf9-0ce755b55787`.
 
-**Quando dispara:** o motor marca a tag para quem compareceu, mas o **primeiro passo do workflow é
-uma condição em `{{contact.nps__nota}}`**: só segue quem tem o campo **vazio**. Quem já deu nota
-sai do fluxo.
+**Quando dispara:** o motor marca a tag para quem compareceu — mas **só a cada 3 vindas**. O
+espaçamento é do backend (`visitCounter.ts`), não do workflow: a cliente vetou o envio depois de
+toda consulta porque, para quem está em tratamento, a mesma pergunta a cada sessão incomoda.
 
-Isso atende o pedido do cliente ("pós avaliação ou no decorrer do tratamento, de quem não avaliou
-ainda") sem precisar adivinhar qual consulta era a avaliação: cada paciente é convidado uma vez
-só, e se ele não responder a pergunta volta na consulta seguinte.
+A trava antiga ("NPS - Nota está em branco", no gatilho) **foi removida**: ela impediria a segunda
+rodada de perguntas, que é justamente o que a nova regra quer.
 
 A nota que o paciente responde é tratada pelo agente, não pelo workflow.
 
@@ -417,7 +459,7 @@ A nota que o paciente responde é tratada pelo agente, não pelo workflow.
 Olá, {{contact.first_name}}! 🤍
 Foi um prazer receber você na Dental Beauty!
 Queremos que cada visita seja marcada por acolhimento, confiança e uma experiência verdadeiramente especial, e a sua opinião nos ajuda a evoluir.
-De 1 a 5 estrelas, como foi a sua experiência com a gente? ⭐
+De 0 a 5, o quanto você indicaria a Dental Beauty para alguém de quem você gosta?
 ```
 
 ## 4.2 · trilha = infantil
@@ -426,37 +468,49 @@ De 1 a 5 estrelas, como foi a sua experiência com a gente? ⭐
 Olá, família de {{contact.nome_da_criana}}! 💖
 Foi uma alegria receber vocês no Reino dos Guardiões!
 Se quiser, conte também o que {{contact.nome_da_criana}} achou da aventura: adoramos saber.
-E, para nos ajudar a evoluir: de 1 a 5 estrelas, como foi a experiência de vocês? ⭐
+E, para nos ajudar a evoluir: de 0 a 5, o quanto você indicaria a Dental Beauty Kids para outra família?
 ```
 
 ## 4.3 · Respostas por nota (vão no prompt do agente)
 
-O agente grava a nota em `NPS - Nota` e responde conforme a faixa. O link do Google **muda por
-unidade**, então o agente escolhe pelo campo `{{contact.unidade}}`.
+O agente grava a nota em `NPS - Nota` e responde conforme a faixa. São **três** faixas desde
+12/11/2026. O link do Google **muda por unidade**, então o agente escolhe pelo campo
+`{{contact.unidade}}`.
 
-### 5 estrelas · unidade = Recreio
+### Nota 5 · unidade = Recreio
 
 ```
 Que alegria ler isso, {{contact.first_name}}! 🤍
-Se puder, conte em poucas palavras como foi a sua experiência no Google. Isso ajuda outras pessoas a nos conhecerem com confiança:
+Se puder, conte em poucas palavras como foi a sua experiência no Google.
+Isso ajuda outras pessoas a nos conhecerem com confiança:
 https://g.page/r/CQZuDgYFDS09EBM/review
 ```
 
-### 5 estrelas · unidade = Ipanema
+### Nota 5 · unidade = Ipanema
 
 ```
 Que alegria ler isso, {{contact.first_name}}! 🤍
-Se puder, conte em poucas palavras como foi a sua experiência no Google. Isso ajuda outras pessoas a nos conhecerem com confiança:
+Se puder, conte em poucas palavras como foi a sua experiência no Google.
+Isso ajuda outras pessoas a nos conhecerem com confiança:
 https://g.page/r/CUGB4w0QxtsmEBM/review
 ```
 
-### 4 estrelas ou menos
+### Nota 4
 
 ```
-Agradecemos a sinceridade, {{contact.first_name}}. 🤍
-Queremos entender o que aconteceu e fazer diferente. Pode contar aqui o que faltou?
-Uma pessoa da nossa equipe entra em contato com você em breve.
+Agradecemos a sua nota, {{contact.first_name}}! ✨
+O que faltou para ser um 5? Sua resposta nos ajuda a cuidar ainda melhor de você.
 ```
+
+### Nota 0 a 3
+
+```
+{{contact.first_name}}, agradecemos a sinceridade. 🤍
+Queremos entender o que aconteceu e fazer diferente. Uma pessoa da nossa equipe vai falar com você em breve.
+```
+
+> A faixa 4 é a novidade: antes, tudo abaixo de 5 ia direto para atendimento humano. Agora o 4
+> primeiro pergunta o que faltou — é a nota mais recuperável, e a resposta costuma ser específica.
 
 ---
 
@@ -545,10 +599,14 @@ Passando para saber como {{contact.nome_da_criana}} está se sentindo depois do 
 Se notarem algo diferente do que o dentista explicou, é só chamar por aqui que nossa equipe orienta vocês.
 ```
 
-## Criança que concluiu o tratamento · ainda sem resposta
+## Criança que concluiu o tratamento · **descartada por ora (12/11/2026)**
 
-Gatilho que falta: **tratamento marcado como concluído** na Clinicorp. Precisa verificar se a API
-expõe esse estado; se não expuser, depende de marcação manual.
+A cliente respondeu: a Clinicorp **não tem campo de alta**. A conclusão do tratamento só aparece
+escrita na ficha clínica, em texto livre. Sem um estado estruturado não há gatilho possível — e
+ler texto livre de prontuário para disparar mensagem é frágil e invasivo demais.
+
+O texto fica guardado aqui. Se um dia houver um campo (ou uma tag manual que a equipe aplique na
+alta), a régua é meia hora de trabalho.
 
 ```
 ✨ Olá, família de {{contact.nome_da_criana}}!
