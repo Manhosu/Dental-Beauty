@@ -60,15 +60,17 @@ Isso é de propósito. O plano é:
 
 **2. Confirmar a divisão com a campanha que já está no ar.** A consultoria tem uma campanha publicada chamada "6+ meses sem vir". Se a nossa régua de reengajamento entrar junto, o mesmo paciente recebe as duas.
 
-**3. A lista dos procedimentos, como eles aparecem na agenda.** É o que mais ajuda agora. O sistema escolhe qual das 13 mensagens enviar pelo nome que está na Clinicorp. Dois casos merecem atenção:
+**3. A lista dos procedimentos, como eles aparecem na agenda.** Você ficou de montar e enviar. É a única coisa que ainda pode fazer a régua errar: o sistema escolhe qual das 13 mensagens enviar pelo nome que está na Clinicorp. Dois casos merecem atenção:
 
 - Se vocês escrevem só **"Coroa"** (sem "prótese"), ou só **"Faceta"** (sem "lente"), esses casos não são reconhecidos e o paciente não recebe nada.
 - Se o Invisalign aparece como **"Ortodontia Invisalign"**, o paciente recebe o texto geral de ortodontia em vez do de alinhadores.
 
-**4. Duas conferências rápidas nos textos:**
+## O que você já confirmou
 
-- No seu documento, a pesquisa **infantil** ficou "de 0 a 10" enquanto a adulta virou "de 0 a 5". Como as três respostas (5 / 4 / 0 a 3) só funcionam numa escala de 0 a 5, montamos a infantil também em **0 a 5**.
-- A pesquisa a cada 3 vindas sai na **primeira** vinda e depois a cada três. Fizemos assim porque quem vem uma vez só é justamente de quem a gente quer a avaliação no Google — esperar a terceira deixaria esse paciente de fora para sempre.
+Respondido em 13/11 — as duas já estavam montadas assim, então não mudou nada:
+
+- **Escala 0 a 5 igual para adulto e infantil.** No documento a infantil tinha ficado "de 0 a 10"; está corrigida.
+- **A pesquisa sai na primeira vinda e depois a cada três.** Quem vem uma vez só recebe uma vez, e tudo bem se não responder.
 
 ## O que ficou de fora
 

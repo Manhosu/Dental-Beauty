@@ -116,14 +116,18 @@ Tudo em **rascunho**. Nada publicado.
    alta: a conclusão só aparece escrita na ficha clínica, em texto livre. Sem um campo estruturado
    não há como disparar sozinho.
 
-> **Decisão minha, a confirmar com a cliente:** a pesquisa sai na **1ª vinda** que o sistema
-> observa e depois a cada três (1ª, 4ª, 7ª…). Começar na primeira é de propósito — quem vem uma
-> vez só é justamente de quem se quer a avaliação no Google, e esperar a 3ª deixaria esse paciente
-> de fora para sempre. Se ela preferir só a partir da 3ª, é uma linha em `visitaPedePesquisa`.
+### Confirmado pela cliente em 13/11/2026
 
-> **Inconsistência no documento dela:** o texto infantil da pesquisa ficou "de 0 a 10" enquanto o
-> adulto virou "de 0 a 5". Como as três respostas (5 / 4 / 0 a 3) só fazem sentido numa escala de
-> 0 a 5, montei o infantil **também em 0 a 5**. Vale confirmar.
+Duas dúvidas que tinham ficado abertas voltaram respondidas, e as duas bateram com o que já estava
+montado — nada mudou no painel nem no código.
+
+- **Escala 0 a 5 igual para adulto e infantil.** O documento dela trazia o infantil em "0 a 10",
+  mas era descuido: a escala é a mesma nas duas trilhas. (As três faixas de resposta — 5 / 4 /
+  0 a 3 — só fazem sentido em 0 a 5 mesmo.)
+- **A pesquisa sai na 1ª vinda e depois a cada três** (1ª, 4ª, 7ª…). Palavras dela: *"quem vem
+  apenas uma vez, sem problemas receber apenas uma vez e não responder"*. Ou seja, perguntar a
+  quem aparece só uma vez é desejado, e silêncio na resposta não é problema. É o que
+  `visitaPedePesquisa` faz.
 
 ### Como ficou o retorno pós-procedimento
 
@@ -175,15 +179,13 @@ Os ramos casam por **Contém** no campo `Último Procedimento`, com o radical en
 
 1. **Antes de publicar**, escolher o número de saída em cada workflow:
    Configurações do fluxo → Comunicação → Número de origem → canal **#3 (Disparos)**.
-2. **"Régua - Dia" e "Régua - Hora"** ainda não existem como campos na location. Só a régua de
-   confirmação depende deles (ver pendência acima).
+2. **Os nomes dos procedimentos na agenda.** Na Clinicorp eles são classificados **pelo nome da
+   especialidade**. A cliente está montando a lista e vai enviar (13/11). Até ela chegar, os ramos
+   do retorno pós-procedimento casam por radical e podem não bater com a grafia real — é a única
+   coisa que ainda pode fazer a régua errar o texto ou não enviar.
 3. **Reengajamento x campanha da consultoria:** eles já têm a campanha "6+ meses sem vir"
    publicada. Confirmar a divisão antes de publicar, senão o paciente recebe as duas.
-4. **Os nomes dos procedimentos na agenda.** A cliente avisou que, na Clinicorp, os procedimentos
-   são classificados **pelo nome da especialidade**, e se ofereceu para indicar quais são. Até a
-   lista chegar, os ramos do retorno pós-procedimento casam por radical e podem não bater com a
-   grafia real. **Pedir a lista.**
-5. **Dois rascunhos `New Workflow`** (criados em 08/10 e 09/11) estão na lista da subconta. Não
+4. **Dois rascunhos `New Workflow`** (criados em 08/10 e 09/11) estão na lista da subconta. Não
    são das réguas — são anteriores a esta montagem —, então ficaram de pé. Quem souber a origem
    que apague.
 
