@@ -46,6 +46,16 @@ Antes de esperar a sua lista, olhei o que a Clinicorp devolve de verdade. Últim
 - **Não dispara:** restauração, canal, implante, tratamento periodontal, Invisalign e lentes não apareceram uma única vez na agenda do mês. Os textos estão montados e guardados — ligam sozinhos no dia em que a agenda passar a registrar esses procedimentos.
 - **Boa notícia:** você não precisa mais montar aquela lista. Eu puxei direto do sistema e já tenho a resposta: **o problema não é o nome estar escrito diferente, é a agenda não registrar o procedimento.** Nenhuma lista conserta isso — só mudar o que a recepção anota.
 
+## Sobre orçamento aprovado — e a saída que apareceu
+
+Você perguntou se o sistema puxa orçamentos aprovados ou só o que está na consulta. Fui ver.
+
+Não existe uma consulta direta de orçamentos na integração — testei todos os caminhos. **Mas o orçamento chega por outro lado**, e isso muda o pedido que eu te fiz.
+
+- **O achado (caso real de 07/11):** um agendamento estava na agenda só como "Consulta". Mas, por dentro, ele estava **vinculado ao orçamento aprovado** — e trazia o procedimento por extenso ("Tratamento endodôntico 1 canal"), o dente, o valor e até a marcação de executado. **A informação certa estava lá.**
+- **O problema:** isso aconteceu em **3 agendamentos do mês inteiro**. Nos outros 306, o procedimento do orçamento não foi vinculado ao agendamento.
+- **O pedido mudou:** esquece o que eu disse sobre escrever o procedimento na categoria. O certo é **vincular o procedimento do orçamento ao agendamento**, que já é um campo pronto do Clinicorp. É melhor em tudo: sai da tabela de preços, ninguém digita errado, e traz o dente e o valor junto. **Eu já deixei o sistema preparado** — ele passa a ler esse campo sozinho, sem precisar mexer em mais nada.
+
 ## A pesquisa de satisfação ficou como você pediu
 
 A pergunta agora é "de 0 a 5, o quanto você indicaria a Dental Beauty para alguém de quem você gosta?", e a resposta tem três caminhos:
@@ -73,7 +83,7 @@ Isso é de propósito. O plano é:
 **3. Decidir o que fazer com o retorno pós-procedimento.** Esta é a única decisão que sobrou, e ela é sua. Dois caminhos:
 
 - **Subir assim mesmo.** O retorno cobre limpeza, clareamento, prótese e ortodontia — o que a agenda sustenta hoje. As outras seis mensagens ficam guardadas. É o que eu recomendo: entra no ar esta semana e já começa a trazer paciente de volta.
-- **Mudar o que a recepção anota.** Se a categoria do agendamento passar a dizer o procedimento ("Restauração", "Canal", "Implante") em vez de "Consulta", as seis mensagens ligam sozinhas. Só que o efeito demora: a régua olha 3, 6 e 12 meses para trás, então o que for anotado hoje só vira mensagem lá na frente.
+- **Vincular o procedimento do orçamento ao agendamento** (ver a seção acima). As seis mensagens ligam sozinhas, sem mexer em nada. Só que o efeito demora: a régua olha 3, 6 e 12 meses para trás, então o que for vinculado hoje só vira mensagem lá na frente.
 
 Os dois caminhos convivem — dá para subir agora e melhorar a anotação em paralelo.
 

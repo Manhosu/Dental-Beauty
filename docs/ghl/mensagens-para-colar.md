@@ -209,7 +209,8 @@ Três conclusões:
    (`GET /procedures/list_specialties`: Endodontia, Dentística, Implantodontia, Periodontia…), mas
    não é isso que chega no agendamento. `CategoryDescription` é categoria livre da agenda.
 2. **`Procedures` está vazio em 306 dos 309.** O "procedimento executado" que a cliente sugeriu
-   usar não é preenchido na rotina da recepção. Não dá para apoiar a régua nele.
+   usar não é preenchido na rotina da recepção. Não dá para apoiar a régua nele **hoje** — mas é
+   nele que está a saída, ver a seção seguinte.
 3. **Só 34 dos 309 casam com algum ramo** (~11%). Seis dos dez ramos adultos — `Restaura`, `Canal`,
    `Implante`, `Periodont`, `Invisalign`, `Lente` — não aparecem **uma única vez** no mês.
 
@@ -230,6 +231,44 @@ resultado final para o paciente é o mesmo (silêncio), mas agora para no backen
 
 Os seis ramos sem movimento **ficaram montados**. Não atrapalham, não disparam, e passam a valer
 sozinhos no dia em que a agenda começar a registrar o procedimento.
+
+### O sistema puxa orçamento aprovado? (pergunta da cliente, 13/11/2026)
+
+**Rota dedicada de orçamento não existe.** Testei ~35 nomes plausíveis (`/budget/*`, `/treatment/*`,
+`/patient/budget*`, `/patient/treatment*`, `/evolution/*`, `/clinical/*`) e todos devolvem
+`404 Cannot GET`. O que existe e responde: `/patient/get`, `/patient/birthdays`,
+`/patient/list_appointments`, `/appointment/list`, `/appointment/status_list`,
+`/appointment/get_avaliable_times_calendar`, `/appointment/cancel_appointment`, `/procedures/list`,
+`/procedures/list_specialties`, `/professional/list_all_professionals`, `/business/list_chairs`.
+
+**Mas o orçamento chega pelo agendamento.** O `/appointment/list` traz dois campos que eu não
+estava usando:
+
+- **`Procedures`** — texto do procedimento, vindo da tabela de preços. Ex.: `"22 - Tratamento
+  endodôntico 1 canal"`.
+- **`SelectedProceduresList`** — o mesmo em estruturado. Quando o agendamento está vinculado a um
+  **orçamento aprovado**, cada item vem com `TreatmentId`, `Tooth`, `Amount`/`FinalAmount`,
+  `PaymentPlanId`, `StatusId`, `BillType` e um marcador **`Executed`**.
+
+Caso real de 07/11/2026: `CategoryDescription` = `"Consulta"`, mas `Procedures` = `"22 - Tratamento
+endodôntico 1 canal"` e a lista estruturada trazia `TreatmentId: 4966846963384321`, `Tooth: "11"`,
+`FinalAmount: 1800`. **A informação certa estava lá, e a régua estava olhando para o campo errado.**
+
+Frequência: preenchido em **3 de 309** (1%).
+
+**O que foi feito:** `procedimentoDoAtendimento` passa a preferir `Procedures` e só cai em
+`CategoryDescription` quando ele vier vazio. Vale para o retorno e para o cuidado do dia seguinte.
+Hoje muda pouco (são 3 casos), mas é a ordem certa: no dia em que a clínica vincular o procedimento
+ao agendamento, a régua acerta sozinha, sem mexer em código nem no painel.
+
+**Consequência para a conversa com a cliente.** O pedido muda. Não é "escrevam o procedimento na
+categoria da agenda" (texto livre, erra na digitação) — é **"vinculem o procedimento do orçamento
+ao agendamento"**, que é campo estruturado, sai da tabela de preços e não tem como escrever errado.
+Se um dia valer a pena, `Executed` ainda permite distinguir o que foi de fato executado do que só
+estava orçado.
+
+**O que continua fora de alcance:** orçamento aprovado **sem** agendamento vinculado. Esse a API
+não entrega por nenhum caminho que eu tenha encontrado.
 
 ### O que ficou em aberto
 

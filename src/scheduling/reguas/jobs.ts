@@ -126,6 +126,29 @@ export async function runLembreteHoje(
 export const POST_PROCEDURE_INTERVALS = [3, 6, 12] as const;
 
 /**
+ * O que o paciente fez, na melhor fonte disponível no agendamento.
+ *
+ * `Procedures` é o campo estruturado: sai da tabela de preços e, quando o agendamento está ligado a
+ * um orçamento aprovado, vem com o nome completo do procedimento ("22 - Tratamento endodôntico 1
+ * canal"), o dente e o marcador de executado. É a fonte certa — não tem erro de digitação.
+ *
+ * `CategoryDescription` é a categoria livre da agenda ("Consulta", "Limpeza", "Avaliação Recreio").
+ * Serve de reserva porque hoje é o único campo que a recepção preenche com regularidade.
+ *
+ * Medido em 13/11/2026 sobre 309 agendamentos (13/10–13/11): `Procedures` preenchido em **3**.
+ * A ordem está certa mesmo assim — no dia em que a clínica começar a vincular o procedimento ao
+ * agendamento, a régua passa a acertar sozinha, sem mudar uma linha.
+ */
+export function procedimentoDoAtendimento(appointment: {
+  procedures?: string;
+  categoryDescription?: string;
+}): string | undefined {
+  const estruturado = appointment.procedures?.trim();
+  if (estruturado) return estruturado;
+  return appointment.categoryDescription;
+}
+
+/**
  * Mapeia a categoria/procedimento atendido para o prazo de retorno (meses), conforme a tabela do
  * cliente: Periodontia 3m; Coroa/Prótese/Implante 12m; demais (limpeza, clareamento, restauração,
  * canal, ortodontia, invisalign, odontopediatria, lente/faceta) 6m. Default = 6m.
@@ -280,15 +303,16 @@ export async function runPostProcedure(
     const appointments = await clinicorp.listAppointmentsByDate(target);
     for (const a of appointments) {
       if (a.statusId !== checkoutId) continue; // só quem compareceu (alta)
-      if (!temTextoDeRetorno(a.categoryDescription)) continue; // sem texto, nem chega no GHL
-      if (intervalMonthsForCategory(a.categoryDescription) !== months) continue; // bucket certo
+      const procedimento = procedimentoDoAtendimento(a);
+      if (!temTextoDeRetorno(procedimento)) continue; // sem texto, nem chega no GHL
+      if (intervalMonthsForCategory(procedimento) !== months) continue; // bucket certo
       if (!a.mobilePhone) continue;
       await dispatch({
         type: 'pos_procedimento',
         phone: a.mobilePhone,
         name: a.patientName,
         date: a.date,
-        ...(a.categoryDescription !== undefined ? { procedure: a.categoryDescription } : {}),
+        ...(procedimento !== undefined ? { procedure: procedimento } : {}),
         ...(a.unit !== undefined ? { unit: a.unit } : {}),
       });
       sent++;
@@ -371,13 +395,14 @@ export async function runPosCirurgia(
   let sent = 0;
   for (const a of appointments) {
     if (a.statusId !== checkoutId) continue; // só quem compareceu
-    if (!isProcedimentoCirurgico(a.categoryDescription)) continue;
+    const procedimento = procedimentoDoAtendimento(a);
+    if (!isProcedimentoCirurgico(procedimento)) continue;
     if (!a.mobilePhone) continue;
     await dispatch({
       type: 'pos_cirurgia',
       phone: a.mobilePhone,
       name: a.patientName,
-      ...(a.categoryDescription !== undefined ? { procedure: a.categoryDescription } : {}),
+      ...(procedimento !== undefined ? { procedure: procedimento } : {}),
       ...(a.unit !== undefined ? { unit: a.unit } : {}),
     });
     sent++;

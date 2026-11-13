@@ -10,6 +10,7 @@ import {
   intervalMonthsForCategory,
   isProcedimentoCirurgico,
   temTextoDeRetorno,
+  procedimentoDoAtendimento,
 } from '../../../src/scheduling/reguas/jobs';
 import {
   CONFIRMACAO_DIAS_ANTES,
@@ -284,6 +285,36 @@ describe('réguas — jobs', () => {
     expect(temTextoDeRetorno('AGENDAMENTO  PENDENTE DE CONFIRMAÇÃO')).toBe(false);
     expect(temTextoDeRetorno(undefined)).toBe(false);
     expect(temTextoDeRetorno('')).toBe(false);
+  });
+
+  it('procedimentoDoAtendimento: o procedimento do orçamento ganha da categoria da agenda', () => {
+    // Caso real de 07/11/2026: categoria "Consulta", mas o agendamento está ligado ao orçamento.
+    expect(
+      procedimentoDoAtendimento({
+        procedures: '22 - Tratamento endodôntico 1 canal / 22 - Tratamento endodôntico 1 canal',
+        categoryDescription: 'Consulta',
+      }),
+    ).toContain('canal');
+
+    expect(procedimentoDoAtendimento({ categoryDescription: 'Limpeza' })).toBe('Limpeza');
+    expect(procedimentoDoAtendimento({ procedures: '   ', categoryDescription: 'Limpeza' })).toBe('Limpeza');
+    expect(procedimentoDoAtendimento({})).toBeUndefined();
+  });
+
+  it('runPostProcedure: usa o procedimento do orçamento mesmo quando a categoria é "Consulta"', async () => {
+    const clinicorp = fakeClinicorp({
+      listAppointmentsByDate: vi.fn().mockResolvedValue([
+        { id: '1', patientName: 'Fez canal', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID, categoryDescription: 'Consulta', procedures: '22 - Tratamento endodôntico 1 canal' },
+      ]),
+    });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runPostProcedure(clinicorp, dispatch, (m) => `d-${m}`);
+
+    expect(sent).toBe(1);
+    expect(dispatch.mock.calls[0]?.[0]).toMatchObject({
+      procedure: '22 - Tratamento endodôntico 1 canal',
+    });
   });
 
   it('runPostProcedure: não manda para o GHL quem a agenda registrou como "Consulta"', async () => {
