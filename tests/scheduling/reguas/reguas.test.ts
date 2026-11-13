@@ -9,6 +9,7 @@ import {
   runPosCirurgia,
   intervalMonthsForCategory,
   isProcedimentoCirurgico,
+  temTextoDeRetorno,
 } from '../../../src/scheduling/reguas/jobs';
 import {
   CONFIRMACAO_DIAS_ANTES,
@@ -262,6 +263,45 @@ describe('réguas — jobs', () => {
     expect(intervalMonthsForCategory('Implante unitário')).toBe(12);
     expect(intervalMonthsForCategory('Limpeza')).toBe(6);
     expect(intervalMonthsForCategory(undefined)).toBe(6);
+  });
+
+  // As categorias abaixo saíram da agenda real (13/10–13/11/2026, 309 agendamentos). Metade do
+  // movimento é "Consulta", que não diz o que foi feito e por isso não pode virar convite de
+  // retorno. Sem o filtro, o default de 6 meses mandava todos eles para o GHL descartar.
+  it('temTextoDeRetorno: só as categorias que têm ramo no workflow', () => {
+    expect(temTextoDeRetorno('Limpeza')).toBe(true);
+    expect(temTextoDeRetorno('Clareamento')).toBe(true);
+    expect(temTextoDeRetorno('Prótese retorno laboratório')).toBe(true);
+    expect(temTextoDeRetorno('Instalação de aparelho(ortodontia)')).toBe(true);
+    expect(temTextoDeRetorno('PROTESE')).toBe(true); // sem acento e em caixa alta
+
+    expect(temTextoDeRetorno('Consulta')).toBe(false);
+    expect(temTextoDeRetorno('Avaliação Recreio')).toBe(false);
+    expect(temTextoDeRetorno('Escaneamento')).toBe(false);
+    expect(temTextoDeRetorno('Revisão')).toBe(false);
+    expect(temTextoDeRetorno('Emergência')).toBe(false);
+    expect(temTextoDeRetorno('Planejamento inicial')).toBe(false);
+    expect(temTextoDeRetorno('AGENDAMENTO  PENDENTE DE CONFIRMAÇÃO')).toBe(false);
+    expect(temTextoDeRetorno(undefined)).toBe(false);
+    expect(temTextoDeRetorno('')).toBe(false);
+  });
+
+  it('runPostProcedure: não manda para o GHL quem a agenda registrou como "Consulta"', async () => {
+    const clinicorp = fakeClinicorp({
+      listAppointmentsByDate: vi.fn().mockResolvedValue([
+        { id: '1', patientName: 'Quem fez limpeza', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID, categoryDescription: 'Limpeza' },
+        { id: '2', patientName: 'Quem so consultou', mobilePhone: '5522', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID, categoryDescription: 'Consulta' },
+        { id: '3', patientName: 'Quem foi avaliado', mobilePhone: '5533', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID, categoryDescription: 'Avaliação Recreio' },
+        { id: '4', patientName: 'Escaneado', mobilePhone: '5544', date: 'x', fromTime: '9', toTime: '10', statusId: CHECKOUT_ID, categoryDescription: 'Escaneamento' },
+      ]),
+    });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runPostProcedure(clinicorp, dispatch, (m) => `d-${m}`);
+
+    expect(sent).toBe(1);
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(dispatch.mock.calls[0]?.[0]).toMatchObject({ phone: '5511', procedure: 'Limpeza' });
   });
 
   it('isProcedimentoCirurgico: pega cirurgia, extração e canal nas variações da agenda', () => {

@@ -175,14 +175,70 @@ Os ramos casam por **Contém** no campo `Último Procedimento`, com o radical en
 > sozinha. Se a Clinicorp usar essas palavras separadas, o paciente cai no ramo "não mapeado" e
 > não recebe nada — que é o comportamento seguro, mas deixa de enviar.
 
+### O que a agenda real devolve (medido em 13/11/2026)
+
+A cliente disse que os procedimentos são classificados pelo nome da especialidade, e que daria para
+pegar "pelo procedimento executado". Fui conferir na API antes de esperar a lista dela. **As duas
+coisas não se confirmam.**
+
+Período medido: 13/10 a 13/11/2026, **309 agendamentos** (`GET /appointment/list`).
+
+| `CategoryDescription` | Qtd | Casa com algum ramo? |
+| --- | ---: | --- |
+| Consulta | 152 | não |
+| Avaliação Recreio | 60 | não |
+| Limpeza | 19 | **sim** |
+| Avaliação para paciente - retorno(COBRADA) | 13 | não |
+| Prótese retorno laboratório | 11 | **sim** (`tese`) |
+| Escaneamento | 10 | não |
+| Cirurgia | 8 | não (mas casa no cuidado do dia seguinte) |
+| Revisão | 8 | não |
+| Retorno Manutenção odontopediatria(COBRADA) | 6 | não |
+| Avaliação Ipanema | 5 | não |
+| Emergência | 4 | não |
+| Clareamento | 3 | **sim** |
+| Aparelho retorno laboratório | 3 | não |
+| AGENDAMENTO  PENDENTE DE CONFIRMAÇÃO | 3 | não |
+| (vazio) | 2 | não |
+| Planejamento inicial | 1 | não |
+| Instalação de aparelho(ortodontia) | 1 | **sim** (`Ortodontia`) |
+
+Três conclusões:
+
+1. **O campo não é especialidade.** As 25 especialidades existem
+   (`GET /procedures/list_specialties`: Endodontia, Dentística, Implantodontia, Periodontia…), mas
+   não é isso que chega no agendamento. `CategoryDescription` é categoria livre da agenda.
+2. **`Procedures` está vazio em 306 dos 309.** O "procedimento executado" que a cliente sugeriu
+   usar não é preenchido na rotina da recepção. Não dá para apoiar a régua nele.
+3. **Só 34 dos 309 casam com algum ramo** (~11%). Seis dos dez ramos adultos — `Restaura`, `Canal`,
+   `Implante`, `Periodont`, `Invisalign`, `Lente` — não aparecem **uma única vez** no mês.
+
+Ou seja: a lista que a cliente ficou de montar **não resolve sozinha**. O problema não é a grafia
+estar diferente, é a agenda não registrar o procedimento. O catálogo de procedimentos existe
+(`GET /procedures/list` devolve `ProcedureName` + `ProcedureExpertiseName` ligados à tabela de
+preços), mas ele diz o que a clínica vende, não o que o paciente fez.
+
+Tentativas que deram 404: `/procedures/list_procedures`, `/procedures/list_procedures_by_specialty`,
+`/patient/treatments`, `/budget/list`. Se um dia aparecer uma rota de evolução/ficha clínica, é por
+ali que o problema se resolve de verdade.
+
+**O que foi feito com isso (13/11):** `temTextoDeRetorno` em `jobs.ts` passou a filtrar antes do
+dispatch. Sem ele, o default de 6 meses do `intervalMonthsForCategory` mandava **todos** os
+atendidos para o GHL — uns 150 "Consulta" por mês — só para o workflow descartar no ramo
+"Procedimento nao mapeado". Gastava chamada de API e escrevia tag + campo no contato à toa. O
+resultado final para o paciente é o mesmo (silêncio), mas agora para no backend.
+
+Os seis ramos sem movimento **ficaram montados**. Não atrapalham, não disparam, e passam a valer
+sozinhos no dia em que a agenda começar a registrar o procedimento.
+
 ### O que ficou em aberto
 
 1. **Antes de publicar**, escolher o número de saída em cada workflow:
    Configurações do fluxo → Comunicação → Número de origem → canal **#3 (Disparos)**.
-2. **Os nomes dos procedimentos na agenda.** Na Clinicorp eles são classificados **pelo nome da
-   especialidade**. A cliente está montando a lista e vai enviar (13/11). Até ela chegar, os ramos
-   do retorno pós-procedimento casam por radical e podem não bater com a grafia real — é a única
-   coisa que ainda pode fazer a régua errar o texto ou não enviar.
+2. **Decisão da cliente sobre o retorno pós-procedimento.** Hoje ele cobre Limpeza, Clareamento,
+   Prótese e Ortodontia — o que a agenda sustenta. Para cobrir o resto, a recepção precisa passar a
+   escrever o procedimento na categoria do agendamento, e o efeito só aparece daqui a 3, 6 e 12
+   meses (é a janela que a régua olha para trás).
 3. **Reengajamento x campanha da consultoria:** eles já têm a campanha "6+ meses sem vir"
    publicada. Confirmar a divisão antes de publicar, senão o paciente recebe as duas.
 4. **Dois rascunhos `New Workflow`** (criados em 08/10 e 09/11) estão na lista da subconta. Não

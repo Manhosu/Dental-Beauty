@@ -139,6 +139,45 @@ export function intervalMonthsForCategory(category?: string): number {
 }
 
 /**
+ * Radicais que o workflow de retorno usa nos ramos "Contém" do campo `Último Procedimento`
+ * (ver docs/ghl/mensagens-para-colar.md § Como ficou o retorno pós-procedimento). Mantidos sem
+ * acento porque `temTextoDeRetorno` normaliza antes de casar.
+ */
+export const RADICAIS_RETORNO = [
+  'limpeza',
+  'clareamento',
+  'restaura',
+  'canal',
+  'tese', // "Prótese" — "Coroa" sozinho não casa, ver aviso no doc
+  'implante',
+  'periodont',
+  'ortodontia',
+  'invisalign',
+  'lente',
+] as const;
+
+/**
+ * A categoria da agenda tem algum texto de retorno correspondente?
+ *
+ * **Por que existe.** A Clinicorp devolve `CategoryDescription` como texto livre de agenda, não como
+ * especialidade nem como procedimento executado. Em 30 dias de agenda real (13/10–13/11/2026, 309
+ * agendamentos) metade era só "Consulta" e o campo `Procedures` veio vazio em 306 dos 309. Sem este
+ * filtro, `intervalMonthsForCategory` joga todo mundo no bucket de 6 meses pelo default e a régua
+ * manda ~150 contatos por mês para o GHL só para o workflow descartar no ramo "Procedimento nao
+ * mapeado". Gasta chamada de API e suja o contato à toa.
+ *
+ * Casar aqui com os mesmos radicais do painel mantém os dois lados com a mesma resposta.
+ */
+export function temTextoDeRetorno(category?: string): boolean {
+  const c = (category ?? '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase();
+  if (c.trim() === '') return false;
+  return RADICAIS_RETORNO.some((radical) => c.includes(radical));
+}
+
+/**
  * Procedimento que justifica a mensagem de cuidado no dia seguinte: cirurgia, extração ou canal
  * (decisão do cliente em 11/11/2026, para adulto e infantil).
  *
@@ -241,6 +280,7 @@ export async function runPostProcedure(
     const appointments = await clinicorp.listAppointmentsByDate(target);
     for (const a of appointments) {
       if (a.statusId !== checkoutId) continue; // só quem compareceu (alta)
+      if (!temTextoDeRetorno(a.categoryDescription)) continue; // sem texto, nem chega no GHL
       if (intervalMonthsForCategory(a.categoryDescription) !== months) continue; // bucket certo
       if (!a.mobilePhone) continue;
       await dispatch({
