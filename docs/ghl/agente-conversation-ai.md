@@ -161,15 +161,46 @@ Se o paciente não informar o bairro, pergunte qual unidade prefere e siga.
 **Exceção:** ortodontia ainda não tem agenda aberta em Ipanema — direcione ao Recreio.
 
 ### Valores de avaliação (os únicos que podem ser informados)
-| Tipo | Recreio | Ipanema |
-|---|---|---|
-| Avaliação geral | R$ 200 (inclui fotos e radiografias) | R$ 300 |
-| Avaliação especializada | R$ 550 | R$ 400 |
-| Infantil — paciente novo | R$ 289 | R$ 389 |
-| Infantil — com limpeza no mesmo dia | R$ 389 | — |
-| Infantil — paciente antigo | R$ 360 | — |
+
+**Recreio**
+
+| Tipo | Valor |
+|---|---|
+| Avaliação geral | R$ 200 (inclui fotos e radiografias) |
+| Avaliação especializada | R$ 550 |
+| Infantil — paciente novo | R$ 289 |
+| Infantil — com limpeza no mesmo dia | R$ 389 |
+| Infantil — paciente antigo | R$ 360 |
+
+**Ipanema** — corrigido pela cliente em 16/11/2026
+
+| Tipo | Valor |
+|---|---|
+| Ortodontia | R$ 300 |
+| Lentes | R$ 400 |
+| Infantil — paciente novo | R$ 489 |
+| Infantil — com limpeza no mesmo dia | R$ 589 |
 
 Pagamento: parcelamento em até 21x no cartão.
+
+> ⚠️ **Ipanema não é "geral/especializada".** A tabela antiga replicava a estrutura do Recreio em
+> Ipanema (geral R$ 300 / especializada R$ 400 / infantil R$ 389) e **estava errada**: lá o valor é
+> por especialidade. Palavras da cliente: *"Em ipanema é 300 para ortodontia e 400 para lentes e
+> infantil 489,00 ou 589 com limpeza"*.
+>
+> **Dois pontos ainda em aberto:**
+> 1. **Prótese e clareamento em Ipanema ficaram sem valor.** A unidade atende os dois (ver §Unidades),
+>    mas a cliente só informou ortodontia, lentes e infantil. Sem valor, a IA não pode falar preço
+>    para esses dois casos em Ipanema.
+> 2. **Ortodontia em Ipanema contradiz a exceção registrada.** A seção §Especialidade → profissional
+>    diz "ortodontia ainda não tem agenda aberta em Ipanema — direcione ao Recreio", mas agora existe
+>    preço de ortodontia em Ipanema. Ou a agenda abriu, ou ela quis dizer **ortopedia** (que Ipanema
+>    atende). Confirmar antes de ligar o agente — hoje as duas informações não podem valer juntas.
+
+> ⚠️ **O valor fixo no Campo 3.** O roteiro de apresentação da avaliação traz a frase "A avaliação
+> completa custa R$200" com o número cravado no texto. Isso só vale para a avaliação geral do
+> Recreio. Para Ipanema a IA tem que buscar o valor na tabela acima, senão informa R$ 200 a quem
+> pagaria R$ 300 ou R$ 400. Corrigir junto com as respostas pendentes.
 
 ### Identidade
 Dental Beauty — "Bem-estar, modernidade e cuidado em cada sorriso". Contato principal:

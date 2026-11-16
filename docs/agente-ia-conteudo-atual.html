@@ -98,22 +98,36 @@
 
   <div class="conf">
     <div class="t">Valores de avaliação — os únicos que a IA pode informar</div>
+    <b>Recreio</b>
     <table>
-      <tr><th>Tipo</th><th>Recreio</th><th>Ipanema</th></tr>
-      <tr><td>Avaliação geral</td><td>R$ 200 (inclui fotos e radiografias)</td><td>R$ 300</td></tr>
-      <tr><td>Avaliação especializada</td><td>R$ 550</td><td>R$ 400</td></tr>
-      <tr><td>Infantil — paciente novo</td><td>R$ 289</td><td>R$ 389</td></tr>
-      <tr><td>Infantil — com limpeza no mesmo dia</td><td>R$ 389</td><td>—</td></tr>
-      <tr><td>Infantil — paciente antigo</td><td>R$ 360</td><td>—</td></tr>
+      <tr><th>Tipo</th><th>Valor</th></tr>
+      <tr><td>Avaliação geral</td><td>R$ 200 (inclui fotos e radiografias)</td></tr>
+      <tr><td>Avaliação especializada</td><td>R$ 550</td></tr>
+      <tr><td>Infantil — paciente novo</td><td>R$ 289</td></tr>
+      <tr><td>Infantil — com limpeza no mesmo dia</td><td>R$ 389</td></tr>
+      <tr><td>Infantil — paciente antigo</td><td>R$ 360</td></tr>
+    </table>
+    <b>Ipanema</b> — corrigido por você em 16/11
+    <table>
+      <tr><th>Tipo</th><th>Valor</th></tr>
+      <tr><td>Ortodontia</td><td>R$ 300</td></tr>
+      <tr><td>Lentes</td><td>R$ 400</td></tr>
+      <tr><td>Infantil — paciente novo</td><td>R$ 489</td></tr>
+      <tr><td>Infantil — com limpeza no mesmo dia</td><td>R$ 589</td></tr>
     </table>
     Pagamento: parcelamento em até <b>21x</b> no cartão.
   </div>
 
   <div class="warn">
-    <b>Achei uma inconsistência aqui.</b> A tabela acima diz que a avaliação geral custa R$ 300 em
-    Ipanema, mas no texto da IA existe uma frase com o valor fixo: <i>"A avaliação completa custa
-    R$200"</i>. Ou seja, hoje ela pode dizer R$ 200 para um paciente de Ipanema. <b>Qual é o certo?</b>
-    Com a sua resposta eu corrijo.
+    <b>A tabela de Ipanema estava errada e você corrigiu.</b> Ela repetia a estrutura do Recreio
+    (geral / especializada / infantil R$ 389), quando na verdade em Ipanema o valor é
+    <b>por especialidade</b>. Já está certo acima. Só ficaram duas pontas soltas:
+    <ul class="plain">
+      <li><b>Prótese e clareamento em Ipanema.</b> A unidade atende os dois, mas não têm valor.
+      Sem isso a IA não pode falar preço nesses casos.</li>
+      <li><b>Ortodontia em Ipanema.</b> Você passou R$ 300, mas aqui consta que <i>ortodontia ainda
+      não tem agenda aberta lá</i>. A agenda abriu, ou você quis dizer <b>ortopedia</b>?</li>
+    </ul>
   </div>
 
   <div class="conf">
@@ -205,9 +219,10 @@
   <h2>🙏 O que eu preciso de você</h2>
   <div class="conf">
     <div class="t">Me diga o que mudou</div>
-    Preços, profissionais que entraram ou saíram, especialidade que passou a ser atendida em Ipanema,
+    Profissionais que entraram ou saíram, especialidade que passou a ser atendida em Ipanema,
     endereço, contato, Instagram — qualquer coisa. Pode mandar do jeito que for mais fácil, até por
-    áudio. E, se puder, me responda aquela dúvida do R$ 200 × R$ 300.
+    áudio. E, se puder, me responda as duas pontas soltas de Ipanema (prótese/clareamento e
+    ortodontia).
   </div>
 
   <div class="foot">
