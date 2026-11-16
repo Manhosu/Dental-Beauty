@@ -1,0 +1,151 @@
+# Roteiro da IA — versão 2 da cliente (recebido em 16/11/2026)
+
+A cliente mandou um documento bem mais completo que o meu: **"Como a IA atende · Versão 2"**,
+27 páginas, que segundo ela mesma *"substitui o IA-Atendente-Frases e o Manual Completo de
+jul/2026"*. Ele é endereçado "para o programador" e traz o fluxo do Miro **"Máquina de Vendas
+2.0"**, que eu não conhecia.
+
+**Este documento passa a ser a referência do agente.** O que eu tinha montado em
+[agente-conversation-ai.md](agente-conversation-ai.md) é de agosto e perde para ele.
+
+> O documento atribui a confirmação dos valores "ao Bruno, em 16/11" e a regra de não usar
+> diminutivos "à Bruna". São duas pessoas diferentes citadas em terceira pessoa — o documento não
+> diz quem o escreveu.
+
+---
+
+## O que ele traz de novo (sem conflito — é só adotar)
+
+| Item | Como fica |
+|---|---|
+| **Nome da IA** | **Clara** — "Clara, assistente virtual da Dental Beauty". Confirma que é IA se perguntarem. No infantil, o tom segue o da Fada do Dente. |
+| **Parcelamento** | **14x** no cartão (o "até 21x" da base de conhecimento saiu). Desconto e 18x ficam para a equipe. |
+| **Radiologia** | **Só no Recreio.** A IA não promete radiografia em Ipanema. |
+| **Instagram infantil** | **@dentalbeautykids** (o @fadabrunela saiu). |
+| **Recepção** | (21) 99128-2761 · WhatsApp comercial (21) 98121-7082 · site dentalbeauty.com.br |
+| **Horário das consultas** | Seg–qui 8h–19h · sex 8h–17h · sáb 8h–14h. A IA **atende e agenda 24h**. |
+| **Estacionamento** | Recreio tem, no subsolo com elevador. Ipanema não tem. |
+| **Avaliação online de lentes** | **R$ 150**, por vídeo, abatida na presencial. Oferecida já no 1º contato, ao lado da presencial. |
+| **Sondagem antes do valor** | Uma pergunta ("o que mais te incomoda hoje?") antes de apresentar a avaliação. |
+| **Travas de texto do OdontoBI** | As frases **"Agendamento realizado com sucesso"** e **"Data e horário:"** não podem ser reescritas — o OdontoBI lê elas para conferir a conversa contra a agenda do Clinicorp. |
+| **Envios ativos** | Só entre **8h e 20h**. Responder quem escreveu vale a qualquer hora. |
+
+### Equipe (mudou)
+
+Haylane (prótese, implante, lentes) · Lívia (prótese, implante) · Sérgio Sinzato (implante) ·
+Alinne (lentes, prótese, clareamento) · Adriana (ortodontia, ortopedia, clareamento) ·
+Dr. Fábio (odontopediatria, ortopedia).
+
+**Thaynara saiu da lista** — era Clínica Geral e Periodontia no material de agosto.
+Em Ipanema atendem só Dr. Fábio e Alinne.
+
+### Valores (tabela fechada)
+
+| Avaliação | Recreio | Ipanema |
+|---|---:|---:|
+| Geral (implante, prótese, ortodontia, ortopedia, alinhador, clareamento, extração) | R$ 200 | R$ 300 |
+| Com limpeza no mesmo dia (adulto) | R$ 598 | R$ 300 + R$ 650 |
+| Lentes | R$ 400 | R$ 400 |
+| Online de lentes (abatida na presencial) | R$ 150 | R$ 150 |
+| Infantil · paciente novo | R$ 289 | R$ 489 |
+| Infantil · com limpeza no mesmo dia | R$ 389 | R$ 589 |
+| Infantil · já é paciente, voltou em < 1 ano (com limpeza) | R$ 360 | — |
+
+Saíram: a "avaliação especializada R$ 550" e a limpeza grátis por indicação. Lentes no Recreio
+caiu de R$ 550 para **R$ 400**.
+
+**Minhas duas dúvidas de 16/11 ficaram respondidas:** prótese e clareamento em Ipanema entram na
+avaliação geral, **R$ 300**. E ortodontia continua **só no Recreio** (§Unidades e §tratamentos),
+apesar de a cliente ter escrito "300 para ortodontia" no WhatsApp — pela estrutura do documento ela
+quis dizer a avaliação geral de Ipanema, que cobre ortopedia.
+
+---
+
+## ⚠️ O que bate de frente com o que já está montado
+
+Estes cinco pontos **contradizem decisões que a própria cliente tomou entre 11 e 13/11** e que já
+estão no código e no painel. Não dá para seguir os dois.
+
+### 1. Pesquisa de satisfação: 0 a 10 × 0 a 5
+
+| | |
+|---|---|
+| **v2 (p. 27)** | *"De 0 a 10, o quanto você indicaria a Dental Beauty"* → **nota 9 ou 10** convida para o Google |
+| **Montado** | **0 a 5** → nota 5 manda o link do Google (um por unidade), nota 4 pergunta "o que faltou para ser um 5?", nota 0 a 3 avisa que um atendente vai chamar |
+
+**Histórico:** em 11/11 ela tirou o 0–10 e pediu "1 a 5 estrelas"; em 12/11 fechou em "0 a 5"; em
+**13/11 confirmou por escrito** que a escala é 0 a 5 igual para adulto e infantil.
+
+**Leitura:** o v2 diz que esse trecho é "texto do documento das mensagens automáticas" — ou seja,
+provavelmente foi copiado da versão **anterior** àquelas três rodadas, e o 0–10 voltou por descuido.
+As três faixas (5 / 4 / 0–3) só fazem sentido em 0 a 5.
+
+**Recomendo manter 0 a 5** e confirmar com ela.
+
+### 2. Quando a pesquisa sai
+
+| | |
+|---|---|
+| **v2 (p. 27)** | "Após a 1ª sessão" |
+| **Montado** | 1ª vinda e depois **a cada 3 vindas** (pedido de 12/11, confirmado em 13/11) |
+
+Pode não ser conflito — "após a 1ª sessão" talvez seja só o começo. Mas o v2 não fala da cadência,
+e ela foi explícita: *"enviar sempre ficaria chato para pacientes em atendimento"*.
+
+### 3. Confirmação da consulta: D-2 × 96h
+
+| | |
+|---|---|
+| **v2 (p. 24)** | **D-4** manda o link da anamnese · **D-2 às 8h** pede a confirmação · **12h e 19h** recobram · **D-1 às 8h** libera o horário e oferece outro |
+| **Montado** | Confirmação a **96h (D-4)**, decisão dela em 12/11 — *"com quatro dias, quem responde NÃO dá tempo de a recepção oferecer a vaga"* |
+
+O v2 inverte: D-4 vira anamnese e a confirmação desce para D-2. E traz **três mensagens que não
+existem** (as recobranças das 12h e 19h, e a liberação do horário no D-1).
+
+Esta é a mudança mais cara: mexe no `CONFIRMACAO_DIAS_ANTES` do código, no workflow de confirmação
+e exige um fluxo novo de recobrança.
+
+### 4. O lembrete das 7h30 sumiu
+
+O v2 vai do D-1 (vídeo do dentista) direto para o "Faltou". **Não há mensagem no dia da consulta.**
+
+Montado: a régua 2b, *"sua consulta é hoje, às tal hora"*, às **7h30** para todos os pacientes do
+dia — que foi exatamente o que ela pediu em 12/11 para substituir o lembrete de 2h antes.
+
+Some um detalhe: o v2 diz que envios ativos saem **só entre 8h e 20h**, e 7h30 está fora dessa
+janela. Pode ser que a regra valha só para lead (tentativas, nutrição, disparos) e não para
+paciente agendado — mas precisa ficar claro.
+
+### 5. O NPS de quem não fechou também está em 0 a 10
+
+Na p. 26, o contato de quem não fechou o tratamento pergunta *"de 0 a 10, como foi a sua
+experiência na avaliação?"*. Mesmo problema do item 1.
+
+---
+
+## O que o v2 acrescenta e ainda não existe em lugar nenhum
+
+Isto é escopo novo. Não está montado, não estava combinado comigo, e boa parte depende do Black/CRM
+e dos SDRs, não do backend:
+
+- **Fluxo do Miro "Máquina de Vendas 2.0":** busca do telefone no Clinicorp na 1ª mensagem; SDR
+  assume em 10 min no horário comercial, com rodízio entre 2 SDRs; cards de Leads quentes/mornos
+  com resumo no CRM; régua humana dos SDRs (SDR 1 de D0 a D+4, SDR 2 de D+5 a D+9, D+10 banco de
+  disparos).
+- **2 tentativas em 24h + nutrição de 5 dias**, com vídeo e áudio por especialidade (implante,
+  lentes, ortodontia/alinhador, odontopediatria, clínico geral) — 5 trilhas × 5 dias.
+- **Mensagens de primeiro contato por campanha** (implante e lentes).
+- **Data de retorno combinada**, gravada no Additional Info, com notificação ao SDR.
+- **Anamnese por especialidade** no D-4, com link.
+- **Vídeo/áudio do dentista no D-1** e vídeo da especialidade no primeiro contato.
+- **Pós-avaliação:** contato da CRC no D+7, follow-up de 30 dias em três versões, lista de "motivos
+  reais para reaparecer".
+- **Convite de indicação** — com a ressalva de que o CFO restringe premiação em dinheiro e a regra
+  precisa passar pela responsável técnica.
+- **Respostas prontas por tratamento** (10 tratamentos) e **respostas alternativas** para os
+  momentos em que a conversa trava.
+
+## Próximo passo
+
+Levar os cinco conflitos para ela antes de mexer em qualquer coisa. Os itens sem conflito
+(valores, equipe, parcelamento, nome Clara, Instagram, travas do OdontoBI) podem entrar direto.
