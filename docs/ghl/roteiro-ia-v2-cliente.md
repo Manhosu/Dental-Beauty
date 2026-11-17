@@ -69,7 +69,7 @@ voltou ao que já estava montado.
 
 | Conflito | Decisão dela | Efeito |
 |---|---|---|
-| Escala da pesquisa | **1 a 5** — nota 5 manda o link, 4 pergunta o que faltou, **1 a 3** chama um atendente. Vale também no NPS de quem não fechou. | Painel: trocar "0 a 5" por "1 a 5" e a faixa "0 a 3" por "1 a 3". |
+| Escala da pesquisa | **1 a 5** — nota 5 manda o link, 4 pergunta o que faltou, **1 a 3** chama um atendente. Vale também no NPS de quem não fechou. | ✅ feito no painel em 17/11 (ver abaixo). |
 | Cadência | **A cada 3 vindas confirmado**, e a pesquisa de quem está em tratamento passa a usar as **mesmas respostas por nota**, inclusive o link do Google. | Código já fazia; painel precisa ligar o ramo de nota na régua de tratamento. |
 | Confirmação | **Volta para D-4**, com regra nova de antecedência (abaixo). | `runConfirmacao` reescrita. |
 | Lembrete do dia | **8h**, não 7h30. | Rodada matinal passou de 10h30 UTC para 11h UTC. |
@@ -130,6 +130,32 @@ id `foB9jkyqGLtaxiowXnM1`) e as tags `regua-anamnese` e `regua-anamnese-lembrete
 
 **Falta:** os dois workflows no GHL que escutam essas tags e mandam os textos (adulto e infantil,
 nas duas pontas).
+
+### Painel: o que já foi trocado em 17/11
+
+**`RÉGUA — Pesquisa de satisfação`** (`a621c15b-6e0e-461b-abf9-0ce755b55787`) — as duas mensagens
+foram reescritas com a redação da v4 e renomeadas para "Pesquisa 1 a 5":
+
+- **adulto:** termina em *"De 1 a 5, como você avalia a sua experiência com a gente?"* (era "De 0 a
+  5, o quanto você indicaria a Dental Beauty para alguém de quem você gosta?");
+- **infantil:** termina em *"E, para nos ajudar a evoluir: de 1 a 5, como vocês avaliam a
+  experiência com a gente?"*.
+
+Os chips de `{{contact.first_name}}` e `{{contact.nome_da_criana}}` foram recriados e conferidos na
+tela. O workflow segue **rascunho**.
+
+> ⚠️ **Como editar uma mensagem já preenchida, sem quebrar.** Clicar numa linha e usar
+> `Shift+Home` **não funciona**: a seleção pega a *linha visual* (o texto é um parágrafo só, com
+> quebras), e o trecho errado é substituído. O "Cancelar" do painel **não desfaz** — o editor mantém
+> o estado.
+>
+> O caminho que funciona: clicar numa linha curta do corpo da mensagem (para dar foco ao editor),
+> `Ctrl+A`, e **redigitar a mensagem inteira**, com `Shift+Enter` entre as linhas. Digitar
+> `{{contact.campo}}` cria o chip corretamente. O `Ctrl+A` só é perigoso quando o foco está no
+> canvas — aí ele seleciona os nós, e `Delete` abre o modal de excluir.
+
+**Não está neste workflow:** as respostas por nota (5 / 4 / 1 a 3). Elas vivem no prompt do agente
+de conversa, que ainda é a versão de agosto.
 
 ---
 
