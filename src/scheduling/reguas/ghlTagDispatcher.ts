@@ -35,6 +35,13 @@ export interface GhlReguaFieldIds {
    * da anamnese grava o resto e o workflow simplesmente não tem o que interpolar.
    */
   anamneseLink?: string | undefined;
+  /**
+   * Id do agendamento na Clinicorp. O workflow "Sem confirmação" devolve este valor para
+   * `/reguas/liberar-horario` quando o paciente não confirma até as 22h — sem ele, não há como
+   * saber qual horário soltar. Opcional: enquanto o campo não existir na location, a régua grava o
+   * resto e a liberação fica dormente.
+   */
+  agendamento?: string | undefined;
 }
 
 export interface GhlTagDispatcherConfig {
@@ -143,6 +150,9 @@ export function buildCustomFields(
   }
   if (ids.anamneseLink && payload.anamneseLink) {
     campos.push({ id: ids.anamneseLink, field_value: payload.anamneseLink });
+  }
+  if (ids.agendamento && payload.appointmentId) {
+    campos.push({ id: ids.agendamento, field_value: payload.appointmentId });
   }
   return campos;
 }

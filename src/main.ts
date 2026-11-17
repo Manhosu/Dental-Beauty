@@ -71,6 +71,7 @@ async function main(): Promise<void> {
     scheduling: { engine, clinicorp },
     ...(sonaxDeps ? { sonax: sonaxDeps } : {}),
     atendimento: { businessHours },
+    reguas: { clinicorp, liberarHorarioAtivo: env.LIBERAR_HORARIO_ATIVO },
   });
 
   await app.listen({ port: env.PORT, host: '0.0.0.0' });
@@ -105,6 +106,7 @@ async function main(): Promise<void> {
           reguaDia: env.GHL_FIELD_REGUA_DIA,
           reguaHora: env.GHL_FIELD_REGUA_HORA,
           anamneseLink: env.GHL_FIELD_ANAMNESE_LINK,
+          agendamento: env.GHL_FIELD_AGENDAMENTO,
         },
       }),
     );

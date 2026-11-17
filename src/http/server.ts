@@ -5,6 +5,7 @@ import { registerAgendamentoRoutes, type AgendamentoDeps } from './routes/agenda
 import { registerCatalogoRoutes } from './routes/catalogo';
 import { registerSonaxRoutes, type SonaxRouteDeps } from './routes/sonax';
 import { registerAtendimentoRoutes, type AtendimentoDeps } from './routes/atendimento';
+import { registerReguasRoutes, type ReguasRouteDeps } from './routes/reguas';
 
 export interface ServerDeps {
   /** Agendamento + catálogo (Clinicorp). Ausente = servidor só com /health e /atendimento/status. */
@@ -13,6 +14,8 @@ export interface ServerDeps {
   sonax?: SonaxRouteDeps;
   /** Horário comercial consultado pelo Flow Builder. */
   atendimento?: AtendimentoDeps;
+  /** Chamadas de volta dos workflows do GHL (hoje: liberar horário sem confirmação). */
+  reguas?: ReguasRouteDeps;
 }
 
 /** Rotas públicas (sem X-Api-Key). `/webhooks/sonax` autentica por token na URL. */
@@ -51,6 +54,10 @@ export function buildServer(deps: ServerDeps = {}): FastifyInstance {
 
   if (deps.sonax) {
     registerSonaxRoutes(app, deps.sonax);
+  }
+
+  if (deps.reguas) {
+    registerReguasRoutes(app, deps.reguas);
   }
 
   return app;

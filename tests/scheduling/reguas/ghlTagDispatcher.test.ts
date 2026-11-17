@@ -156,6 +156,19 @@ describe('buildCustomFields', () => {
     );
     expect(campos).toContainEqual({ id: 'id-unidade', field_value: 'Ipanema' });
   });
+
+  it('grava o id do agendamento, que é o que a liberação do horário cancela', () => {
+    const campos = buildCustomFields(
+      { type: 'no_show', phone: '1', appointmentId: 'agd-9' },
+      { ...fields, agendamento: 'id-agendamento' },
+    );
+    expect(campos).toContainEqual({ id: 'id-agendamento', field_value: 'agd-9' });
+  });
+
+  it('não grava o agendamento enquanto o campo não existir na location', () => {
+    const campos = buildCustomFields({ type: 'no_show', phone: '1', appointmentId: 'agd-9' }, fields);
+    expect(campos.some((c) => c.field_value === 'agd-9')).toBe(false);
+  });
 });
 
 describe('createGhlTagDispatcher', () => {

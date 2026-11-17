@@ -64,6 +64,13 @@ const envSchema = z.object({
   GHL_FIELD_REGUA_DIA: z.string().optional(),
   GHL_FIELD_REGUA_HORA: z.string().optional(),
   GHL_FIELD_ANAMNESE_LINK: z.string().optional(),
+  // Id do agendamento na Clinicorp, gravado no contato para o workflow poder devolvê-lo em
+  // `/reguas/liberar-horario`. Sem ele a liberação do horário não tem o que cancelar.
+  GHL_FIELD_AGENDAMENTO: z.string().optional(),
+  // Interruptor da liberação do horário de quem não confirmou. Cancelar na agenda é irreversível,
+  // então começa desligado: a rota responde `simulado` e não toca na Clinicorp. Ver
+  // `src/http/routes/reguas.ts`.
+  LIBERAR_HORARIO_ATIVO: z.string().optional().transform((v) => v === 'true'),
   // ── Anamnese online do OdontoBI (integração 17/11/2026) ────────────────────────────────────
   // D-2 da primeira avaliação a régua cria o link da ficha de saúde e manda; D-1 confere se o
   // paciente respondeu e, se não, lembra uma vez. Sem o segredo a régua fica dormente.
