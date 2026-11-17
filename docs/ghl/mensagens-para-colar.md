@@ -306,6 +306,7 @@ Um workflow por régua, cada um disparado pela sua tag. Dentro dele, ramificaç�
 | `RÉGUA — Lembrete do dia` | `regua-lembrete-hoje` | trilha | 2 |
 | `RÉGUA — Retorno pós-procedimento` | `regua-posprocedimento` | trilha × procedimento | 13 |
 | `RÉGUA — Pesquisa de satisfação` | `regua-nps` | trilha | 2 |
+| `RÉGUA — Pesquisa em tratamento` | `regua-nps-tratamento` | — | 1 |
 | `RÉGUA — Reengajamento` | `regua-inatividade-6` e `-12` | trilha × tag | 4 |
 | `RÉGUA — Cuidado no dia seguinte` | `regua-poscirurgia` | trilha | 2 |
 
@@ -643,19 +644,21 @@ Uma pessoa da nossa equipe vai te chamar para entender o que aconteceu. Qual o m
 > A faixa 4 é a novidade: antes, tudo abaixo de 5 ia direto para atendimento humano. Agora o 4
 > primeiro pergunta o que faltou — é a nota mais recuperável, e a resposta costuma ser específica.
 
-## 4.4 · Pesquisa de quem está em tratamento · **ainda não montada**
+---
 
-A v4 traz um texto separado, mais curto, para a pesquisa que vai a cada 3 consultas de quem está
-em tratamento. Hoje o painel usa o mesmo texto da primeira consulta nos dois casos.
+# 4b · RÉGUA — Pesquisa em tratamento
+
+Gatilho: Tag de contato · `regua-nps-tratamento`. Workflow `21bd2c11-9211-4604-a591-f44935f6be78`,
+rascunho. Gatilho → mensagem → remove a tag.
+
+O backend separa os dois casos pelo contador de visitas: a **1ª vinda observada** recebe o texto
+de boas-vindas da régua 4; da **4ª em diante** (a cada 3) sai este, que pergunta pelas "últimas
+consultas". Sem contador, todo mundo cai no texto da régua 4 — caminho legado.
 
 ```
 Olá, {{contact.first_name}}! 🤍 Que bom acompanhar o seu tratamento de perto.
 De 1 a 5, como você avalia as suas últimas consultas com a gente?
 ```
-
-Para montar: o backend precisaria distinguir a primeira vinda da enésima e marcar uma segunda tag
-(`regua-nps-tratamento`), com um ramo a mais no workflow. O `visitCounter` já sabe a contagem — o
-que falta é passá-la adiante.
 
 ---
 

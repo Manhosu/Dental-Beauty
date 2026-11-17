@@ -11,6 +11,11 @@ export interface ReguaPayload {
     | 'lembrete_hoje'
     | 'pos_procedimento'
     | 'nps'
+    /**
+     * Pesquisa de quem **já está em tratamento** — da 4ª vinda em diante, a cada 3. O texto é
+     * outro, mais curto: pergunta pelas "últimas consultas", não pela primeira experiência.
+     */
+    | 'nps_tratamento'
     | 'inatividade'
     | 'pos_cirurgia'
     | 'anamnese'

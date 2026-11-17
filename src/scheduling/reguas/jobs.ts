@@ -432,15 +432,19 @@ export async function runNps(
   for (const a of appointments) {
     if (a.statusId !== checkoutId) continue; // só quem compareceu
     if (!a.mobilePhone) continue;
+    // Sem contador, todo mundo cai no texto da primeira consulta — é o comportamento antigo.
+    let emTratamento = false;
     if (counter) {
       const total = await counter.increment(a.mobilePhone);
       if (!visitaPedePesquisa(total)) {
         pulados++;
         continue;
       }
+      // A 1ª vinda observada ganha o texto de boas-vindas; da 4ª em diante, o de acompanhamento.
+      emTratamento = total > 1;
     }
     await dispatch({
-      type: 'nps',
+      type: emTratamento ? 'nps_tratamento' : 'nps',
       phone: a.mobilePhone,
       name: a.patientName,
       ...(a.unit !== undefined ? { unit: a.unit } : {}),

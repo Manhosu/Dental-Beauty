@@ -1,5 +1,11 @@
 # Agente "Atendimento Lead" — porte para o Conversation AI do GoHighLevel
 
+> 🗄️ **HISTÓRICO. Substituído em 17/11/2026 por [agente-prompt-v2.md](agente-prompt-v2.md).**
+> Este arquivo guarda o porte do Chatbotify para o GoHighLevel feito em agosto e as razões de cada
+> escolha de arquitetura (o que virou comando, o que virou base de conhecimento, o que virou ação
+> nativa) — isso continua valendo. **Os textos e os valores daqui estão velhos:** o agente agora se
+> chama Clara, o parcelamento é 14x, lentes custam R$ 400 e a Thaynara saiu da equipe.
+
 **Bot:** `VhysOKmSJpx8f7BMu8m8` · Modelo **OpenAI GPT 4.1** (o mesmo do Chatbotify)
 **Base de conhecimento:** `YAtV5A0lna3NnjbICJO6`
 **Status:** ✅ Aplicado no painel em 2026-08-22 — **Desativado, sem canal vinculado.**

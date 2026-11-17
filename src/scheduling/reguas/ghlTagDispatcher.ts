@@ -64,6 +64,7 @@ export function tagForPayload(payload: ReguaPayload): string {
     lembrete_hoje: 'regua-lembrete-hoje',
     pos_procedimento: 'regua-posprocedimento',
     nps: 'regua-nps',
+    nps_tratamento: 'regua-nps-tratamento',
     pos_cirurgia: 'regua-poscirurgia',
     anamnese: 'regua-anamnese',
     anamnese_lembrete: 'regua-anamnese-lembrete',

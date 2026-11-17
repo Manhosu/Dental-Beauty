@@ -184,6 +184,9 @@ describe('réguas — jobs', () => {
 
     expect(enviados).toEqual([1, 0, 0, 1, 0]);
     expect(dispatch).toHaveBeenCalledTimes(2);
+    // A 1ª vinda é a de boas-vindas; a 4ª já é acompanhamento de tratamento, com outro texto.
+    expect(dispatch.mock.calls[0]?.[0]).toMatchObject({ type: 'nps' });
+    expect(dispatch.mock.calls[1]?.[0]).toMatchObject({ type: 'nps_tratamento' });
   });
 
   it('pesquisa de satisfação: sem contador, mantém o envio a cada consulta (caminho legado)', async () => {
@@ -196,6 +199,8 @@ describe('réguas — jobs', () => {
 
     expect(await runNps(clinicorp, dispatch, '2026-06-28')).toBe(1);
     expect(await runNps(clinicorp, dispatch, '2026-06-28')).toBe(1);
+    // Sem contador não dá para saber se é a primeira vinda — todo mundo cai no texto de sempre.
+    expect(dispatch.mock.calls.every((c) => c[0].type === 'nps')).toBe(true);
   });
 
   it('pesquisa de satisfação: a contagem é por paciente, não global', async () => {

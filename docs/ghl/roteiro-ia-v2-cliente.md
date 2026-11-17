@@ -277,6 +277,40 @@ Clinicorp, que o backend passa a gravar no contato e que o webhook devolve.
 > Para corrigir sem redigitar: o menu "..." do nó tem **"Ação de mover"**, que põe um "Mover para
 > cá" em cada ponto de inserção.
 
+### Painel: pesquisa de quem está em tratamento
+
+**`RÉGUA — Pesquisa em tratamento`** (`21bd2c11-9211-4604-a591-f44935f6be78`), rascunho.
+Gatilho pela tag `regua-nps-tratamento` → mensagem → remove a tag.
+
+O backend passou a separar os dois casos: a **1ª vinda observada** continua recebendo o texto de
+boas-vindas (`regua-nps`), e da **4ª em diante** sai o de acompanhamento (`regua-nps-tratamento`),
+que pergunta pelas "últimas consultas" em vez da primeira experiência. Quem roda sem contador de
+visitas cai todo no texto antigo — é o caminho legado, preservado.
+
+### Painel: o agente de conversa virou a Clara
+
+Ver [agente-prompt-v2.md](agente-prompt-v2.md). Em resumo: prompt e base de conhecimento
+reescritos com a v2 da cliente — nome Clara, parcelamento 14x, radiografia só no Recreio, tabela
+de preços nova (lentes R$ 400, avaliação online R$ 150, Ipanema R$ 300), equipe sem a Thaynara,
+@dentalbeautykids, a pergunta de sondagem antes do valor, a frase de confirmação travada que o
+OdontoBI lê e as respostas por nota 5 / 4 / 1 a 3.
+
+### ❌ O "número de saída #3 Disparos" não existe onde eu achava
+
+Eu vinha anotando que faltava "definir o número de saída em cada fluxo". **Isso estava errado.**
+
+Em Configurações → Comunicação → **Número de origem**, a lista vem **vazia** ("No Data") — e vem
+vazia também nos fluxos **publicados da consultoria**, que funcionam e saem pelo #2 e pelo #3. Abri
+a ação de mensagem de um deles: é a **mesma ação "SMS"** que estou usando, sem seletor de canal.
+
+Ou seja, o "#2" e o "#3" nos nomes deles são **rótulo humano**, não configuração do workflow. O
+canal é decidido pela integração "WhatsApp API Não Oficial", fora do construtor.
+
+**O que fazer:** perguntar à consultoria como um fluxo é amarrado a um canal — se é por conta
+conectada, por rodízio automático, ou se existe uma tela própria da integração. Enquanto isso não
+estiver claro, **nenhuma régua deve ser publicada**, porque não há como saber por qual número ela
+sai.
+
 ---
 
 ## ⚠️ O registro dos conflitos, como estavam antes de 17/11
