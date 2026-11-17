@@ -216,6 +216,7 @@ export class HttpClinicorpClient implements ClinicorpClient {
       CategoryDescription?: string;
       StatusId?: number;
       Deleted?: string;
+      CreateDate?: string;
     }>>('GET', '/appointment/list', {
       query: { subscriber_id: this.config.subscriberId, from, to: to ?? from },
     });
@@ -247,6 +248,7 @@ export class HttpClinicorpClient implements ClinicorpClient {
         if (r.Procedures) appt.procedures = r.Procedures;
         if (r.CategoryDescription) appt.categoryDescription = r.CategoryDescription;
         if (r.StatusId !== undefined) appt.statusId = r.StatusId;
+        if (r.CreateDate) appt.createdAt = r.CreateDate;
         return appt;
       });
   }

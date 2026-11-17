@@ -63,6 +63,13 @@ const envSchema = z.object({
   GHL_FIELD_UNIDADE: z.string().optional(),
   GHL_FIELD_REGUA_DIA: z.string().optional(),
   GHL_FIELD_REGUA_HORA: z.string().optional(),
+  // ── Anamnese online do OdontoBI (integração 17/11/2026) ────────────────────────────────────
+  // D-2 da primeira avaliação a régua cria o link da ficha de saúde e manda; D-1 confere se o
+  // paciente respondeu e, se não, lembra uma vez. Sem o segredo a régua fica dormente.
+  // O segredo é credencial: vive só no .env (gitignored) e nunca entra em log, código de browser
+  // ou mensagem. Se vazar, a clínica troca o valor no servidor do OdontoBI.
+  ANAMNESE_API_BASE: z.string().url().optional().or(z.literal('')).default('https://odontobi.onrender.com'),
+  ANAMNESE_SECRET: z.string().optional(),
   // Horário comercial da recepção (decisão do cliente 2026-08): dentro dele a recepção atende e a
   // IA de conversa fica calada; fora dele a IA assume. Réguas/follow-ups rodam sempre.
   BUSINESS_HOURS_START: z.string().optional(), // 'HH:mm' (default 09:00)

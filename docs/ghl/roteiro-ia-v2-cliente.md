@@ -61,10 +61,70 @@ quis dizer a avaliação geral de Ipanema, que cobre ortopedia.
 
 ---
 
-## ⚠️ O que bate de frente com o que já está montado
+## ✅ Os cinco conflitos foram resolvidos (17/11/2026)
 
-Estes cinco pontos **contradizem decisões que a própria cliente tomou entre 11 e 13/11** e que já
-estão no código e no painel. Não dá para seguir os dois.
+A cliente respondeu os cinco e mandou duas versões novas: **"Como a IA atende v2"** com a seção
+"Agenda e pesquisas (17/11)" e **"Mensagens automáticas v4 (base Bruna)"**. Em quatro dos cinco ela
+voltou ao que já estava montado.
+
+| Conflito | Decisão dela | Efeito |
+|---|---|---|
+| Escala da pesquisa | **1 a 5** — nota 5 manda o link, 4 pergunta o que faltou, **1 a 3** chama um atendente. Vale também no NPS de quem não fechou. | Painel: trocar "0 a 5" por "1 a 5" e a faixa "0 a 3" por "1 a 3". |
+| Cadência | **A cada 3 vindas confirmado**, e a pesquisa de quem está em tratamento passa a usar as **mesmas respostas por nota**, inclusive o link do Google. | Código já fazia; painel precisa ligar o ramo de nota na régua de tratamento. |
+| Confirmação | **Volta para D-4**, com regra nova de antecedência (abaixo). | `runConfirmacao` reescrita. |
+| Lembrete do dia | **8h**, não 7h30. | Rodada matinal passou de 10h30 UTC para 11h UTC. |
+| NPS de quem não fechou | **1 a 5** também. | Painel. |
+
+### A regra nova de quando confirmar
+
+Confirmar cedo existe para **liberar a vaga a tempo de chamar outro paciente**. Mas o D-4 não cabe
+em quem marcou anteontem, então a janela agora depende de como o paciente marcou:
+
+| Marcou com | Confirma em | Por quê |
+|---|---|---|
+| 6 dias ou mais | **D-4, às 8h** | dá tempo de reaproveitar a vaga |
+| 5 a 3 dias antes | **D-2, às 8h** | o D-4 já passou ou cairia no dia seguinte à marcação |
+| 2 dias ou menos | **não confirma** | a mensagem do próprio agendamento já serviu de confirmação |
+
+Sem resposta: avisos às **12h e às 19h**; sem SIM até as **22h**, o horário é liberado às **8h do
+dia seguinte** (D-3 para quem confirmou no D-4, D-1 para quem confirmou no D-2).
+
+Implementado em `diasAntesDaConfirmacao` + `runConfirmacao` (`jobs.ts`), lendo o `CreateDate` do
+agendamento — campo que a gente não estava trazendo da Clinicorp e agora traz. Sem `CreateDate`,
+cai no D-4, que era o comportamento anterior.
+
+**Ainda não existe:** as recobranças das 12h e 19h e a liberação do horário. São três mensagens
+novas, e a liberação precisa escrever de volta na agenda do Clinicorp.
+
+### Anamnese online — integração pronta do lado do OdontoBI
+
+Documento próprio da clínica, 17/11. O sistema **já está no ar**.
+
+- **D-2 às 8h** (só primeira avaliação): `POST /api/v1/anamnese/externo/links` cria o link e a régua
+  manda pelo WhatsApp. Se a confirmação também cair no D-2, o link vai **logo depois do SIM**.
+  Marcou com menos de 2 dias: manda logo depois da mensagem de agendamento.
+- **D-1 às 8h**: `GET /api/v1/anamnese/externo/links/<id>` diz se respondeu. Se não, um lembrete só.
+- Sete formulários por especialidade: `odontopediatria`, `ortodontia`, `implante`, `protese`,
+  `lentes`, `endodontia`, `clinico_geral` (padrão quando não dá para saber).
+- Mandar o `clinicorp_patient_id` sempre que existir — sem ele o PDF não sobe sozinho para a ficha.
+- Chamar de novo é seguro: devolve o mesmo link com `reaproveitado: true`.
+- **A IA não recebe as respostas**, só se o paciente respondeu. São dados de saúde.
+- Erros: 401 (segredo), 400 (especialidade fora da lista), 502/503 (tentar de novo em 1 min, até 3).
+
+Implementado em `src/integrations/anamnese/client.ts`. O segredo veio por mensagem e está **só no
+`.env`**, que é gitignored. Como ele trafegou por WhatsApp, vale a clínica trocá-lo depois do teste
+— o próprio documento prevê a troca.
+
+**Ainda não existe:** a régua que chama as duas rotas nos horários certos. Falta decidir onde fica o
+`id` do link (ele precisa sobreviver do D-2 ao D-1) e de onde sai o `PatientId` — hoje o
+`/appointment/list` devolve `Patient_PersonId`, que a gente ainda não mapeia.
+
+---
+
+## ⚠️ O registro dos conflitos, como estavam antes de 17/11
+
+Estes cinco pontos **contradiziam decisões que a própria cliente tomou entre 11 e 13/11** e que já
+estavam no código e no painel. Ficam aqui porque explicam por que o código é como é.
 
 ### 1. Pesquisa de satisfação: 0 a 10 × 0 a 5
 

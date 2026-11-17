@@ -108,6 +108,84 @@ export async function runNoShow(
   return runLembreteAgenda(clinicorp, dispatch, date, 'no_show');
 }
 
+/** Quantos dias inteiros separam a marcação da consulta. `undefined` quando não dá para saber. */
+export function antecedenciaEmDias(createdAt?: string, appointmentDate?: string): number | undefined {
+  if (!createdAt || !appointmentDate) return undefined;
+  const criado = Date.parse(createdAt);
+  const consulta = Date.parse(appointmentDate);
+  if (Number.isNaN(criado) || Number.isNaN(consulta)) return undefined;
+  // Compara só a data, em UTC: a hora da marcação não deve mudar o bucket.
+  const diaDe = (ms: number): number => Math.floor(ms / 86_400_000);
+  return diaDe(consulta) - diaDe(criado);
+}
+
+/**
+ * Em quantos dias antes da consulta o SIM deve ser pedido — ou `null` para não pedir.
+ *
+ * Regra da cliente em 17/11/2026, que existe para **liberar a vaga a tempo de chamar outro
+ * paciente**:
+ *
+ * - marcou com **6 dias ou mais** de antecedência → confirma no **D-4**;
+ * - marcou de **5 a 3 dias** antes → o D-4 já passou ou cai no dia seguinte à marcação, então vale
+ *   a regra dos 2 dias: confirma no **D-2**;
+ * - marcou com **2 dias ou menos** → não confirma: a própria mensagem do agendamento já serviu de
+ *   confirmação, e um segundo pedido no mesmo par de dias vira incômodo.
+ *
+ * Sem `CreateDate` na agenda caímos no D-4, que era o comportamento antes desta regra.
+ */
+export function diasAntesDaConfirmacao(antecedencia?: number): 4 | 2 | null {
+  if (antecedencia === undefined) return 4;
+  if (antecedencia >= 6) return 4;
+  if (antecedencia >= 3) return 2;
+  return null;
+}
+
+/** As duas janelas em que a confirmação pode cair. Da mais distante para a mais próxima. */
+export const CONFIRMACAO_JANELAS = [4, 2] as const;
+
+/**
+ * Régua de confirmação com a regra de antecedência (17/11/2026). Varre as duas janelas (D-4 e D-2)
+ * e, em cada agendamento, só dispara se aquela for a janela certa para como ele foi marcado.
+ *
+ * `targetDate(diasAntes)` devolve a data alvo de cada janela a partir de hoje.
+ */
+export async function runConfirmacao(
+  clinicorp: ClinicorpClient,
+  dispatch: ReguaDispatcher,
+  targetDate: (diasAntes: number) => string,
+): Promise<number> {
+  let sent = 0;
+  let pulados = 0;
+
+  for (const janela of CONFIRMACAO_JANELAS) {
+    const appointments = await clinicorp.listAppointmentsByDate(targetDate(janela));
+    for (const a of appointments) {
+      if (!a.mobilePhone) continue;
+      const janelaCerta = diasAntesDaConfirmacao(antecedenciaEmDias(a.createdAt, a.date));
+      if (janelaCerta !== janela) {
+        if (janelaCerta === null) pulados++;
+        continue;
+      }
+      await dispatch({
+        type: 'no_show',
+        phone: a.mobilePhone,
+        name: a.patientName,
+        appointmentId: a.id,
+        date: a.date,
+        fromTime: a.fromTime,
+        ...(a.professionalName !== undefined ? { professionalName: a.professionalName } : {}),
+        ...(a.unit !== undefined ? { unit: a.unit } : {}),
+      });
+      sent++;
+    }
+  }
+
+  if (pulados > 0) {
+    logger.info({ sent, pulados }, 'confirmação: marcados em cima da hora não recebem o pedido de SIM');
+  }
+  return sent;
+}
+
 /**
  * Lembrete da manhã: às 7h30 avisa todo mundo que tem consulta **hoje** (decisão do cliente em
  * 12/11/2026, no lugar do lembrete de 2h antes, que não cabia numa varredura diária).

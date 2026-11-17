@@ -11,6 +11,9 @@ import {
   isProcedimentoCirurgico,
   temTextoDeRetorno,
   procedimentoDoAtendimento,
+  runConfirmacao,
+  antecedenciaEmDias,
+  diasAntesDaConfirmacao,
 } from '../../../src/scheduling/reguas/jobs';
 import {
   CONFIRMACAO_DIAS_ANTES,
@@ -285,6 +288,70 @@ describe('réguas — jobs', () => {
     expect(temTextoDeRetorno('AGENDAMENTO  PENDENTE DE CONFIRMAÇÃO')).toBe(false);
     expect(temTextoDeRetorno(undefined)).toBe(false);
     expect(temTextoDeRetorno('')).toBe(false);
+  });
+
+  // Regra da cliente em 17/11/2026: confirmar cedo existe para liberar a vaga a tempo de chamar
+  // outro paciente. Quem marcou em cima da hora já foi confirmado pelo próprio agendamento.
+  it('antecedenciaEmDias: conta dias de calendário, ignorando a hora da marcação', () => {
+    expect(antecedenciaEmDias('2026-11-10T23:50:00Z', '2026-11-17T09:00:00Z')).toBe(7);
+    expect(antecedenciaEmDias('2026-11-15T00:10:00Z', '2026-11-17T09:00:00Z')).toBe(2);
+    expect(antecedenciaEmDias('2026-11-17T08:00:00Z', '2026-11-17T09:00:00Z')).toBe(0);
+    expect(antecedenciaEmDias(undefined, '2026-11-17')).toBeUndefined();
+    expect(antecedenciaEmDias('nao-e-data', '2026-11-17')).toBeUndefined();
+  });
+
+  it('diasAntesDaConfirmacao: D-4 para quem marcou cedo, D-2 no meio, nada em cima da hora', () => {
+    expect(diasAntesDaConfirmacao(30)).toBe(4);
+    expect(diasAntesDaConfirmacao(6)).toBe(4);
+    expect(diasAntesDaConfirmacao(5)).toBe(2);
+    expect(diasAntesDaConfirmacao(3)).toBe(2);
+    expect(diasAntesDaConfirmacao(2)).toBeNull();
+    expect(diasAntesDaConfirmacao(0)).toBeNull();
+    // Sem CreateDate na agenda, mantém o comportamento anterior à regra.
+    expect(diasAntesDaConfirmacao(undefined)).toBe(4);
+  });
+
+  it('runConfirmacao: cada paciente recebe o SIM na janela certa, e só uma vez', async () => {
+    const porData: Record<string, unknown[]> = {
+      // Janela D-4: só quem marcou com 6+ dias de antecedência confirma aqui.
+      'd-4': [
+        { id: '1', patientName: 'Marcou com um mes', mobilePhone: '5511', date: '2026-11-21T09:00:00Z', fromTime: '9', toTime: '10', createdAt: '2026-10-21T09:00:00Z' },
+        { id: '2', patientName: 'Marcou 5 dias antes', mobilePhone: '5522', date: '2026-11-21T09:00:00Z', fromTime: '9', toTime: '10', createdAt: '2026-11-16T09:00:00Z' },
+      ],
+      // Janela D-2: a vez de quem marcou de 5 a 3 dias antes.
+      'd-2': [
+        { id: '2', patientName: 'Marcou 5 dias antes', mobilePhone: '5522', date: '2026-11-19T09:00:00Z', fromTime: '9', toTime: '10', createdAt: '2026-11-14T09:00:00Z' },
+        { id: '3', patientName: 'Marcou ontem', mobilePhone: '5533', date: '2026-11-19T09:00:00Z', fromTime: '9', toTime: '10', createdAt: '2026-11-18T09:00:00Z' },
+      ],
+    };
+    const clinicorp = fakeClinicorp({
+      listAppointmentsByDate: vi.fn().mockImplementation(async (d: string) => porData[d] ?? []),
+    });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runConfirmacao(clinicorp, dispatch, (dias) => `d-${dias}`);
+
+    expect(sent).toBe(2);
+    const nomes = dispatch.mock.calls.map((c) => (c[0] as { name: string }).name);
+    expect(nomes).toEqual(['Marcou com um mes', 'Marcou 5 dias antes']);
+    // "Marcou ontem" não recebe nada: o agendamento já serviu de confirmação.
+    expect(nomes).not.toContain('Marcou ontem');
+  });
+
+  it('runConfirmacao: sem CreateDate, confirma no D-4 como antes da regra', async () => {
+    const clinicorp = fakeClinicorp({
+      listAppointmentsByDate: vi.fn().mockImplementation(async (d: string) =>
+        d === 'd-4'
+          ? [{ id: '1', patientName: 'Sem data de criacao', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10' }]
+          : [],
+      ),
+    });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runConfirmacao(clinicorp, dispatch, (dias) => `d-${dias}`);
+
+    expect(sent).toBe(1);
+    expect(dispatch.mock.calls[0]?.[0]).toMatchObject({ type: 'no_show', phone: '5511' });
   });
 
   it('procedimentoDoAtendimento: o procedimento do orçamento ganha da categoria da agenda', () => {

@@ -2,7 +2,7 @@ import type { ClinicorpClient } from '../../integrations/clinicorp/types';
 import type { ReguaDispatcher } from './dispatcher';
 import {
   runAniversariantes,
-  runNoShow,
+  runConfirmacao,
   runLembreteHoje,
   runPostProcedure,
   runNps,
@@ -16,7 +16,7 @@ import { logger } from '../../lib/logger';
 export interface ReguaDispatchers {
   aniversario: ReguaDispatcher;
   noShow?: ReguaDispatcher;
-  /** Lembrete da manhã (7h30) para quem tem consulta hoje. Roda na rodada matinal, não na diária. */
+  /** Lembrete da manhã (8h) para quem tem consulta hoje. Roda na rodada matinal, não na diária. */
   lembreteHoje?: ReguaDispatcher;
   posProcedimento?: ReguaDispatcher;
   nps?: ReguaDispatcher;
@@ -25,8 +25,11 @@ export interface ReguaDispatchers {
 }
 
 /**
- * Antecedência da confirmação de consulta, em dias. O cliente mudou de 24h para **96h** em
- * 12/11/2026: com 4 dias, quem responde NÃO ainda dá tempo de liberar a vaga para outro paciente.
+ * Antecedência padrão da confirmação, em dias. O cliente mudou de 24h para **96h** em 12/11/2026:
+ * com 4 dias, quem responde NÃO ainda dá tempo de liberar a vaga para outro paciente.
+ *
+ * Em 17/11/2026 virou a janela *máxima*: quem marcou de 5 a 3 dias antes confirma no D-2 e quem
+ * marcou em cima da hora não confirma. Ver `diasAntesDaConfirmacao` em `jobs.ts`.
  */
 export const CONFIRMACAO_DIAS_ANTES = 4;
 
@@ -62,9 +65,9 @@ export async function runDailyReguas(
   posCirurgia: number;
 }> {
   const aniversario = await runAniversariantes(clinicorp, dispatchers.aniversario, now);
-  // Confirmação: agendamentos daqui a 96h (4 dias).
+  // Confirmação: D-4 para quem marcou com 6+ dias, D-2 para quem marcou de 5 a 3 dias antes.
   const noShow = dispatchers.noShow
-    ? await runNoShow(clinicorp, dispatchers.noShow, isoDate(now, CONFIRMACAO_DIAS_ANTES))
+    ? await runConfirmacao(clinicorp, dispatchers.noShow, (dias) => isoDate(now, dias))
     : 0;
   const posProcedimento = dispatchers.posProcedimento
     ? await runPostProcedure(clinicorp, dispatchers.posProcedimento, (m) => monthsAgoIso(now, m))
@@ -144,10 +147,11 @@ function scheduleDaily(opts: {
 /**
  * Cron-Engine (README §3.4): agenda as duas rotinas do dia e devolve uma função que para as duas.
  *
- * - **Rodada principal**, 12h UTC = 09h de Brasília: aniversário, confirmação (96h antes),
+ * - **Rodada principal**, 12h UTC = 09h de Brasília: aniversário, confirmação (D-4 ou D-2),
  *   retorno pós-procedimento, pesquisa de satisfação, reengajamento e cuidado no dia seguinte.
- * - **Rodada matinal**, 10h30 UTC = 07h30 de Brasília: o lembrete de quem tem consulta HOJE
- *   (pedido do cliente em 12/11/2026). Só liga se `dispatchers.lembreteHoje` existir.
+ * - **Rodada matinal**, 11h UTC = 08h de Brasília: o lembrete de quem tem consulta HOJE (pedido do
+ *   cliente em 12/11/2026, movido de 07h30 para 08h em 17/11). Só liga se
+ *   `dispatchers.lembreteHoje` existir. As 8h também abrem a janela de envios ativos do fluxo.
  *
  * Cada rodada tem o seu próprio claim — se as duas dividissem a mesma chave, a primeira do dia
  * cancelaria a segunda.
@@ -157,7 +161,7 @@ export function startReguas(opts: {
   dispatchers: ReguaDispatchers;
   hourUtc?: number;
   minuteUtc?: number;
-  /** Horário da rodada matinal. Default 10h30 UTC = 07h30 BRT. */
+  /** Horário da rodada matinal. Default 11h UTC = 08h BRT. */
   manha?: { hourUtc?: number; minuteUtc?: number };
   claimDailyRun?: ClaimDailyRun;
   /** Claim da rodada matinal. Precisa de chave própria, separada da rodada principal. */
@@ -195,8 +199,8 @@ export function startReguas(opts: {
   if (!lembreteHoje) return pararPrincipal;
 
   const pararManha = scheduleDaily({
-    hourUtc: opts.manha?.hourUtc ?? 10,
-    minuteUtc: opts.manha?.minuteUtc ?? 30,
+    hourUtc: opts.manha?.hourUtc ?? 11,
+    minuteUtc: opts.manha?.minuteUtc ?? 0,
     run: async (now) => {
       const dateIso = isoDate(now);
       if (!(await claimManha(dateIso))) {
