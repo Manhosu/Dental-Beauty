@@ -10,6 +10,9 @@ import {
   runPosCirurgia,
 } from './jobs';
 import type { VisitCounter } from './visitCounter';
+import type { AnamneseStore } from './anamneseStore';
+import type { AnamneseClient } from '../../integrations/anamnese/client';
+import { runAnamneseD2, runAnamneseD1 } from './anamneseJobs';
 import { logger } from '../../lib/logger';
 
 /** Dispatchers por régua (cada um aponta para o SEU fluxo Gatilho HTTP, com mensagem própria). */
@@ -168,6 +171,15 @@ export function startReguas(opts: {
   claimMorningRun?: ClaimDailyRun;
   /** Contador de visitas que espaça a pesquisa de satisfação (a cada 3 vindas). */
   npsCounter?: VisitCounter;
+  /**
+   * Anamnese online do OdontoBI. Roda junto da rodada das 8h: cria o link no D-2 e lembra no D-1.
+   * Dormente enquanto não vier — depende do `ANAMNESE_SECRET`.
+   */
+  anamnese?: {
+    client: AnamneseClient;
+    store: AnamneseStore;
+    dispatch: ReguaDispatcher;
+  };
 }): () => void {
   const claim: ClaimDailyRun = opts.claimDailyRun ?? (async () => true);
   const claimManha: ClaimDailyRun = opts.claimMorningRun ?? (async () => true);
@@ -196,7 +208,8 @@ export function startReguas(opts: {
   });
 
   const lembreteHoje = opts.dispatchers.lembreteHoje;
-  if (!lembreteHoje) return pararPrincipal;
+  const anamnese = opts.anamnese;
+  if (!lembreteHoje && !anamnese) return pararPrincipal;
 
   const pararManha = scheduleDaily({
     hourUtc: opts.manha?.hourUtc ?? 11,
@@ -204,14 +217,38 @@ export function startReguas(opts: {
     run: async (now) => {
       const dateIso = isoDate(now);
       if (!(await claimManha(dateIso))) {
-        logger.info({ dateIso }, 'lembrete da manhã já executado por outra instância/execução');
+        logger.info({ dateIso }, 'rodada das 8h já executada por outra instância/execução');
         return;
       }
-      try {
-        const enviados = await runLembreteHoje(opts.clinicorp, lembreteHoje, dateIso);
-        logger.info({ lembreteHoje: enviados }, 'lembrete da manhã executado');
-      } catch (err) {
-        logger.error({ err }, 'falha no lembrete da manhã');
+      // Cada peça falha sozinha: um erro no lembrete não pode levar a anamnese junto.
+      if (lembreteHoje) {
+        try {
+          const enviados = await runLembreteHoje(opts.clinicorp, lembreteHoje, dateIso);
+          logger.info({ lembreteHoje: enviados }, 'lembrete da manhã executado');
+        } catch (err) {
+          logger.error({ err }, 'falha no lembrete da manhã');
+        }
+      }
+      if (anamnese) {
+        try {
+          const criados = await runAnamneseD2(
+            opts.clinicorp,
+            anamnese.client,
+            anamnese.store,
+            anamnese.dispatch,
+            isoDate(now, 2),
+          );
+          const lembrados = await runAnamneseD1(
+            opts.clinicorp,
+            anamnese.client,
+            anamnese.store,
+            anamnese.dispatch,
+            isoDate(now, 1),
+          );
+          logger.info({ criados, lembrados }, 'anamnese online executada');
+        } catch (err) {
+          logger.error({ err }, 'falha na anamnese online');
+        }
       }
     },
   });

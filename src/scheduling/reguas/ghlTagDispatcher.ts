@@ -30,6 +30,11 @@ export interface GhlReguaFieldIds {
   reguaDia: string;
   /** Hora da consulta, já formatada para o texto da confirmação. */
   reguaHora: string;
+  /**
+   * Link pessoal da ficha de anamnese. Opcional: enquanto o campo não existir na location, a régua
+   * da anamnese grava o resto e o workflow simplesmente não tem o que interpolar.
+   */
+  anamneseLink?: string | undefined;
 }
 
 export interface GhlTagDispatcherConfig {
@@ -53,6 +58,8 @@ export function tagForPayload(payload: ReguaPayload): string {
     pos_procedimento: 'regua-posprocedimento',
     nps: 'regua-nps',
     pos_cirurgia: 'regua-poscirurgia',
+    anamnese: 'regua-anamnese',
+    anamnese_lembrete: 'regua-anamnese-lembrete',
   };
   return porTipo[payload.type];
 }
@@ -133,6 +140,9 @@ export function buildCustomFields(
   const hora = horaParaTexto(payload.fromTime);
   if (hora) {
     campos.push({ id: ids.reguaHora, field_value: hora });
+  }
+  if (ids.anamneseLink && payload.anamneseLink) {
+    campos.push({ id: ids.anamneseLink, field_value: payload.anamneseLink });
   }
   return campos;
 }

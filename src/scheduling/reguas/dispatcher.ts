@@ -12,7 +12,9 @@ export interface ReguaPayload {
     | 'pos_procedimento'
     | 'nps'
     | 'inatividade'
-    | 'pos_cirurgia';
+    | 'pos_cirurgia'
+    | 'anamnese'
+    | 'anamnese_lembrete';
   phone: string;
   name?: string;
   /** 'adulto' (default) ou 'infantil' — o fluxo escolhe o template da trilha certa. */
@@ -29,6 +31,11 @@ export interface ReguaPayload {
   procedure?: string;
   // Extra de inatividade (reengajamento): há quantos meses o paciente não vem (6 ou 12).
   months?: number;
+  // Extras da anamnese online (D-2 e lembrete do D-1):
+  /** URL pessoal da ficha de saúde. Só vai para o telefone do próprio paciente/responsável. */
+  anamneseLink?: string;
+  /** Código do formulário (implante, lentes, clinico_geral…) — entra no texto da mensagem. */
+  especialidade?: string;
 }
 
 export type ReguaDispatcher = (payload: ReguaPayload) => Promise<void>;

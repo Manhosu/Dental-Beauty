@@ -115,9 +115,21 @@ Implementado em `src/integrations/anamnese/client.ts`. O segredo veio por mensag
 `.env`**, que é gitignored. Como ele trafegou por WhatsApp, vale a clínica trocá-lo depois do teste
 — o próprio documento prevê a troca.
 
-**Ainda não existe:** a régua que chama as duas rotas nos horários certos. Falta decidir onde fica o
-`id` do link (ele precisa sobreviver do D-2 ao D-1) e de onde sai o `PatientId` — hoje o
-`/appointment/list` devolve `Patient_PersonId`, que a gente ainda não mapeia.
+**Montado em 17/11:** `runAnamneseD2` e `runAnamneseD1` (`anamneseJobs.ts`), rodando na rodada das
+8h junto do lembrete do dia. O `id` do link vive no Redis por 7 dias (`anamneseStore.ts`) — ele
+nasce no D-2 e só é usado no D-1, e as duas rodadas são execuções diferentes do processo. O
+`Patient_PersonId` passou a ser mapeado.
+
+Quem recebe a ficha sai de `ehPrimeiraAvaliacao`: categoria com "avalia" e **sem** "retorno". É
+heurística assumida — o sinal bom seria a especialidade do Additional Info, que o backend não
+enxerga. Errar é brando nos dois sentidos: link repetido vira `reaproveitado: true`, e não mandar
+faz o dentista preencher na cadeira, como hoje.
+
+No painel foram criados o campo **"Anamnese - Link"** (`{{contact.anamnese__link}}`,
+id `foB9jkyqGLtaxiowXnM1`) e as tags `regua-anamnese` e `regua-anamnese-lembrete`.
+
+**Falta:** os dois workflows no GHL que escutam essas tags e mandam os textos (adulto e infantil,
+nas duas pontas).
 
 ---
 

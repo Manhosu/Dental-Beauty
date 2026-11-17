@@ -63,6 +63,7 @@ const envSchema = z.object({
   GHL_FIELD_UNIDADE: z.string().optional(),
   GHL_FIELD_REGUA_DIA: z.string().optional(),
   GHL_FIELD_REGUA_HORA: z.string().optional(),
+  GHL_FIELD_ANAMNESE_LINK: z.string().optional(),
   // ── Anamnese online do OdontoBI (integração 17/11/2026) ────────────────────────────────────
   // D-2 da primeira avaliação a régua cria o link da ficha de saúde e manda; D-1 confere se o
   // paciente respondeu e, se não, lembra uma vez. Sem o segredo a régua fica dormente.

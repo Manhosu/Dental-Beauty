@@ -61,6 +61,11 @@ export interface Appointment {
   /** Id do status do agendamento (ver /appointment/status_list). CHECKOUT = "4-Atendido". */
   statusId?: number;
   /**
+   * `Patient_PersonId` — o id do paciente no Clinicorp. A anamnese online precisa dele para o PDF
+   * subir sozinho para a ficha; sem ele o link funciona, mas o resultado fica preso no OdontoBI.
+   */
+  patientId?: number;
+  /**
    * Quando o agendamento foi criado (`CreateDate`). É o que separa quem marcou com antecedência de
    * quem marcou em cima da hora — a régua de confirmação decide por aí se pede o SIM no D-4, no
    * D-2 ou se nem pede (regra da cliente em 17/11/2026).

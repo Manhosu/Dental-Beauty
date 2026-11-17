@@ -17,6 +17,8 @@ import { createGhlTagDispatcher } from './scheduling/reguas/ghlTagDispatcher';
 import { isoDate, startReguas } from './scheduling/reguas/cronEngine';
 import { createRedisSentRegistry, withDedupe } from './scheduling/reguas/dedupe';
 import { createRedisVisitCounter } from './scheduling/reguas/visitCounter';
+import { createRedisAnamneseStore } from './scheduling/reguas/anamneseStore';
+import { HttpAnamneseClient } from './integrations/anamnese/client';
 import { logger } from './lib/logger';
 
 async function main(): Promise<void> {
@@ -102,6 +104,7 @@ async function main(): Promise<void> {
           unidade: env.GHL_FIELD_UNIDADE,
           reguaDia: env.GHL_FIELD_REGUA_DIA,
           reguaHora: env.GHL_FIELD_REGUA_HORA,
+          anamneseLink: env.GHL_FIELD_ANAMNESE_LINK,
         },
       }),
     );
@@ -120,10 +123,27 @@ async function main(): Promise<void> {
       // A pesquisa de satisfação sai a cada 3 vindas; a contagem fica no Redis para sobreviver a
       // restart — em memória, cada deploy zeraria todo mundo e a pesquisa voltaria a sair sempre.
       npsCounter: createRedisVisitCounter(redis),
+      // Anamnese online: só liga com o segredo do OdontoBI no .env. Sem ele fica dormente, e as
+      // outras réguas seguem normalmente.
+      ...(env.ANAMNESE_SECRET
+        ? {
+            anamnese: {
+              client: new HttpAnamneseClient({
+                baseUrl: env.ANAMNESE_API_BASE,
+                secret: env.ANAMNESE_SECRET,
+              }),
+              store: createRedisAnamneseStore(redis),
+              dispatch: porTag,
+            },
+          }
+        : {}),
       claimDailyRun: (dateIso) => sentRegistry.claim(`regua:run:${dateIso}`, 172_800),
       claimMorningRun: (dateIso) => sentRegistry.claim(`regua:run:manha:${dateIso}`, 172_800),
     });
-    logger.info({ plataforma: 'gohighlevel', gatilho: 'tag' }, 'réguas (cron-engine) ativadas');
+    logger.info(
+      { plataforma: 'gohighlevel', gatilho: 'tag', anamnese: !!env.ANAMNESE_SECRET },
+      'réguas (cron-engine) ativadas',
+    );
     return;
   }
 
