@@ -301,6 +301,8 @@ Um workflow por régua, cada um disparado pela sua tag. Dentro dele, ramificaç�
 | --- | --- | --- | --- |
 | `RÉGUA — Aniversário` | `regua-aniversario` | trilha | 2 |
 | `RÉGUA — Confirmação de consulta` | `regua-confirmacao` | trilha | 2 |
+| `RÉGUA — Sem confirmação (12h, 19h e liberação)` | `regua-confirmacao` | — | 3 |
+| `RÉGUA — Confirmação recebida` | *Cliente respondeu* | — | 0 (só marca tag) |
 | `RÉGUA — Lembrete do dia` | `regua-lembrete-hoje` | trilha | 2 |
 | `RÉGUA — Retorno pós-procedimento` | `regua-posprocedimento` | trilha × procedimento | 13 |
 | `RÉGUA — Pesquisa de satisfação` | `regua-nps` | trilha | 2 |
@@ -384,26 +386,60 @@ Pode confirmar a presença com um SIM? Se precisar remarcar, responda NÃO que e
 
 # 2b · RÉGUA — Lembrete do dia
 
-Gatilho: Tag de contato · `regua-lembrete-hoje` · dispara às **7h30**, para todos os pacientes
+Gatilho: Tag de contato · `regua-lembrete-hoje` · dispara às **8h**, para todos os pacientes
 com consulta naquele dia. Workflow `e98741ba-e3a3-4d93-9c3a-10de387bafa7`.
 
-`runLembreteHoje` lê a agenda de hoje e marca a tag na rodada matinal (10h30 UTC = 7h30 de
-Brasília). Mesma forma da confirmação: gatilho por tag → If/else de trilha → mensagem → remove a
-tag ("Remove a tag para valer amanha", senão o paciente não receberia o lembrete na próxima vez).
+`runLembreteHoje` lê a agenda de hoje e marca a tag na rodada matinal (11h UTC = 8h de Brasília).
+Mesma forma da confirmação: gatilho por tag → If/else de trilha → mensagem → remove a tag ("Remove
+a tag para valer amanha", senão o paciente não receberia o lembrete na próxima vez).
+
+> Redação da **v4**, trocada no painel em 17/11/2026. O texto antigo era o de "2h antes" e só
+> avisava; este **pede o aviso de volta**, que é o motivo de a cliente ter movido o lembrete para
+> as 8h — dar tempo de chamar outro paciente para o horário.
 
 ## 2b.1 · trilha = adulto
 
 ```
-Olá, {{contact.first_name}}! ✨ Sua consulta é hoje, às {{contact.rgua__hora}}.
-Nossa equipe já está esperando por você. Se surgir qualquer imprevisto, é só nos avisar por aqui. 🤍
+Bom dia, {{contact.first_name}}! ☀️ Hoje é dia da sua consulta na Dental Beauty, às {{contact.rgua__hora}}. Estamos esperando por você. 🤍
+Se surgir algum imprevisto, consegue nos avisar por aqui o quanto antes? Assim remarcamos com calma e o horário pode atender outro paciente.
 ```
 
 ## 2b.2 · trilha = infantil
 
 ```
-🧚 Olá, família de {{contact.nome_da_criana}}! A consulta é hoje, às {{contact.rgua__hora}}.
-Estamos esperando vocês com carinho. Qualquer imprevisto, é só nos avisar por aqui. 💖
+🧚 Bom dia, família de {{contact.nome_da_criana}}! Hoje a Fada do Dente espera {{contact.nome_da_criana}} às {{contact.rgua__hora}}. 💖
+Se surgir algum imprevisto, conseguem nos avisar por aqui o quanto antes? Assim remarcamos com calma e o horário pode atender outra criança.
 ```
+
+---
+
+# 2c · RÉGUA — Sem confirmação (12h, 19h e liberação)
+
+Gatilho: Tag de contato · `regua-confirmacao` — a **mesma** da régua 2, rodando em paralelo.
+Workflow `c73e7007-21cc-4ba0-ade7-e7b0ed2fffb4`. **Rascunho, e não pode ser publicada ainda** (ver
+`roteiro-ia-v2-cliente.md`: falta o `x-api-key` do webhook e o `LIBERAR_HORARIO_ATIVO`).
+
+Quem responde qualquer coisa sai do fluxo sozinho (`Parar ao receber resposta`). Quem responde ao
+*primeiro* pedido de SIM — que saiu da régua 2, não desta — é pego pela tag `consulta-confirmada`,
+marcada pelo workflow `RÉGUA — Confirmação recebida` (`7e1f4dba-d429-4c04-9877-c47b45e2da85`).
+
+## 2c.1 · Sem confirmação · 12h e 19h (mesmo texto nas duas)
+
+```
+{{contact.first_name}}, ainda não recebemos a confirmação da sua consulta de {{contact.rgua__dia}} às {{contact.rgua__hora}}.
+Para guardarmos o seu horário, responda SIM até as 22h de hoje. Se precisar mudar, responda NÃO que encontramos outra opção. 🤍
+```
+
+## 2c.2 · Horário liberado · 8h do dia seguinte
+
+```
+Olá, {{contact.first_name}}! Como não recebemos a sua confirmação, liberamos o horário de {{contact.rgua__dia}} para outro paciente.
+Sabemos que a rotina aperta, e queremos muito te receber. Qual dia da semana fica melhor para remarcarmos?
+```
+
+Antes desta mensagem o fluxo chama `POST /reguas/liberar-horario` com
+`appointmentId = {{contact.rgua__agendamento}}`. A ordem é essa de propósito: a frase "liberamos o
+seu horário" só sai depois de o horário ter sido liberado de fato.
 
 ---
 
@@ -556,7 +592,7 @@ A nota que o paciente responde é tratada pelo agente, não pelo workflow.
 Olá, {{contact.first_name}}! 🤍
 Foi um prazer receber você na Dental Beauty!
 Queremos que cada visita seja marcada por acolhimento, confiança e uma experiência verdadeiramente especial, e a sua opinião nos ajuda a evoluir.
-De 0 a 5, o quanto você indicaria a Dental Beauty para alguém de quem você gosta?
+De 1 a 5, como você avalia a sua experiência com a gente?
 ```
 
 ## 4.2 · trilha = infantil
@@ -565,21 +601,20 @@ De 0 a 5, o quanto você indicaria a Dental Beauty para alguém de quem você go
 Olá, família de {{contact.nome_da_criana}}! 💖
 Foi uma alegria receber vocês no Reino dos Guardiões!
 Se quiser, conte também o que {{contact.nome_da_criana}} achou da aventura: adoramos saber.
-E, para nos ajudar a evoluir: de 0 a 5, o quanto você indicaria a Dental Beauty Kids para outra família?
+E, para nos ajudar a evoluir: de 1 a 5, como vocês avaliam a experiência com a gente?
 ```
 
 ## 4.3 · Respostas por nota (vão no prompt do agente)
 
 O agente grava a nota em `NPS - Nota` e responde conforme a faixa. São **três** faixas desde
-12/11/2026. O link do Google **muda por unidade**, então o agente escolhe pelo campo
-`{{contact.unidade}}`.
+12/11/2026, com a redação da **v4**. O link do Google **muda por unidade**, então o agente escolhe
+pelo campo `{{contact.unidade}}`.
 
 ### Nota 5 · unidade = Recreio
 
 ```
 Que alegria ler isso, {{contact.first_name}}! 🤍
-Se puder, conte em poucas palavras como foi a sua experiência no Google.
-Isso ajuda outras pessoas a nos conhecerem com confiança:
+Você toparia contar como foi a sua experiência no Google? Leva um minuto e ajuda outras pessoas a conhecerem a Dental Beauty:
 https://g.page/r/CQZuDgYFDS09EBM/review
 ```
 
@@ -587,27 +622,40 @@ https://g.page/r/CQZuDgYFDS09EBM/review
 
 ```
 Que alegria ler isso, {{contact.first_name}}! 🤍
-Se puder, conte em poucas palavras como foi a sua experiência no Google.
-Isso ajuda outras pessoas a nos conhecerem com confiança:
+Você toparia contar como foi a sua experiência no Google? Leva um minuto e ajuda outras pessoas a conhecerem a Dental Beauty:
 https://g.page/r/CUGB4w0QxtsmEBM/review
 ```
 
 ### Nota 4
 
 ```
-Agradecemos a sua nota, {{contact.first_name}}! ✨
-O que faltou para ser um 5? Sua resposta nos ajuda a cuidar ainda melhor de você.
+Obrigada pela nota, {{contact.first_name}}! ✨
+Queremos chegar no 5 com você: o que faltou para a sua experiência ser completa?
 ```
 
-### Nota 0 a 3
+### Nota 1 a 3
 
 ```
-{{contact.first_name}}, agradecemos a sinceridade. 🤍
-Queremos entender o que aconteceu e fazer diferente. Uma pessoa da nossa equipe vai falar com você em breve.
+Obrigada por contar, {{contact.first_name}}, e sinto muito que a sua experiência não tenha sido como você esperava. 🤍
+Uma pessoa da nossa equipe vai te chamar para entender o que aconteceu. Qual o melhor horário para falar com você?
 ```
 
 > A faixa 4 é a novidade: antes, tudo abaixo de 5 ia direto para atendimento humano. Agora o 4
 > primeiro pergunta o que faltou — é a nota mais recuperável, e a resposta costuma ser específica.
+
+## 4.4 · Pesquisa de quem está em tratamento · **ainda não montada**
+
+A v4 traz um texto separado, mais curto, para a pesquisa que vai a cada 3 consultas de quem está
+em tratamento. Hoje o painel usa o mesmo texto da primeira consulta nos dois casos.
+
+```
+Olá, {{contact.first_name}}! 🤍 Que bom acompanhar o seu tratamento de perto.
+De 1 a 5, como você avalia as suas últimas consultas com a gente?
+```
+
+Para montar: o backend precisaria distinguir a primeira vinda da enésima e marcar uma segunda tag
+(`regua-nps-tratamento`), com um ramo a mais no workflow. O `visitCounter` já sabe a contagem — o
+que falta é passá-la adiante.
 
 ---
 

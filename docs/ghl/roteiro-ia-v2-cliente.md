@@ -183,6 +183,100 @@ tela. O workflow segue **rascunho**.
 **Não está neste workflow:** as respostas por nota (5 / 4 / 1 a 3). Elas vivem no prompt do agente
 de conversa, que ainda é a versão de agosto.
 
+### O que a v4 de fato mudou nos textos (conferido linha a linha)
+
+Vale registrar, porque economiza trabalho: **os 13 textos do retorno pós-procedimento, os 2 de
+aniversário, os 2 de confirmação, os 4 de reengajamento e os 2 do cuidado no dia seguinte são
+idênticos aos da v3**, que já estão no painel desde 13/11. A v4 reescreveu só:
+
+| Bloco | Situação |
+|---|---|
+| Lembrete do dia (adulto e infantil) | redação nova — **trocado em 17/11** |
+| Pesquisa de satisfação | 1 a 5 — trocado em 17/11 |
+| Respostas por nota (5 / 4 / 1 a 3) | redação nova — vai no prompt do agente, não no workflow |
+| Sem confirmação (12h e 19h) | mensagem nova — **montada em 17/11** |
+| Horário liberado (8h do dia seguinte) | mensagem nova — **montada em 17/11** |
+| Anamnese D-2 e D-1 | montada em 17/11 |
+| Pesquisa de quem está em tratamento | texto separado, ainda **não montado** |
+
+### Painel: lembrete do dia, com a redação da v4
+
+**`RÉGUA — Lembrete do dia`** (`e98741ba-e3a3-4d93-9c3a-10de387bafa7`) — as duas mensagens saíram
+do texto antigo de "2h antes" e passaram a ser o lembrete da manhã:
+
+- **adulto:** "Bom dia, {{contact.first_name}}! ☀️ Hoje é dia da sua consulta na Dental Beauty, às
+  {{contact.rgua__hora}}. Estamos esperando por você. 🤍 / Se surgir algum imprevisto, consegue nos
+  avisar por aqui o quanto antes? Assim remarcamos com calma e o horário pode atender outro
+  paciente."
+- **infantil:** "🧚 Bom dia, família de {{contact.nome_da_criana}}! Hoje a Fada do Dente espera
+  {{contact.nome_da_criana}} às {{contact.rgua__hora}}. 💖 / …e o horário pode atender outra
+  criança."
+
+A mudança de redação importa: o texto velho só avisava; o novo **pede o aviso de volta**, que é o
+motivo pelo qual a cliente moveu o lembrete para as 8h — dar tempo de chamar outro paciente.
+
+### Painel: a recobrança e a liberação do horário
+
+Dois workflows novos, os dois em **rascunho**.
+
+**`RÉGUA — Confirmação recebida`** (`7e1f4dba-d429-4c04-9877-c47b45e2da85`)
+Gatilho **"Cliente respondeu"** (gratuito), com filtro *Corpo da mensagem contém* `sim`, `confirmo`,
+`confirmad`, `estarei`. Ação única: marca a tag `consulta-confirmada`.
+
+A lista de frases é generosa de propósito. Os dois erros possíveis não custam a mesma coisa: deixar
+de reconhecer um "Confirmado!" faria o sistema **cancelar a consulta de quem confirmou**; reconhecer
+um "assim que eu puder" a mais só deixa de mandar uma recobrança. Então vale errar para o lado de
+reconhecer.
+
+**`RÉGUA — Sem confirmação (12h, 19h e liberação)`** (`c73e7007-21cc-4ba0-ade7-e7b0ed2fffb4`)
+Gatilho: a **mesma tag** `regua-confirmacao` que dispara a confirmação. Roda em paralelo:
+
+```
+Tag regua-confirmacao
+  └─ Remove consulta-confirmada   (limpa o ciclo anterior)
+     └─ Espera até as 12h          (janela recorrente, todos os dias, America/Sao_Paulo)
+        └─ Já confirmou?
+             ├─ tem consulta-confirmada → FIM
+             └─ senão → "Sem confirmação" (12h)
+                   └─ Espera até as 19h → "Sem confirmação" (19h)
+                        └─ Espera até as 8h do dia seguinte
+                             └─ Webhook: dá baixa na agenda
+                                  └─ "Horário liberado"
+```
+
+Três decisões que não são óbvias:
+
+1. **A cadeia não mora no fluxo da confirmação.** Lá ela teria de ser duplicada nos ramos adulto e
+   infantil, e a v4 só tem uma redação para a recobrança. Em fluxo próprio é uma cadeia só.
+2. **`Parar ao receber resposta` ligado neste fluxo, desligado no da confirmação.** Aqui ele faz o
+   trabalho: respondeu à mensagem das 12h, a execução morre e não há 19h nem liberação. No fluxo da
+   confirmação ele seria um tiro no pé — fecharia a execução antes do "remove a tag", e o paciente
+   nunca mais receberia confirmação. Por isso o If/else com a tag: a resposta ao *primeiro* pedido
+   de SIM foi enviada pelo outro workflow, e o "parar ao responder" não enxerga.
+3. **A baixa na agenda vem antes da mensagem.** Assim a frase "liberamos o seu horário" só sai
+   depois de o horário ter sido liberado de verdade.
+
+**Campo novo:** "Régua - Agendamento", `{{contact.rgua__agendamento}}`. É o id do agendamento na
+Clinicorp, que o backend passa a gravar no contato e que o webhook devolve.
+
+> 🚫 **Esta régua não pode ser publicada ainda.** Faltam duas coisas:
+> 1. o cabeçalho `x-api-key` do webhook está com `PREENCHER-COM-API_KEY_SECRET`;
+> 2. `LIBERAR_HORARIO_ATIVO` está desligado no servidor, então `/reguas/liberar-horario` responde
+>    `simulado` e **não** cancela nada na Clinicorp.
+>
+> Enquanto o item 2 estiver assim, a mensagem "Horário liberado" afirma ao paciente algo que não
+> aconteceu. Ela está nomeada no painel como *"Horario liberado - NAO PUBLICAR sem a baixa na
+> agenda"* justamente para ninguém publicar por engano.
+
+> 🐛 **Armadilha do construtor: o canvas é virtualizado.** Os botões "+" só existem para os nós
+> renderizados na viewport, então o mapeamento entre "+" e posição muda conforme o scroll — foi o
+> que fez a mensagem do horário liberado nascer no lugar errado. **Antes de inserir qualquer nó,
+> clicar em "Ajustar à tela"** e só então ler o snapshot. E conferir sempre pela lista de
+> `Edge from X to Y`, que é a ordem real; a posição do marcador na tela engana.
+>
+> Para corrigir sem redigitar: o menu "..." do nó tem **"Ação de mover"**, que põe um "Mover para
+> cá" em cada ponto de inserção.
+
 ---
 
 ## ⚠️ O registro dos conflitos, como estavam antes de 17/11
