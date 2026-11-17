@@ -128,8 +128,34 @@ faz o dentista preencher na cadeira, como hoje.
 No painel foram criados o campo **"Anamnese - Link"** (`{{contact.anamnese__link}}`,
 id `foB9jkyqGLtaxiowXnM1`) e as tags `regua-anamnese` e `regua-anamnese-lembrete`.
 
-**Falta:** os dois workflows no GHL que escutam essas tags e mandam os textos (adulto e infantil,
-nas duas pontas).
+**Montados em 17/11, como rascunho:**
+
+| Workflow | Id | Gatilho |
+|---|---|---|
+| `RÉGUA — Anamnese (D-2)` | `eea8dd30-4e63-4189-9d06-0ea5198b0bd2` | tag `regua-anamnese` |
+| `RÉGUA — Anamnese lembrete (D-1)` | `c414c0fc-86b2-41a0-b2e4-20a1d7e96070` | tag `regua-anamnese-lembrete` |
+
+Os dois saíram de uma duplicata da pesquisa de satisfação, então herdaram a forma:
+gatilho → remove a tag → trilha adulto/infantil → mensagem → remove a tag → FIM.
+
+> ⚠️ **A duplicata traz as ações de remover tag apontando para a tag do original.** Nos dois
+> workflows havia três ações removendo `regua-nps`, que teriam tirado a tag da pesquisa de um
+> paciente que estivesse no meio dela. Todas foram repontadas para a tag do próprio workflow.
+> Vale conferir isso em qualquer duplicata futura.
+
+Textos (os quatro, da spec da anamnese):
+
+- **D-2 adulto:** "Olá, {{contact.first_name}}! Faltam 2 dias para a sua avaliação 🤍 / Para o
+  dentista já chegar conhecendo um pouco da sua saúde, preparamos uma ficha rápida, que você
+  responde e assina pelo celular: {{contact.anamnese__link}} / Leva poucos minutos. Consegue
+  preencher até amanhã?"
+- **D-2 infantil:** mesma ideia, citando `{{contact.nome_da_criana}}` e a consulta encantada.
+- **D-1 adulto e infantil:** o lembrete único, também com o link.
+
+**Diferença da spec:** os textos dela trazem `[especialidade]` e `[profissional]`, que não existem
+como campo no GHL — o backend sabe a especialidade, mas ela não é gravada no contato. As mensagens
+dizem "a sua avaliação" e "o dentista". Se a cliente quiser a personalização, dá para criar os dois
+campos e passar a gravá-los no dispatcher.
 
 ### Painel: o que já foi trocado em 17/11
 
