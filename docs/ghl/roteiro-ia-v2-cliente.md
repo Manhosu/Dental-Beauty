@@ -295,21 +295,53 @@ de preços nova (lentes R$ 400, avaliação online R$ 150, Ipanema R$ 300), equi
 @dentalbeautykids, a pergunta de sondagem antes do valor, a frase de confirmação travada que o
 OdontoBI lê e as respostas por nota 5 / 4 / 1 a 3.
 
-### ❌ O "número de saída #3 Disparos" não existe onde eu achava
+### ✅ O número de saída: o prefixo "#2" no nome do fluxo (respondido em 18/11)
 
-Eu vinha anotando que faltava "definir o número de saída em cada fluxo". **Isso estava errado.**
+Eu vinha anotando que faltava "definir o número de saída em cada fluxo", procurando no lugar errado.
+Em Configurações → Comunicação → **Número de origem** a lista vem **vazia** — e vem vazia também
+nos fluxos **publicados da consultoria**, que funcionam. A ação de mensagem deles é a **mesma
+"SMS"** que uso, sem seletor de canal.
 
-Em Configurações → Comunicação → **Número de origem**, a lista vem **vazia** ("No Data") — e vem
-vazia também nos fluxos **publicados da consultoria**, que funcionam e saem pelo #2 e pelo #3. Abri
-a ação de mensagem de um deles: é a **mesma ação "SMS"** que estou usando, sem seletor de canal.
+A resposta da cliente: **o canal é o prefixo do nome do fluxo.** O nome tem de começar com `#2`,
+que é como a **4zapy** sabe por qual número disparar.
 
-Ou seja, o "#2" e o "#3" nos nomes deles são **rótulo humano**, não configuração do workflow. O
-canal é decidido pela integração "WhatsApp API Não Oficial", fora do construtor.
+| Número | Para quê |
+|---|---|
+| **#2 · atendimento do call center** | todas as mensagens automáticas: confirmação, recobrança, lembrete, anamnese, retorno, aniversário, reengajamento, pesquisas |
+| #3 | só disparos de campanha (os da consultoria) |
 
-**O que fazer:** perguntar à consultoria como um fluxo é amarrado a um canal — se é por conta
-conectada, por rodízio automático, ou se existe uma tela própria da integração. Enquanto isso não
-estiver claro, **nenhuma régua deve ser publicada**, porque não há como saber por qual número ela
-sai.
+**Feito em 18/11:** as **12 réguas que enviam mensagem** foram renomeadas com o prefixo `#2 `.
+`RÉGUA — Confirmação recebida` ficou **sem prefixo de propósito** — ela não envia nada, só marca a
+tag `consulta-confirmada`.
+
+> 💡 Renomear em massa é bem mais rápido pelo menu **"Ações da lista de fluxo de trabalho" →
+> "Renomear fluxo de trabalho"** na listagem, sem abrir cada workflow. A busca da lista **não casa
+> com acento**: procurar "RÉGUA" não devolve nada, "GUA" devolve tudo.
+
+### Quem não confirma: a resposta de 18/11 e o problema que ela revelou
+
+A cliente respondeu: *"a IA pode mudar para cancelado e abrir para outro paciente, assim saberemos
+que não teve retorno. não excluir o agendamento. se puder, cancelar e avisar a recepção seria bom."*
+
+Fui conferir o vocabulário de status da Clinicorp (`GET /appointment/status_list`, leitura apenas).
+**"Cancelado" não existe nessa conta.** Os 8 status são:
+
+`1-Confirmado` · `2-Em espera` · `3-Em atendimento` · `4-Atendido` · `5-Atrasado` · `6-Ligar` ·
+`7-Prótese pendente` · `8-Faltou`
+
+O que isso significa na prática:
+
+- **Não dá para "mudar para Cancelado"** — não há esse status para onde mudar.
+- O único caminho que **libera o horário** é `POST /appointment/cancel_appointment`, que é uma
+  operação própria, não uma mudança de status. **Nunca foi chamado neste projeto**, então não sei
+  dizer se ele preserva o registro na agenda ou se some com ele — e a cliente foi explícita que o
+  registro tem de ficar.
+- `8-Faltou` preservaria o registro, mas **não libera o horário** e seria mentira: o paciente ainda
+  não faltou, só não confirmou.
+
+**O que precisa acontecer antes de ligar:** a clínica testa `cancel_appointment` em **um
+agendamento de teste** e olha se ele continua aparecendo na agenda como cancelado. Se sumir, a
+regra da cliente não pode ser cumprida com esta API e a decisão volta para ela.
 
 ---
 

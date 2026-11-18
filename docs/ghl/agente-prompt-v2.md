@@ -213,20 +213,27 @@ Site: dentalbeauty.com.br
 
 ---
 
-## Ponto que a v2 resolveu
+## Ortodontia em Ipanema — resolvido em 18/11
 
-As duas pendências que eu tinha registrado sobre Ipanema **estão respondidas** pela tabela da v2:
+A primeira versão da v2 listava ortodontia entre o que Ipanema atende e dava o valor, mas a coluna
+"quem atende" de Ipanema trazia só Dr. Fábio e Alinne — nenhum dos dois é ortodontista. A Clara
+cobraria R$ 300 e depois não teria com quem agendar.
 
-- **Prótese e clareamento em Ipanema** entram na "avaliação geral" de lá, R$ 300.
-- **Ortodontia em Ipanema** custa R$ 300 — ou seja, a unidade passou a atender.
+**Resposta da cliente:** a **Adriana atende em Ipanema às segundas-feiras**, ortodontia infantil e
+adulto, avaliação R$ 300.
 
-## Ponto que a v2 abriu
+Aplicado no prompt e na base de conhecimento: nessa unidade a Clara oferece **somente horários de
+segunda-feira** para ortodontia, e se a segunda não servir, oferece o Recreio.
 
-**Ortodontia em Ipanema não tem profissional.** A tabela de unidades da v2 lista ortodontia entre o
-que Ipanema atende e dá o valor da avaliação, mas a coluna "quem atende" de Ipanema traz só Dr.
-Fábio (odontopediatria, ortopedia) e Alinne (lentes, prótese, clareamento). Adriana, a ortodontista,
-aparece só no Recreio.
+## Armadilha do editor do prompt: o autolink come o fim da URL
 
-Enquanto isso não for resolvido, a IA pode cobrar R$ 300 por uma avaliação de ortodontia em Ipanema
-e não ter com quem agendar. **Perguntar à cliente** se a Adriana passou a atender em Ipanema ou se
-ortodontia continua exclusiva do Recreio.
+Ao digitar `https://g.page/r/CQZuDgYFDS09EBM/review`, o editor transforma em link e **descarta o
+`/review`**, deixando `https://g.page/r/CQZuDgYFDS09EBM` — que não é o link de avaliação.
+
+Os dois links do Google saíram do prompt e foram para a **base de conhecimento**, escritos **sem
+`https://`** (`g.page/r/.../review`), que é o que impede o autolink. O prompt agora manda buscar o
+link na base de conhecimento e enviá-lo exatamente como está lá.
+
+Mesma família de armadilha do `End`: nesse editor, `End` vai para o fim da **linha visual**, não do
+parágrafo. Inserir uma linha nova depois de um parágrafo longo parte a frase ao meio. O que funciona
+é `Ctrl+A` e redigitar, ou `Home` + `Ctrl+Shift+End` para substituir do ponto até o fim.

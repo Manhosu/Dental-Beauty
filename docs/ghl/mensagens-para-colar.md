@@ -297,6 +297,18 @@ num campo de data do contato e usar a espera "Até uma data/hora específica →
 Um workflow por régua, cada um disparado pela sua tag. Dentro dele, ramificação por
 `{{contact.trilha}}` (e por procedimento quando precisa).
 
+> ### ⚠️ Todo fluxo que envia mensagem tem de começar com `#2 `
+>
+> O nome do fluxo é o que diz à **4zapy** por qual número disparar. `#2` é o atendimento do call
+> center e vale para **todas** as mensagens automáticas; `#3` é só para disparos de campanha, que
+> são os da consultoria.
+>
+> O campo "Número de origem" em Configurações → Comunicação **fica vazio mesmo** — inclusive nos
+> fluxos publicados que já funcionam. Não é lá que se escolhe o canal.
+>
+> As 12 réguas que enviam mensagem já foram renomeadas. `RÉGUA — Confirmação recebida` fica sem o
+> prefixo: ela só marca uma tag, não envia nada.
+
 | Workflow | Tag que dispara | Ramos | Mensagens |
 | --- | --- | --- | --- |
 | `RÉGUA — Aniversário` | `regua-aniversario` | trilha | 2 |
@@ -401,16 +413,19 @@ a tag para valer amanha", senão o paciente não receberia o lembrete na próxim
 ## 2b.1 · trilha = adulto
 
 ```
-Bom dia, {{contact.first_name}}! ☀️ Hoje é dia da sua consulta na Dental Beauty, às {{contact.rgua__hora}}. Estamos esperando por você. 🤍
-Se surgir algum imprevisto, consegue nos avisar por aqui o quanto antes? Assim remarcamos com calma e o horário pode atender outro paciente.
+Bom dia, {{contact.first_name}}! ☀️ Hoje é dia da sua consulta na Dental Beauty, às {{contact.rgua__hora}}, na unidade {{contact.unidade}}. Estamos te esperando 🤍
+Se surgir algum imprevisto, consegue me avisar por aqui o quanto antes? Assim remarcamos com calma e o horário pode atender outro paciente.
 ```
 
 ## 2b.2 · trilha = infantil
 
 ```
-🧚 Bom dia, família de {{contact.nome_da_criana}}! Hoje a Fada do Dente espera {{contact.nome_da_criana}} às {{contact.rgua__hora}}. 💖
-Se surgir algum imprevisto, conseguem nos avisar por aqui o quanto antes? Assim remarcamos com calma e o horário pode atender outra criança.
+Bom dia, família de {{contact.nome_da_criana}}! ☀️ Hoje a Fada do Dente espera {{contact.nome_da_criana}} às {{contact.rgua__hora}}, na unidade {{contact.unidade}} 🧚‍♀️
+Se surgir algum imprevisto, conseguem me avisar por aqui o quanto antes? Assim remarcamos com calma.
 ```
+
+> A **unidade** entrou em 18/11, com a v2 de 18/11 da cliente. Sem ela, quem é atendido em Ipanema
+> podia aparecer no Recreio.
 
 ---
 
