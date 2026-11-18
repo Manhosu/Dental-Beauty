@@ -64,6 +64,11 @@ lugar que chama o backend precisa mandar `x-api-key` com o valor exato. São tr�
 O valor só existe no painel do Render (serviço `dental-beauty-agenda` → Environment →
 `API_KEY_SECRET`). Não está no `.env` local nem em nenhum doc daqui.
 
+> A conta do Render é a da clínica: `dentalbeautyy@gmail.com`, workspace "Bruno's workspace",
+> owner `tea-d8ul16f7f7vs73b29du0`. A chave de API usada em 18/11 para configurar tudo **precisa
+> ser revogada à mão** em Account Settings → API Keys: a API do Render não expõe gestão de chaves
+> (`GET /v1/api-keys` responde 404), então não dá para revogar por script.
+
 ## O susto do build de agosto
 
 Ao ligar as variáveis descobri que o que rodava no Render era o commit `d0bacad`, de **3 de agosto**
