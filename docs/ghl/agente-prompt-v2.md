@@ -213,6 +213,27 @@ Site: dentalbeauty.com.br
 
 ---
 
+## Ações do agente — o que falta para a Clara agendar de verdade
+
+Até 18/11 o painel dizia *"Nenhuma ação foi configurada ainda"*. O prompt manda ela consultar a
+agenda real e marcar na hora, mas sem ação nativa ela **conversa bem e não marca nada**.
+
+**Configurado:** `Informações de contato` → grava a **Especialidade** no contato, que é o que a v2
+pede ("grava a especialidade no Additional Info") e o que decide o vídeo e o banco de disparo.
+
+> 🐛 O diálogo "Adicionar informações de contato" **não salva mais de um campo por vez**: o botão
+> "Adicionar novo campo" grava o primeiro bloco e depois recusa o segundo com "Campos obrigatórios
+> estão faltando", mesmo com tudo preenchido. Para Bairro, Unidade e Nome da Criança é preciso
+> abrir a ação de novo, uma por vez.
+
+**Falta decidir e montar:**
+
+| Ação | Situação |
+|---|---|
+| `Transferência humana` | 3 cenários prontos (pedido explícito, falta de informação, falha ao resolver), todos **desligados**. Cada um exige escolher **um usuário** que recebe a conversa — decisão da clínica, não minha. Os 6 usuários da conta: Bruna Barroso Veríssimo Araújo, Bruno Magnago, José Carlos da Costa Araújo Júnior, Luis Bruno Atendimento, Maryanne Atendimento, Mayara Recepção. |
+| Agendamento | **Não usar** `Agendamento de compromissos`: ele marca no calendário nativo do GHL, e a agenda real é a Clinicorp. O caminho certo é `Chamada de API` contra o nosso backend (`/agendamento/disponibilidade` e `/agendamento/book`). Ainda não montado. |
+| `Acionar um fluxo de trabalho` | não serve para agendar: é disparo sem retorno, e a Clara precisa receber os horários de volta. |
+
 ## Ortodontia em Ipanema — resolvido em 18/11
 
 A primeira versão da v2 listava ortodontia entre o que Ipanema atende e dava o valor, mas a coluna
