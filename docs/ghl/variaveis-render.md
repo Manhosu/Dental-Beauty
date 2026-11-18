@@ -85,8 +85,10 @@ O push subiu os 44 commits e o auto-deploy colocou o código novo no ar
 - `/reguas/liberar-horario` responde **400** de validação, não mais 404 — a rota existe.
 - `?unidade=Ipanema` devolve só slots de Ipanema.
 
-**`REGUAS_ENABLED` segue `false`.** Ligar é o go-live das réguas e precisa ser uma decisão com
-hora marcada, junto com a publicação dos 13 workflows.
+**Ligado em 18/11 às 18h40**, junto com a publicação dos 13 workflows — ver
+[go-live.md](go-live.md). `LIBERAR_HORARIO_ATIVO` voltou para `false` na mesma hora: a régua de
+quem não confirma roda inteira mas **simula** o cancelamento na primeira semana, para conferir a
+detecção de "SIM" antes de deixar mexer na agenda de verdade.
 
 ## Depois da primeira liberação real
 
