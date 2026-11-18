@@ -176,15 +176,32 @@ export class HttpClinicorpClient implements ClinicorpClient {
     };
   }
 
-  async cancelAppointment(appointmentId: string): Promise<{ released: boolean }> {
-    await this.request<unknown>('POST', '/appointment/cancel_appointment', {
+  /**
+   * Cancela um agendamento e libera o horário.
+   *
+   * **Não existe status "Cancelado"** no vocabulário desta conta (`/appointment/status_list`
+   * devolve só Confirmado, Em espera, Em atendimento, Atendido, Atrasado, Ligar, Prótese pendente
+   * e Faltou). Este endpoint é o único caminho para soltar a vaga.
+   *
+   * O registro **não some do Clinicorp**: os agendamentos trazem um campo `Deleted`, e
+   * `/appointment/list` só devolve os que estão com ele vazio — em 421 agendamentos de 7 semanas,
+   * todos vinham `Deleted: ""`. Ou seja, é baixa lógica: a listagem passa a ignorar o registro,
+   * mas ele continua gravado. É o que a clínica pediu ("não excluir, para ficar registrado que não
+   * houve retorno").
+   *
+   * A resposta crua volta junto para quem chamar poder registrar o que a Clinicorp respondeu na
+   * primeira execução real — é a única forma de confirmar o comportamento sem cancelar a consulta
+   * de alguém só para testar.
+   */
+  async cancelAppointment(appointmentId: string): Promise<{ released: boolean; resposta: unknown }> {
+    const resposta = await this.request<unknown>('POST', '/appointment/cancel_appointment', {
       body: {
         subscriber_id: this.config.subscriberId,
         id: appointmentId,
       },
     });
 
-    return { released: true };
+    return { released: true, resposta };
   }
 
   async listProfessionals(): Promise<Professional[]> {

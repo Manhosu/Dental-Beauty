@@ -452,7 +452,9 @@ describe('HttpClinicorpClient', () => {
 
       const result = await client.cancelAppointment('987654321');
 
-      expect(result).toEqual({ released: true });
+      // A resposta crua volta junto: é o que deixa registro do que a Clinicorp respondeu na
+      // primeira liberação real, sem precisar cancelar a consulta de alguém só para testar.
+      expect(result).toEqual({ released: true, resposta: { ok: true } });
       const [url, init] = fetchFn.mock.calls[0] as [string, RequestInit];
       expect(url).toBe('https://api.clinicorp.com/rest/v1/appointment/cancel_appointment');
       const body = JSON.parse(init.body as string);

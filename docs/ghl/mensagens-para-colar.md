@@ -432,8 +432,9 @@ Se surgir algum imprevisto, conseguem me avisar por aqui o quanto antes? Assim r
 # 2c · RÉGUA — Sem confirmação (12h, 19h e liberação)
 
 Gatilho: Tag de contato · `regua-confirmacao` — a **mesma** da régua 2, rodando em paralelo.
-Workflow `c73e7007-21cc-4ba0-ade7-e7b0ed2fffb4`. **Rascunho, e não pode ser publicada ainda** (ver
-`roteiro-ia-v2-cliente.md`: falta o `x-api-key` do webhook e o `LIBERAR_HORARIO_ATIVO`).
+Workflow `c73e7007-21cc-4ba0-ade7-e7b0ed2fffb4`, em rascunho. Para publicar faltam só dois
+interruptores — o `x-api-key` do webhook e `LIBERAR_HORARIO_ATIVO=true` (ver
+`roteiro-ia-v2-cliente.md`).
 
 Quem responde qualquer coisa sai do fluxo sozinho (`Parar ao receber resposta`). Quem responde ao
 *primeiro* pedido de SIM — que saiu da régua 2, não desta — é pego pela tag `consulta-confirmada`,

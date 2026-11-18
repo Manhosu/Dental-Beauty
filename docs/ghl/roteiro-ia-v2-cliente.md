@@ -259,14 +259,15 @@ Três decisões que não são óbvias:
 **Campo novo:** "Régua - Agendamento", `{{contact.rgua__agendamento}}`. É o id do agendamento na
 Clinicorp, que o backend passa a gravar no contato e que o webhook devolve.
 
-> 🚫 **Esta régua não pode ser publicada ainda.** Faltam duas coisas:
-> 1. o cabeçalho `x-api-key` do webhook está com `PREENCHER-COM-API_KEY_SECRET`;
-> 2. `LIBERAR_HORARIO_ATIVO` está desligado no servidor, então `/reguas/liberar-horario` responde
->    `simulado` e **não** cancela nada na Clinicorp.
+> ⚙️ **Dois interruptores antes de publicar esta régua** (a cliente já aprovou o cancelamento em
+> 18/11, então é só ligar):
+> 1. preencher o cabeçalho `x-api-key` do webhook no painel, hoje com
+>    `PREENCHER-COM-API_KEY_SECRET`, usando o mesmo valor de `API_KEY_SECRET`;
+> 2. `LIBERAR_HORARIO_ATIVO=true` no Render — enquanto estiver desligado,
+>    `/reguas/liberar-horario` responde `simulado` e não cancela nada.
 >
-> Enquanto o item 2 estiver assim, a mensagem "Horário liberado" afirma ao paciente algo que não
-> aconteceu. Ela está nomeada no painel como *"Horario liberado - NAO PUBLICAR sem a baixa na
-> agenda"* justamente para ninguém publicar por engano.
+> A ordem importa: com o item 2 desligado, a mensagem "Horário liberado" afirmaria ao paciente algo
+> que não aconteceu.
 
 > 🐛 **Armadilha do construtor: o canvas é virtualizado.** Os botões "+" só existem para os nós
 > renderizados na viewport, então o mapeamento entre "+" e posição muda conforme o scroll — foi o
@@ -332,16 +333,42 @@ Fui conferir o vocabulário de status da Clinicorp (`GET /appointment/status_lis
 O que isso significa na prática:
 
 - **Não dá para "mudar para Cancelado"** — não há esse status para onde mudar.
-- O único caminho que **libera o horário** é `POST /appointment/cancel_appointment`, que é uma
-  operação própria, não uma mudança de status. **Nunca foi chamado neste projeto**, então não sei
-  dizer se ele preserva o registro na agenda ou se some com ele — e a cliente foi explícita que o
-  registro tem de ficar.
 - `8-Faltou` preservaria o registro, mas **não libera o horário** e seria mentira: o paciente ainda
   não faltou, só não confirmou.
+- O único caminho que **libera o horário** é `POST /appointment/cancel_appointment`, que é uma
+  operação própria, não uma mudança de status. **É o que o sistema usa**, por decisão do Eduardo.
 
-**O que precisa acontecer antes de ligar:** a clínica testa `cancel_appointment` em **um
-agendamento de teste** e olha se ele continua aparecendo na agenda como cancelado. Se sumir, a
-regra da cliente não pode ser cumprida com esta API e a decisão volta para ela.
+### A baixa é lógica, não exclusão — e dá para saber isso sem cancelar nada
+
+Olhando um registro cru de `/appointment/list`, os agendamentos têm um campo **`Deleted`**. Em
+**421 agendamentos de 7 semanas** (01/10 a 18/11), *todos* vinham `Deleted: ""`.
+
+Duas leituras possíveis: ou a clínica nunca cancela nada em 7 semanas — improvável, já que há 78
+"Faltou" no mesmo período —, ou **a listagem filtra os cancelados**. A segunda explica tudo e
+descreve um *soft delete*: o registro continua gravado no Clinicorp com o campo marcado, e some só
+da listagem da API.
+
+É exatamente o que a cliente pediu: *"não excluir o agendamento, assim saberemos que não teve
+retorno"*. E tem um efeito colateral bom: as nossas próprias réguas deixam de enxergar aquele
+agendamento, então ninguém é cobrado duas vezes pelo mesmo horário.
+
+**Mas isso é inferência, não prova.** Por isso a rota `/reguas/liberar-horario` **confere sozinha**:
+depois de cancelar, ela relê a agenda dos próximos 7 dias e registra se o agendamento ainda
+aparece.
+
+- `aindaNaAgenda: false` → saiu da listagem, vaga livre, comportamento esperado.
+- `aindaNaAgenda: true` → o log sai como **"ATENÇÃO: o agendamento continua na agenda depois do
+  cancelamento"**, e aí o cancelamento não pegou.
+
+A conferência nunca derruba a liberação: se a releitura falhar, o horário já foi solto do mesmo
+jeito e o que se perde é só o diagnóstico. A resposta crua da Clinicorp também vai para o log.
+
+Ou seja: **a primeira liberação real é o teste**, sem precisar cancelar a consulta de ninguém de
+propósito.
+
+**Para ligar:** `LIBERAR_HORARIO_ATIVO=true` no Render, e preencher o cabeçalho `x-api-key` do
+webhook no painel com o mesmo valor de `API_KEY_SECRET`. A mensagem "Horário liberado" já pode ser
+publicada — o nome da ação no painel não traz mais o aviso de não publicar.
 
 ---
 

@@ -18,8 +18,19 @@ const liberarHorarioSchema = z.object({
   appointmentId: z.string().min(1),
 });
 
+/**
+ * Quantos dias à frente a conferência pós-cancelamento varre a agenda. A consulta liberada está
+ * sempre a poucos dias (D-3 para quem confirmou no D-4, D-1 para quem confirmou no D-2), então
+ * uma janela de uma semana cobre com folga.
+ */
+export const JANELA_CONFERENCIA_DIAS = 7;
+
+function isoDate(base: Date, diasDepois: number): string {
+  return new Date(base.getTime() + diasDepois * 86_400_000).toISOString().slice(0, 10);
+}
+
 export interface ReguasRouteDeps {
-  clinicorp: Pick<ClinicorpClient, 'cancelAppointment'>;
+  clinicorp: Pick<ClinicorpClient, 'cancelAppointment' | 'listAppointmentsByDate'>;
   /**
    * Interruptor de segurança. Cancelar na agenda é **irreversível** e atinge a clínica de verdade,
    * então começa desligado: a rota responde `simulado`, o workflow segue sem erro e nada muda na
@@ -50,7 +61,36 @@ export function registerReguasRoutes(app: FastifyInstance, deps: ReguasRouteDeps
     }
 
     const result = await deps.clinicorp.cancelAppointment(appointmentId);
-    logger.info({ appointmentId, released: result.released }, 'horário liberado na agenda');
-    return reply.status(200).send({ status: 'liberado', appointmentId, released: result.released });
+
+    // Confere o que de fato aconteceu com o agendamento. É a resposta para a pergunta que ninguém
+    // conseguiu responder sem cancelar a consulta de alguém: se o registro continua na listagem,
+    // o cancelamento não pegou; se saiu, a vaga está livre e a baixa foi lógica (campo `Deleted`).
+    // A conferência nunca derruba a liberação — se ela falhar, o horário já foi solto do mesmo
+    // jeito e o que se perde é só o diagnóstico.
+    let aindaNaAgenda: boolean | undefined;
+    try {
+      const hoje = new Date();
+      const agenda = await deps.clinicorp.listAppointmentsByDate(
+        isoDate(hoje, 0),
+        isoDate(hoje, JANELA_CONFERENCIA_DIAS),
+      );
+      aindaNaAgenda = agenda.some((a) => String(a.id) === appointmentId);
+    } catch (err) {
+      logger.warn({ err, appointmentId }, 'não deu para conferir a agenda depois do cancelamento');
+    }
+
+    logger.info(
+      { appointmentId, released: result.released, aindaNaAgenda, resposta: result.resposta },
+      aindaNaAgenda === true
+        ? 'ATENÇÃO: o agendamento continua na agenda depois do cancelamento'
+        : 'horário liberado na agenda',
+    );
+
+    return reply.status(200).send({
+      status: 'liberado',
+      appointmentId,
+      released: result.released,
+      ...(aindaNaAgenda === undefined ? {} : { aindaNaAgenda }),
+    });
   });
 }

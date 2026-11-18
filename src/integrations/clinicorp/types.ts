@@ -110,7 +110,7 @@ export interface Patient {
 export interface ClinicorpClient {
   getAvailability(query: AvailabilityQuery): Promise<AvailableSlot[]>;
   createAppointment(input: CreateAppointmentInput): Promise<AppointmentResult>;
-  cancelAppointment(appointmentId: string): Promise<{ released: boolean }>;
+  cancelAppointment(appointmentId: string): Promise<{ released: boolean; resposta?: unknown }>;
   listProfessionals(): Promise<Professional[]>;
   /** Lista agendamentos por período (GET /appointment/list?from=&to=). `to` default = `from`. */
   listAppointmentsByDate(from: string, to?: string): Promise<Appointment[]>;
