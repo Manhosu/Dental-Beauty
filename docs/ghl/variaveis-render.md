@@ -38,19 +38,26 @@ LIBERAR_HORARIO_ATIVO=true
 
 `ANAMNESE_SECRET` já deve estar lá desde 17/11 — sem ele a régua da anamnese fica dormente.
 
-## `API_KEY_SECRET` e o cabeçalho do webhook
+## `API_KEY_SECRET` — resolvido em 18/11: **está ligada**
 
-O webhook do workflow `#2 RÉGUA — Sem confirmação` tem um cabeçalho `x-api-key` com o valor
-`PREENCHER-COM-API_KEY_SECRET`. O que fazer depende do servidor:
+Testado ao vivo pela aba **Teste** do construtor de API do painel, em 18/11/2026:
 
-- **Se `API_KEY_SECRET` NÃO está no Render:** o backend não exige o header
-  (`src/http/server.ts` só cobra quando a variável existe). O webhook funciona do jeito que está —
-  o cabeçalho vira apenas um header ignorado. Para não deixar sujeira, dá para apagá-lo.
-- **Se `API_KEY_SECRET` ESTÁ no Render:** trocar o `PREENCHER-COM-API_KEY_SECRET` pelo valor real,
-  senão a liberação toma **401** e o horário nunca é solto.
+```
+GET https://dental-beauty-agenda.onrender.com/agendamento/disponibilidade?date=2026-11-25&unidade=Recreio
+HTTP 401  { "error": "unauthorized" }
+```
 
-Não dá para descobrir isso daqui: a variável não está no `.env` local e o painel do Render é o
-único lugar onde ela aparece.
+O servidor está no ar e **exige** o header. Logo, `API_KEY_SECRET` está definida no Render, e todo
+lugar que chama o backend precisa mandar `x-api-key` com o valor exato. São três:
+
+| Onde | Estado |
+|---|---|
+| Webhook do `#2 RÉGUA — Sem confirmação` | header `x-api-key` com `PREENCHER-COM-API_KEY_SECRET` — **sem isso a liberação toma 401 e o horário nunca é solto** |
+| Ação `Consulta horários livres` da Clara | **não montada** — o painel só conclui a ação depois de um teste que responda 200 |
+| Ação `Agenda a avaliação` da Clara | **não montada**, mesmo motivo |
+
+O valor só existe no painel do Render (serviço `dental-beauty-agenda` → Environment →
+`API_KEY_SECRET`). Não está no `.env` local nem em nenhum doc daqui.
 
 ## Depois da primeira liberação real
 

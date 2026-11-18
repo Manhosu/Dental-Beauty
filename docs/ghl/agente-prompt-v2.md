@@ -218,21 +218,53 @@ Site: dentalbeauty.com.br
 Até 18/11 o painel dizia *"Nenhuma ação foi configurada ainda"*. O prompt manda ela consultar a
 agenda real e marcar na hora, mas sem ação nativa ela **conversa bem e não marca nada**.
 
-**Configurado:** `Informações de contato` → grava a **Especialidade** no contato, que é o que a v2
-pede ("grava a especialidade no Additional Info") e o que decide o vídeo e o banco de disparo.
+### `Informações de contato` — 4 campos, prontos
 
-> 🐛 O diálogo "Adicionar informações de contato" **não salva mais de um campo por vez**: o botão
-> "Adicionar novo campo" grava o primeiro bloco e depois recusa o segundo com "Campos obrigatórios
-> estão faltando", mesmo com tudo preenchido. Para Bairro, Unidade e Nome da Criança é preciso
-> abrir a ação de novo, uma por vez.
+| Ação | Campo | Tipo | O que grava |
+|---|---|---|---|
+| Grava a especialidade | Especialidade | Dropdown | um dos 13 valores fixos do campo |
+| Grava a unidade | Unidade | Dropdown | `Recreio` ou `Ipanema` |
+| Grava o bairro | Bairro | Texto | o bairro como o paciente disse |
+| Grava o nome da criança | Nome da Criança | Texto | só o primeiro nome da criança, nunca do responsável |
 
-**Falta decidir e montar:**
+> ⚠️ **Dropdown tem lista fechada.** A Especialidade só aceita: Avaliação geral, Odontopediatria,
+> Ortodontia infantil, Ortodontia adulto, Clareamento, Lentes, Implante unitário, Implante
+> protocolo, Prótese, Periodontia, Canal, Frenectomia, Não identificado. A descrição da ação
+> precisa listar esses valores **exatos** — a primeira versão mandava escrever em minúscula e sem
+> acento ("implante, protese, lentes") e nada casaria. Note que *alinhador* e *limpeza* não estão
+> na lista: caem em **Não identificado**.
 
-| Ação | Situação |
+> 🐛 Campo de **texto livre** (Single Line) exige, além da descrição, **pelo menos 2 "Exemplos de
+> Saída"** — e sem eles o painel só diz "Campos obrigatórios estão faltando", sem apontar onde.
+> Era isso, e não um bug de salvar vários blocos por vez: dá para montar os 4 campos de uma sentada.
+> Dropdown não pede exemplo nenhum.
+
+### `Transferência humana` — 4 cenários, todos ligados
+
+Todos atribuem a conversa à **Mayara Recepção** (escolha do Eduardo em 18/11), com "pule a
+atribuição se o contato já tiver um usuário", tarefa no contato, tag `transferência humana` e bot
+de volta em 8 horas.
+
+| Cenário | Dispara quando |
 |---|---|
-| `Transferência humana` | 3 cenários prontos (pedido explícito, falta de informação, falha ao resolver), todos **desligados**. Cada um exige escolher **um usuário** que recebe a conversa — decisão da clínica, não minha. Os 6 usuários da conta: Bruna Barroso Veríssimo Araújo, Bruno Magnago, José Carlos da Costa Araújo Júnior, Luis Bruno Atendimento, Maryanne Atendimento, Mayara Recepção. |
-| Agendamento | **Não usar** `Agendamento de compromissos`: ele marca no calendário nativo do GHL, e a agenda real é a Clinicorp. O caminho certo é `Chamada de API` contra o nosso backend (`/agendamento/disponibilidade` e `/agendamento/book`). Ainda não montado. |
-| `Acionar um fluxo de trabalho` | não serve para agendar: é disparo sem retorno, e a Clara precisa receber os horários de volta. |
+| Solicitação de ser humano | o paciente pede para falar com alguém (embutido) |
+| Falta de informação | a Clara não tem a resposta (embutido) |
+| Falha ao resolver o problema | várias tentativas falharam (embutido) |
+| **Urgência ou reclamação** | criado por nós: dor forte, inchaço, febre, sangramento, dente ou aparelho quebrado; reclamação; nota de 1 a 3 na pesquisa |
+
+Os 3 embutidos têm nome e condição **travados** — só o cenário criado à mão aceita condição
+própria, que é como os outros gatilhos da lista "TRANSFIRA PARA HUMANO" do prompt entraram.
+
+### Agendamento — bloqueado pelo `API_KEY_SECRET`
+
+**Não usar** `Agendamento de compromissos`: ele marca no calendário nativo do GHL, e a agenda real
+é a Clinicorp. O caminho certo é `Chamada de API` contra o nosso backend. `Acionar um fluxo de
+trabalho` também não serve: é disparo sem retorno, e a Clara precisa receber os horários de volta.
+
+As duas ações estão **especificadas e não montadas** — ver
+[acoes-api-clara.md](acoes-api-clara.md). O construtor de API do painel só libera o botão
+"Concluído" depois de um teste que responda **200**, e o backend responde **401** sem o
+`x-api-key`. Sem o valor de `API_KEY_SECRET` não há como terminar.
 
 ## Ortodontia em Ipanema — resolvido em 18/11
 

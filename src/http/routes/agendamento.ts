@@ -51,6 +51,9 @@ const cancelBodySchema = z.object({
 const disponibilidadeQuerySchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'date must be YYYY-MM-DD'),
   professionalId: z.coerce.number().int().optional(),
+  // A Clara (agente do GHL) sabe a unidade, não sabe o id do profissional. O filtro acontece
+  // aqui para que ela não precise escolher na mão entre os slots das duas unidades.
+  unidade: z.enum(['Ipanema', 'Recreio']).optional(),
 });
 
 const agendaQuerySchema = z.object({
@@ -100,8 +103,9 @@ export function registerAgendamentoRoutes(app: FastifyInstance, deps: Agendament
       return reply.status(400).send({ error: 'invalid', issues: parsed.error.issues });
     }
 
-    const { date, professionalId } = parsed.data;
-    const slots = await deps.clinicorp.getAvailability({ date, professionalId });
+    const { date, professionalId, unidade } = parsed.data;
+    const todos = await deps.clinicorp.getAvailability({ date, professionalId });
+    const slots = unidade ? todos.filter((s) => s.unit === unidade) : todos;
 
     return reply.status(200).send({ date, slots });
   });

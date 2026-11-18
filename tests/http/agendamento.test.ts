@@ -285,4 +285,39 @@ describe('GET /agendamento/disponibilidade', () => {
     expect(fakeClinicorp.getAvailability).toHaveBeenCalledWith({ date: '2026-07-01', professionalId: 99 });
     await app.close();
   });
+
+  it('devolve só os horários da unidade pedida', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
+    const ipanema: AvailableSlot = {
+      from: '09:00', to: '10:00', dayWeek: 1, businessId: 1, professionalId: 7, unit: 'Ipanema',
+    };
+    const recreio: AvailableSlot = {
+      from: '14:00', to: '15:00', dayWeek: 1, businessId: 1, professionalId: 9, unit: 'Recreio',
+    };
+    const fakeClinicorp = makeFakeClinicorp([ipanema, recreio]);
+    const app = buildServer({ scheduling: { engine: fakeEngine, clinicorp: fakeClinicorp } });
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/agendamento/disponibilidade?date=2026-07-01&unidade=Ipanema',
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ date: '2026-07-01', slots: [ipanema] });
+    await app.close();
+  });
+
+  it('recusa unidade que não existe', async () => {
+    const fakeEngine = makeFakeEngine({ status: 'confirmed', appointmentId: 'x' });
+    const fakeClinicorp = makeFakeClinicorp([]);
+    const app = buildServer({ scheduling: { engine: fakeEngine, clinicorp: fakeClinicorp } });
+
+    const res = await app.inject({
+      method: 'GET',
+      url: '/agendamento/disponibilidade?date=2026-07-01&unidade=Botafogo',
+    });
+
+    expect(res.statusCode).toBe(400);
+    await app.close();
+  });
 });
