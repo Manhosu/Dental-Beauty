@@ -38,6 +38,11 @@ LIBERAR_HORARIO_ATIVO=true
 
 `ANAMNESE_SECRET` já deve estar lá desde 17/11 — sem ele a régua da anamnese fica dormente.
 
+> **Aplicadas no Render em 18/11/2026**, via API do Render (serviço `srv-d8um6urtqb8s7387h2t0`).
+> Faltavam também `GHL_LOCATION_ID`, `GHL_PRIVATE_TOKEN` e `ANAMNESE_SECRET` — sem elas as réguas
+> não marcariam tag nenhuma, mesmo ligadas. **`REGUAS_ENABLED` está em `false` de propósito**:
+> ver "O susto do build de agosto" no fim.
+
 ## `API_KEY_SECRET` — resolvido em 18/11: **está ligada**
 
 Testado ao vivo pela aba **Teste** do construtor de API do painel, em 18/11/2026:
@@ -52,12 +57,36 @@ lugar que chama o backend precisa mandar `x-api-key` com o valor exato. São tr�
 
 | Onde | Estado |
 |---|---|
-| Webhook do `#2 RÉGUA — Sem confirmação` | header `x-api-key` com `PREENCHER-COM-API_KEY_SECRET` — **sem isso a liberação toma 401 e o horário nunca é solto** |
-| Ação `Consulta horários livres` da Clara | **não montada** — o painel só conclui a ação depois de um teste que responda 200 |
-| Ação `Agenda a avaliação` da Clara | **não montada**, mesmo motivo |
+| Webhook do `#2 RÉGUA — Sem confirmação` | ✅ preenchido com o valor real em 18/11 |
+| Ação `Consulta horarios livres` da Clara | ✅ montada e testada (HTTP 200) |
+| Ação `Agenda a avaliacao` da Clara | ✅ montada e testada (HTTP 201) |
 
 O valor só existe no painel do Render (serviço `dental-beauty-agenda` → Environment →
 `API_KEY_SECRET`). Não está no `.env` local nem em nenhum doc daqui.
+
+## O susto do build de agosto
+
+Ao ligar as variáveis descobri que o que rodava no Render era o commit `d0bacad`, de **3 de agosto**
+— 44 commits atrás, antes de toda a migração para o GoHighLevel. Duas consequências:
+
+1. `/reguas/liberar-horario` **não existia** (404), então o webhook da liberação nunca funcionaria,
+   mesmo com a chave certa.
+2. O cron daquele build dispara as réguas **pelo Chatbotify**, e as três variáveis
+   `CHATBOTIFY_REGUA_*` continuam preenchidas no Render. `REGUAS_ENABLED=true` ali teria começado a
+   mandar mensagem de verdade para paciente de verdade pela plataforma antiga.
+
+Nada chegou a disparar: no Render, mexer em variável **não reinicia o serviço sozinho** — o último
+deploy continuou sendo o de agosto até o `git push`. Ainda assim, `REGUAS_ENABLED` voltou para
+`false` na hora.
+
+O push subiu os 44 commits e o auto-deploy colocou o código novo no ar
+(`c356a7a`, depois `9daf632`). Conferido depois do deploy:
+
+- `/reguas/liberar-horario` responde **400** de validação, não mais 404 — a rota existe.
+- `?unidade=Ipanema` devolve só slots de Ipanema.
+
+**`REGUAS_ENABLED` segue `false`.** Ligar é o go-live das réguas e precisa ser uma decisão com
+hora marcada, junto com a publicação dos 13 workflows.
 
 ## Depois da primeira liberação real
 

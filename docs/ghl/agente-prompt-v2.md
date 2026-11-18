@@ -255,16 +255,19 @@ de volta em 8 horas.
 Os 3 embutidos têm nome e condição **travados** — só o cenário criado à mão aceita condição
 própria, que é como os outros gatilhos da lista "TRANSFIRA PARA HUMANO" do prompt entraram.
 
-### Agendamento — bloqueado pelo `API_KEY_SECRET`
+### Agendamento — montado e testado
 
 **Não usar** `Agendamento de compromissos`: ele marca no calendário nativo do GHL, e a agenda real
 é a Clinicorp. O caminho certo é `Chamada de API` contra o nosso backend. `Acionar um fluxo de
 trabalho` também não serve: é disparo sem retorno, e a Clara precisa receber os horários de volta.
 
-As duas ações estão **especificadas e não montadas** — ver
-[acoes-api-clara.md](acoes-api-clara.md). O construtor de API do painel só libera o botão
-"Concluído" depois de um teste que responda **200**, e o backend responde **401** sem o
-`x-api-key`. Sem o valor de `API_KEY_SECRET` não há como terminar.
+Duas ações, montadas e testadas contra a agenda de produção em 18/11 — `Consulta horarios livres`
+(GET, HTTP 200) e `Agenda a avaliacao` (POST, HTTP 201). Detalhes, o bug da ficha excluída que o
+teste revelou e a prova de que o cancelamento é soft delete estão em
+[acoes-api-clara.md](acoes-api-clara.md).
+
+> 🐛 O campo "Nome" da ação de API **descarta caracteres acentuados** ao salvar: "Consulta horários
+> livres" virou "Consulta horrios livres". Por isso os dois nomes estão sem acento.
 
 ## Ortodontia em Ipanema — resolvido em 18/11
 
