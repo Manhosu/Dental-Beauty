@@ -82,13 +82,24 @@ export class HttpClinicorpClient implements ClinicorpClient {
       return null;
     }
 
-    const raw = response[0] as {
+    type RawPatient = {
       PatientId: number;
       Name: string;
       Phone?: string;
       Email?: string;
       Status?: string;
     };
+    const candidatos = response as RawPatient[];
+
+    // Um telefone pode ter mais de uma ficha, e a Clinicorp devolve as EXCLUÍDAS junto, às vezes
+    // primeiro. Mandar o Patient_PersonId de uma ficha DELETED faz create_appointment_by_api
+    // responder 400 — foi o que derrubou o primeiro agendamento de teste em 18/11/2026. Então só
+    // vale uma ficha ativa; se todas estiverem excluídas, melhor não resolver paciente nenhum e
+    // deixar a Clinicorp criar uma ficha nova.
+    const raw = candidatos.find((p) => p.Status !== 'DELETED');
+    if (!raw) {
+      return null;
+    }
 
     return {
       id: raw.PatientId,

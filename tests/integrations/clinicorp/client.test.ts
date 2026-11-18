@@ -121,6 +121,57 @@ describe('HttpClinicorpClient', () => {
 
       expect(result).toBeNull();
     });
+
+    it('pula a ficha DELETED e devolve a ativa, mesmo vindo depois', async () => {
+      const fetchFn = vi.fn().mockResolvedValue(
+        makeResponse([
+          { PatientId: 1, Name: 'Compromisso Dr. Walter', Phone: '21999999999', Status: 'DELETED' },
+          { PatientId: 2, Name: 'Paciente de Verdade', Phone: '21999999999', Status: 'ACTIVE' },
+        ]),
+      );
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      const result = await client.findPatientByPhone('21999999999');
+
+      expect(result?.id).toBe(2);
+      expect(result?.name).toBe('Paciente de Verdade');
+    });
+
+    it('devolve null quando todas as fichas do telefone estão excluídas', async () => {
+      const fetchFn = vi.fn().mockResolvedValue(
+        makeResponse([
+          { PatientId: 1, Name: 'Ficha Velha', Phone: '21999999999', Status: 'DELETED' },
+          { PatientId: 2, Name: 'Outra Ficha Velha', Phone: '21999999999', Status: 'DELETED' },
+        ]),
+      );
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      expect(await client.findPatientByPhone('21999999999')).toBeNull();
+    });
+
+    it('não manda Patient_PersonId de ficha excluída ao criar agendamento', async () => {
+      const fetchFn = vi
+        .fn()
+        .mockResolvedValueOnce(
+          makeResponse([
+            { PatientId: 999, Name: 'Ficha Excluida', Phone: '21999999999', Status: 'DELETED' },
+          ]),
+        )
+        .mockResolvedValueOnce(makeResponse({ id: 77, Deleted: '' }));
+      const client = new HttpClinicorpClient(config, fetchFn);
+
+      await client.createAppointment({
+        patient: { name: 'Fulano', phone: '21999999999' },
+        date: '2027-03-15',
+        fromTime: '8:00',
+        toTime: '9:00',
+        dentistPersonId: 4848869307449344,
+      });
+
+      const [, init] = fetchFn.mock.calls[1] as [string, RequestInit];
+      const body = JSON.parse(init.body as string) as Record<string, unknown>;
+      expect(body).not.toHaveProperty('Patient_PersonId');
+    });
   });
 
   describe('createAppointment', () => {
