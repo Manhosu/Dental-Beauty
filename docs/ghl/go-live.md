@@ -87,10 +87,30 @@ contra a Clinicorp de produção. Falta só ela poder ouvir. Duas opções:
 
 **O que isso custa de verdade.** Registrar o número na API oficial **desliga o 4zapy nesse número**
 — quem confirmou foi a consultoria. Então não é "$20 a mais": é trocar o canal de envio das réguas.
-Hoje elas saem de graça pelo app; no oficial cada mensagem de régua vira *template de utilidade*.
-Pela média do primeiro dia real (19/11, 67 envios) dá ~2.000 mensagens/mês, que a R$ 0,035
-são **~R$ 70/mês**, mais os $20 da assinatura. As respostas de paciente continuam grátis: conversa
-iniciada por ele é de serviço, e as 1.000 primeiras do mês não são cobradas.
+Hoje elas saem de graça pelo app; no oficial cada disparo vira template cobrado por mensagem.
+
+São **disparos**, não conversas: pela média do primeiro dia real (19/11, 67 envios) dá ~2.000
+mensagens/mês. E elas **não estão todas na mesma faixa**, que foi o erro da primeira estimativa:
+
+| Faixa | Réguas | Por mês | Preço | Custo |
+|---|---|---|---|---|
+| Utilidade | lembrete 23 + confirmação 15 + pesquisa 12 + anamnese 2 | ~1.560 | ~R$ 0,035–0,05 | **R$ 55–78** |
+| Marketing | aniversário 13 + reengajamento 1 + pós-procedimento 1 | ~450 | ~R$ 0,31–0,38 | **R$ 140–171** |
+
+**R$ 195–250/mês** em mensagens, mais os $20 da assinatura: algo entre **R$ 305 e R$ 360**.
+
+A régua de **aniversário** é 20% do volume e ~70% do custo. Utilidade, para a Meta, é o que está
+preso a uma transação específica do paciente — lembrete, confirmação e anamnese são; parabéns de
+aniversário é relacionamento, logo marketing, a ~9x o preço. Reengajamento e retorno pós-procedimento
+caem do mesmo lado, porque convidam a marcar. Se a clínica quiser cortar custo sem perder régua
+operacional, é o aniversário que paga a conta.
+
+Duas ressalvas: **quem decide a categoria é a Meta**, na aprovação do template — só vira número
+fechado quando os textos forem submetidos; e as tarifas em BRL variam por fonte, daí a faixa.
+
+**Resposta de paciente não é mais sempre grátis.** Desde **out/2026** a mensagem de serviço é
+cobrada pela tarifa de utilidade, com franquia mensal gratuita (as ~1.000 primeiras do mês). Dentro
+da franquia não custa; acima dela, custa. Vale para a recepção e para a Clara.
 
 ## A recobrança que pegou quem já tinha confirmado (19/11)
 
