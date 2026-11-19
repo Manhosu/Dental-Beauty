@@ -34,6 +34,8 @@ Três armadilhas, todas descobertas no braço:
    muitas vezes não pega o foco e o `Ctrl+A` vai para o **canvas** — que seleciona todos os nós.
    O botão de expandir é o `⤢` ao lado de "Saiba mais". Ele é um *toggle*: se o painel já estiver
    expandido de um nó anterior, clicar de novo **colapsa**. Confira na tela antes.
+   **E clique no elemento raiz do editor, não numa linha de texto.** Clicar numa linha às vezes
+   cai em cima de um chip e abre o seletor de variáveis, que engole o `Ctrl+A` e a digitação.
 2. **Nunca termine um trecho digitado logo depois de uma variável.** Digitar `{{contact.campo}}`
    abre o seletor de variáveis, e o `Enter` seguinte **escolhe o item destacado da lista** em vez
    de quebrar a linha. Como a lista vem ordenada por nome, o item destacado é quase sempre
@@ -47,7 +49,7 @@ E **confira o chip na tela antes de salvar**. O painel às vezes renderiza o ró
 mensagem recém-carregada (mostrou "Anamnese - Link" onde o dado real era "Régua - Dia"); redigitar
 a variável corrige a exibição.
 
-## Estado da aplicação no painel — 19/11/2026
+## Estado da aplicação no painel — 19/11/2026: **concluído**
 
 | Régua | Adulto | Infantil |
 |---|---|---|
@@ -59,16 +61,45 @@ a variável corrige a exibição.
 | Anamnese (D-2) | ✅ | ✅ |
 | Anamnese lembrete (D-1) | ✅ | ✅ |
 | Pesquisa em tratamento | ✅ | — |
-| Cuidado no dia seguinte | ✅ | **pendente** |
-| Reengajamento 6 meses | **pendente** | **pendente** |
-| Reengajamento 12 meses | **pendente** | **pendente** |
-| Retorno pós-procedimento | **pendente** (10 textos) | **pendente** (3 textos) |
+| Cuidado no dia seguinte | ✅ | ✅ |
+| Reengajamento 6 meses | ✅ | ✅ |
+| Reengajamento 12 meses | ✅ | ✅ |
+| Retorno pós-procedimento | ✅ (10 textos) | ✅ (3 textos) |
 
-**18 mensagens aplicadas, conferidas uma a uma na tela antes de salvar.** As pendentes seguem no
-formato antigo — funcionam, só estão sem as linhas em branco.
+**As 36 mensagens das 12 réguas estão no formato v5**, cada uma conferida antes de salvar. Os
+workflows seguem publicados o tempo todo — nenhum ficou em rascunho.
 
 > A régua "Sem confirmação" foi furada na fila de propósito: ela dispara às 12h, e a troca entrou
 > a tempo do envio de 19/11.
+
+## Duas coisas que o painel preservou e o documento não
+
+O v5 foi gerado a partir do v4, e perdeu detalhes que já estavam no ar e que fazem falta. Mantidos
+de propósito:
+
+- **`{{contact.unidade}}` no lembrete do dia**, adulto e infantil ("na unidade Recreio"). O v5 não
+  traz, mas o próprio exemplo que o Bruno colou traz — e o paciente precisa saber onde ir.
+- **O fim do lembrete infantil**, que no painel estava truncado em "Assim remarcamos com calma" e
+  voltou a ter "e o horário pode atender outra criança".
+
+---
+
+## Modelo da Clara trocado em 19/11
+
+O painel marcava o **GPT 4.1 como "Retires 15 Dec"** — e o secundário, GPT 4.1 Mini, também.
+Trocado pelo sucessor que o próprio painel recomenda, **GPT 6 Sol**, e testado em cima do prompt:
+
+> *"Oi, meu filho tem 6 anos e nunca foi ao dentista. Moro em Ipanema. Quanto custa?"*
+> → **R$ 489**, Dr. Fábio, "consulta encantada", e **sem prometer radiografia em Ipanema** —
+> falou em "exame, fotos e um plano de cuidados", que é exatamente a regra do prompt.
+
+Acertou o caso mais difícil que existe na base: valor infantil de paciente novo em Ipanema, mais a
+armadilha da radiologia que só existe no Recreio.
+
+> ⏱️ **Ele é mais lento.** O 4.1 respondia em segundos; o GPT 6 Sol levou cerca de **1 minuto**
+> nesse teste. Para WhatsApp isso é tolerável, mas vale medir de novo quando a Clara estiver
+> atendendo de verdade. Se incomodar, o painel oferece o **GPT 6 Luna**, mais barato e
+> provavelmente mais rápido — aí o prompt precisa ser testado de novo em cima dele.
 
 ---
 
