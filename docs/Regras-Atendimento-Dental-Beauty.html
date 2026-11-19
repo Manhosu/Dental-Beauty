@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="Regras do atendente virtual, prazos das mensagens automáticas e textos aprovados — Dental Beauty / Oral Multi.">
+<meta name="color-scheme" content="light dark">
+<title>Regras de Atendimento Dental Beauty</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;7..72,600;7..72,700&family=Source+Sans+3:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+</head>
+<body>
+<style>
+  :root {
+    --ground: #F6F7F5;
+    --surface: #FFFFFF;
+    --surface-2: #EFF2EF;
+    --ink: #18211E;
+    --ink-2: #41504A;
+    --muted: #6E7D76;
+    --line: #DDE3DF;
+    --line-strong: #C6D0CA;
+    --accent: #0E7C66;
+    --accent-deep: #0A5A4A;
+    --accent-soft: #E3EFEA;
+    --kids: #A85C28;
+    --kids-soft: #F5E9DF;
+    --on: #157A52;
+    --off: #7C8A84;
+    --warn: #9A6410;
+    --warn-soft: #F7EEDC;
+
+    --f-display: "Literata", Georgia, "Times New Roman", serif;
+    --f-body: "Source Sans 3", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --f-mono: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #111614;
+      --surface: #1A211E;
+      --surface-2: #212925;
+      --ink: #E9EFEB;
+      --ink-2: #B4C2BB;
+      --muted: #8A9992;
+      --line: #2A342F;
+      --line-strong: #3A463F;
+      --accent: #55C4A4;
+      --accent-deep: #7FD8BD;
+      --accent-soft: #16302A;
+      --kids: #D9945F;
+      --kids-soft: #2C2118;
+      --on: #55C4A4;
+      --off: #8A9992;
+      --warn: #D9A94F;
+      --warn-soft: #2B2416;
+    }
+  }
+
+  :root[data-theme="dark"] {
+    --ground: #111614;
+    --surface: #1A211E;
+    --surface-2: #212925;
+    --ink: #E9EFEB;
+    --ink-2: #B4C2BB;
+    --muted: #8A9992;
+    --line: #2A342F;
+    --line-strong: #3A463F;
+    --accent: #55C4A4;
+    --accent-deep: #7FD8BD;
+    --accent-soft: #16302A;
+    --kids: #D9945F;
+    --kids-soft: #2C2118;
+    --on: #55C4A4;
+    --off: #8A9992;
+    --warn: #D9A94F;
+    --warn-soft: #2B2416;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--f-body);
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  a { color: var(--accent-deep); }
+  :focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: 2px; }
+
+  /* ── Shell ─────────────────────────────────────────── */
+  .shell {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+    gap: 56px;
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 0 32px 120px;
+  }
+
+  .toc {
+    position: sticky;
+    top: 0;
+    align-self: start;
+    max-height: 100vh;
+    overflow-y: auto;
+    padding: 56px 0 40px;
+  }
+  .toc-label {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 16px;
+  }
+  .toc ol { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+  .toc a {
+    display: grid;
+    grid-template-columns: 26px 1fr;
+    gap: 4px;
+    padding: 6px 8px 6px 0;
+    text-decoration: none;
+    color: var(--ink-2);
+    font-size: 14.5px;
+    line-height: 1.35;
+    border-radius: 4px;
+  }
+  .toc a:hover { color: var(--accent-deep); }
+  .toc .num { font-family: var(--f-mono); font-size: 12px; color: var(--muted); padding-top: 2px; }
+
+  main { padding-top: 56px; min-width: 0; }
+
+  /* ── Header ────────────────────────────────────────── */
+  .masthead { border-bottom: 2px solid var(--ink); padding-bottom: 28px; margin-bottom: 12px; }
+  .eyebrow {
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    margin: 0 0 14px;
+  }
+  h1 {
+    font-family: var(--f-display);
+    font-size: clamp(34px, 5vw, 50px);
+    line-height: 1.08;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 18px;
+    text-wrap: balance;
+  }
+  .standfirst {
+    font-size: 19px;
+    line-height: 1.6;
+    color: var(--ink-2);
+    max-width: 60ch;
+    margin: 0;
+  }
+  .meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    font-family: var(--f-mono);
+    font-size: 12px;
+    color: var(--muted);
+    margin: 32px 0 64px;
+  }
+
+  /* ── Sections ──────────────────────────────────────── */
+  section { margin-bottom: 72px; scroll-margin-top: 28px; }
+  h2 {
+    font-family: var(--f-display);
+    font-size: 27px;
+    font-weight: 600;
+    line-height: 1.2;
+    letter-spacing: -0.01em;
+    margin: 0 0 10px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line-strong);
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    align-items: baseline;
+    text-wrap: balance;
+  }
+  h2 .num {
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--accent);
+  }
+  .section-intro { color: var(--ink-2); margin: 0 0 26px 40px; max-width: 66ch; }
+
+  h3 {
+    font-family: var(--f-body);
+    font-size: 16px;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin: 34px 0 12px;
+    color: var(--ink);
+  }
+  p { max-width: 68ch; }
+
+  /* ── Cards & callouts ──────────────────────────────── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 22px 24px;
+  }
+  .note {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 0 6px 6px 0;
+    padding: 16px 20px;
+    margin: 22px 0;
+  }
+  .note p { margin: 0; max-width: 62ch; }
+  .note.warn { background: var(--warn-soft); border-left-color: var(--warn); }
+  .note-label {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--accent-deep);
+    display: block;
+    margin-bottom: 6px;
+  }
+  .note.warn .note-label { color: var(--warn); }
+
+  /* ── Flow steps (a real sequence) ──────────────────── */
+  .flow { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 0; }
+  .flow li {
+    display: grid;
+    grid-template-columns: 44px 1fr;
+    gap: 18px;
+    padding: 20px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .flow li:first-child { border-top: 1px solid var(--line); }
+  .step-n {
+    font-family: var(--f-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--surface);
+    background: var(--accent);
+    width: 30px; height: 30px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    margin-top: 2px;
+  }
+  .flow h4 { font-family: var(--f-body); font-size: 16.5px; font-weight: 700; margin: 0 0 6px; }
+  .flow p { margin: 0; color: var(--ink-2); font-size: 16px; }
+
+  /* ── WhatsApp bubbles (the subject's own vernacular) ─ */
+  .bubble {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 4px 14px 14px 14px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    max-width: 52ch;
+    font-size: 16px;
+    line-height: 1.55;
+    color: var(--ink-2);
+    white-space: pre-line;
+  }
+  .bubble.kids { border-color: var(--kids); background: var(--kids-soft); }
+
+  /* ── Tables ────────────────────────────────────────── */
+  .table-wrap { overflow-x: auto; margin: 18px 0; border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; font-size: 15.5px; background: var(--surface); }
+  th, td { text-align: left; padding: 12px 16px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  th {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    font-weight: 500;
+    background: var(--surface-2);
+    white-space: nowrap;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  td.mono, .mono { font-family: var(--f-mono); font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+  /* ── Cadence pills ─────────────────────────────────── */
+  .pill {
+    display: inline-block;
+    font-family: var(--f-mono);
+    font-size: 11.5px;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+    padding: 3px 9px;
+    border-radius: 100px;
+    background: var(--accent-soft);
+    color: var(--accent-deep);
+    white-space: nowrap;
+  }
+  .pill.kids { background: var(--kids-soft); color: var(--kids); }
+  .pill.off { background: var(--surface-2); color: var(--off); }
+
+  .status { display: inline-flex; align-items: center; gap: 7px; font-size: 14.5px; white-space: nowrap; }
+  .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+  .dot.on { background: var(--on); }
+  .dot.off { background: var(--off); }
+  .dot.wait { background: var(--warn); }
+
+  /* ── Régua timeline ────────────────────────────────── */
+  .regua { border: 1px solid var(--line); border-radius: 8px; background: var(--surface); padding: 20px 22px; margin: 16px 0; }
+  .regua-head { display: flex; flex-wrap: wrap; align-items: baseline; gap: 12px; margin-bottom: 4px; }
+  .regua-head h3 { margin: 0; font-size: 17px; }
+  .regua-when { color: var(--muted); font-size: 15px; margin: 0 0 4px; }
+
+  ul.plain { padding-left: 20px; color: var(--ink-2); }
+  ul.plain li { margin-bottom: 7px; }
+  ul.plain li::marker { color: var(--accent); }
+
+  .kicker {
+    font-family: var(--f-mono);
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 0 0 8px;
+  }
+
+  .two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 18px; margin: 20px 0; }
+
+  .gap-item { border-left: 3px solid var(--line-strong); padding: 2px 0 2px 18px; margin-bottom: 26px; }
+  .gap-item.flag { border-left-color: var(--warn); }
+  .gap-item h3 { margin-top: 0; }
+  .gap-item .fix { color: var(--ink-2); }
+  .gap-item .fix strong { color: var(--accent-deep); }
+
+  footer {
+    border-top: 2px solid var(--ink);
+    padding-top: 24px;
+    margin-top: 20px;
+    color: var(--muted);
+    font-size: 14.5px;
+  }
+
+
+  /* ── Impressão / Salvar como PDF ─────────────────────── */
+  @media print {
+    :root {
+      --ground: #FFFFFF; --surface: #FFFFFF; --surface-2: #F4F6F4;
+      --ink: #141A17; --ink-2: #3A453F; --muted: #6A756F;
+      --line: #D8DEDA; --line-strong: #BFC8C3;
+      --accent: #0B6350; --accent-deep: #0B6350; --accent-soft: #EDF4F1;
+    }
+    body { font-size: 11.5pt; background: #fff; }
+    .shell { display: block; max-width: none; padding: 0; }
+    .toc { display: none; }
+    main { padding-top: 0; }
+    section { page-break-inside: auto; margin-bottom: 34px; }
+    h2 { page-break-after: avoid; font-size: 17pt; }
+    h3 { page-break-after: avoid; }
+    .regua, .card, .note, .bubble, .gap-item, .table-wrap { page-break-inside: avoid; }
+    .flow li { page-break-inside: avoid; }
+    .step-n { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .pill, th, .note, .bubble.kids { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    a { color: inherit; text-decoration: none; }
+    footer { page-break-inside: avoid; }
+  }
+
+  /* Dica de impressão, visível só na tela */
+  .print-hint {
+    display: flex; flex-wrap: wrap; align-items: center; gap: 10px;
+    background: var(--surface-2); border: 1px solid var(--line);
+    border-radius: 8px; padding: 12px 16px; margin: 0 0 40px;
+    font-size: 14.5px; color: var(--ink-2);
+  }
+  .print-hint button {
+    font-family: var(--f-body); font-size: 14px; font-weight: 600;
+    color: var(--surface); background: var(--accent);
+    border: none; border-radius: 6px; padding: 7px 14px; cursor: pointer;
+  }
+  .print-hint button:hover { background: var(--accent-deep); }
+  @media print { .print-hint { display: none; } }
+
+  @media (max-width: 900px) {
+    .shell { grid-template-columns: 1fr; gap: 0; padding: 0 22px 80px; }
+    .toc { position: static; max-height: none; padding: 40px 0 8px; border-bottom: 1px solid var(--line); }
+    .toc ol { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
+    main { padding-top: 36px; }
+    h2 { grid-template-columns: 32px 1fr; font-size: 24px; }
+    .section-intro { margin-left: 32px; }
+    body { font-size: 16.5px; }
+  }
+</style>
+
+<div class="shell">
+  <nav class="toc">
+    <p class="toc-label">Índice</p>
+    <ol>
+      <li><a href="#s1"><span class="num">01</span><span>O que existe hoje</span></a></li>
+      <li><a href="#s2"><span class="num">02</span><span>Como a IA atende</span></a></li>
+      <li><a href="#s3"><span class="num">03</span><span>Regras inegociáveis</span></a></li>
+      <li><a href="#s4"><span class="num">04</span><span>Unidades e bairros</span></a></li>
+      <li><a href="#s5"><span class="num">05</span><span>Profissionais</span></a></li>
+      <li><a href="#s6"><span class="num">06</span><span>Valores de avaliação</span></a></li>
+      <li><a href="#s7"><span class="num">07</span><span>Atendimento infantil</span></a></li>
+      <li><a href="#s8"><span class="num">08</span><span>Réguas automáticas</span></a></li>
+      <li><a href="#s9"><span class="num">09</span><span>Follow-up de leads</span></a></li>
+      <li><a href="#s10"><span class="num">10</span><span>Funil e dados</span></a></li>
+      <li><a href="#s11"><span class="num">11</span><span>Horários e handoff</span></a></li>
+      <li><a href="#s12"><span class="num">12</span><span>Onde melhorar</span></a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="masthead">
+      <p class="eyebrow">Documento de referência · Dental Beauty / Oral Multi</p>
+      <h1>Como o atendimento está programado hoje</h1>
+      <p class="standfirst">Todas as regras que o atendente virtual segue, os prazos de cada mensagem automática e os textos aprovados — reunidos para avaliação e ajuste.</p>
+    </header>
+
+    <p class="meta">
+      <span>Unidades: Recreio · Ipanema</span>
+      <span>Agenda: Clinicorp</span>
+      <span>Plataforma: GoHighLevel</span>
+    </p>
+
+    <div class="print-hint">
+      <span>Para enviar como PDF, use a impressão do navegador e escolha “Salvar como PDF”.</span>
+      <button type="button" onclick="window.print()">Salvar como PDF</button>
+    </div>
+
+    <!-- 01 -->
+    <section id="s1">
+      <h2><span class="num">01</span><span>O que existe hoje</span></h2>
+      <p class="section-intro">O sistema tem três camadas independentes. Elas podem ser ligadas e desligadas separadamente.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Camada</th><th>O que faz</th><th>Situação</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Atendente virtual</strong></td>
+              <td>Conversa no WhatsApp, entende o que o paciente procura, direciona para a unidade certa e agenda</td>
+              <td><span class="status"><span class="dot off"></span>Desligado</span></td>
+            </tr>
+            <tr>
+              <td><strong>Agenda Clinicorp</strong></td>
+              <td>Consulta horários reais, marca e cancela direto no sistema da clínica</td>
+              <td><span class="status"><span class="dot on"></span>Funcionando</span></td>
+            </tr>
+            <tr>
+              <td><strong>Mensagens automáticas</strong></td>
+              <td>Aniversário, lembrete de consulta, retorno pós-procedimento, pesquisa de satisfação e reengajamento</td>
+              <td><span class="status"><span class="dot wait"></span>Aguardando ativação</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="note-label">Importante para a avaliação</span>
+        <p>As mensagens automáticas <strong>não passam pela IA de conversa</strong>. São disparos programados por data, que rodam mesmo com o atendente virtual desligado. São coisas separadas.</p>
+      </div>
+    </section>
+
+    <!-- 02 -->
+    <section id="s2">
+      <h2><span class="num">02</span><span>Como a IA atende hoje</span></h2>
+      <p class="section-intro">A sequência abaixo é obrigatória no roteiro atual — o atendente virtual não pode pular etapas.</p>
+
+      <ol class="flow">
+        <li>
+          <span class="step-n">1</span>
+          <div>
+            <h4>Boas-vindas e objetivo</h4>
+            <p>Abre com a saudação e pergunta qual tratamento a pessoa busca, ou se é consulta de rotina.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-n">2</span>
+          <div>
+            <h4>Bairro</h4>
+            <p>Pergunta <strong>apenas o bairro</strong> — nunca "qual unidade prefere". A unidade é deduzida a partir do bairro.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-n">3</span>
+          <div>
+            <h4>Unidade e profissional</h4>
+            <p>Confirma a unidade correta e verifica se aquela unidade atende a especialidade pedida.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-n">4</span>
+          <div>
+            <h4>Avaliação e valor</h4>
+            <p>Explica como funciona a avaliação e informa o preço — obrigatoriamente <strong>na mesma mensagem</strong>, nunca separados.</p>
+          </div>
+        </li>
+        <li>
+          <span class="step-n">5</span>
+          <div>
+            <h4>Agendamento</h4>
+            <p>Pergunta o turno, consulta os horários reais da agenda, oferece até três opções e marca.</p>
+          </div>
+        </li>
+      </ol>
+
+      <div class="note warn">
+        <span class="note-label">Regra de ouro atual</span>
+        <p>A IA <strong>não pode oferecer dia ou horário</strong> antes de ter os três: (a) bairro/unidade, (b) objetivo/especialidade e (c) valor da avaliação já apresentado. Mesmo que a pessoa diga "quero agendar", ela completa os três primeiro.</p>
+      </div>
+
+      <h3>Na hora de marcar</h3>
+      <ul class="plain">
+        <li>Pergunta o turno: <em>manhã ou tarde</em>, e o dia.</li>
+        <li>Consulta a agenda real da Clinicorp e oferece <strong>até 3 horários verdadeiros</strong>. Nunca inventa horário.</li>
+        <li>Só depois de acertar o horário pede os dados: nome completo, telefone e CPF.</li>
+        <li>Marca na hora e confirma. Se o horário tiver sido ocupado, oferece outro imediatamente.</li>
+      </ul>
+
+      <h3>Como ela fala</h3>
+      <ul class="plain">
+        <li>Mensagens curtas, em parágrafos separados por linha em branco.</li>
+        <li>Uma ideia por mensagem; no máximo uma a três perguntas curtas.</li>
+        <li>Nunca repete a saudação depois da primeira mensagem, e nunca repergunta algo já informado.</li>
+        <li>Detecta o idioma e responde no mesmo — português, espanhol, inglês ou francês.</li>
+      </ul>
+    </section>
+
+    <!-- 03 -->
+    <section id="s3">
+      <h2><span class="num">03</span><span>Regras inegociáveis</span></h2>
+      <p class="section-intro">Travas que não podem ser removidas sem decisão da clínica.</p>
+
+      <div class="two-col">
+        <div class="card">
+          <p class="kicker">Preço</p>
+          <p style="margin:0">Informa <strong>apenas o valor da avaliação</strong>. Nunca valor de tratamento sem avaliação — regra do CRO. Se perguntarem preço de tratamento, explica que é definido na avaliação.</p>
+        </div>
+        <div class="card">
+          <p class="kicker">Convênio e SUS</p>
+          <p style="margin:0">A clínica é <strong>100% particular</strong>. Se citarem SUS, esclarece que existe uma campanha na internet que confunde o nome, mas não é da clínica.</p>
+        </div>
+        <div class="card">
+          <p class="kicker">Não inventar</p>
+          <p style="margin:0">Nunca afirma dias de funcionamento, profissionais ou procedimentos que não existam. Não diz "de segunda a sexta" — a disponibilidade vem da agenda real.</p>
+        </div>
+        <div class="card">
+          <p class="kicker">Escopo</p>
+          <p style="margin:0">Responde <strong>somente</strong> sobre a Dental Beauty. Assunto fora do contexto, traz de volta ao atendimento com gentileza.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 04 -->
+    <section id="s4">
+      <h2><span class="num">04</span><span>Unidades e regra de bairro</span></h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Unidade</th><th>Endereço</th><th>Atende</th></tr></thead>
+          <tbody>
+            <tr>
+              <td><strong>Recreio</strong></td>
+              <td>Rua Almirante Ary Rongel, 511</td>
+              <td><strong>Todos os procedimentos.</strong> Radiologia e fotos no local (inclusas na avaliação), sala de cirurgia e espaço infantil</td>
+            </tr>
+            <tr>
+              <td><strong>Ipanema</strong></td>
+              <td>Rua Visconde de Pirajá, 550, sala 215 — TOP Center</td>
+              <td><strong>Somente</strong> odontopediatria, ortopedia, lentes de contato dental, prótese e clareamento</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Bairros que vão para Ipanema</h3>
+      <p>Leblon · Ipanema · Copacabana · Leme · Botafogo · Flamengo · Tijuca · São Conrado · Rocinha · Lagoa · Jardim Botânico · Catete · Laranjeiras · Centro · Glória</p>
+      <p>Qualquer outro bairro — ou qualquer procedimento não atendido em Ipanema — vai para <strong>Recreio</strong>. Se a pessoa não informar o bairro, a IA pergunta qual unidade prefere e segue.</p>
+
+      <div class="note warn">
+        <span class="note-label">Exceção ativa</span>
+        <p>Ortodontia ainda <strong>não tem agenda aberta em Ipanema</strong>. Mesmo morando na zona sul, quem procura aparelho é direcionado ao Recreio.</p>
+      </div>
+    </section>
+
+    <!-- 05 -->
+    <section id="s5">
+      <h2><span class="num">05</span><span>Especialidade → profissional</span></h2>
+      <p class="section-intro">Roteamento usado pela IA para escolher com quem agendar.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Especialidade</th><th>Profissional</th><th>Unidade</th></tr></thead>
+          <tbody>
+            <tr><td>Implante · Bucomaxilo</td><td>Sérgio Sinzato</td><td>Recreio</td></tr>
+            <tr><td>Prótese · Implante</td><td>Lívia ou Haylane</td><td>Recreio</td></tr>
+            <tr><td>Lentes · Facetas · Clareamento</td><td>Alinne</td><td>Recreio e Ipanema</td></tr>
+            <tr><td>Odontopediatria · Ortopedia</td><td>Fábio</td><td>Recreio e Ipanema</td></tr>
+            <tr><td>Ortodontia · Invisalign</td><td>Adriana</td><td>Recreio</td></tr>
+            <tr><td>Clínica Geral · Periodontia</td><td>Thaynara</td><td>Recreio</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- 06 -->
+    <section id="s6">
+      <h2><span class="num">06</span><span>Valores de avaliação</span></h2>
+      <p class="section-intro">Os únicos valores que a IA tem autorização para enviar.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Tipo</th><th>Recreio</th><th>Ipanema</th></tr></thead>
+          <tbody>
+            <tr><td>Avaliação geral</td><td class="mono">R$ 200 <span style="font-family:var(--f-body);color:var(--muted)">(inclui fotos e radiografias)</span></td><td class="mono">R$ 300</td></tr>
+            <tr><td>Avaliação especializada</td><td class="mono">R$ 550</td><td class="mono">R$ 400</td></tr>
+            <tr><td>Infantil — paciente novo</td><td class="mono">R$ 289</td><td class="mono">R$ 389</td></tr>
+            <tr><td>Infantil — com limpeza no mesmo dia</td><td class="mono">R$ 389</td><td class="mono">—</td></tr>
+            <tr><td>Infantil — paciente antigo</td><td class="mono">R$ 360</td><td class="mono">—</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>Pagamento: parcelamento em <strong>até 21x no cartão</strong>.</p>
+    </section>
+
+    <!-- 07 -->
+    <section id="s7">
+      <h2><span class="num">07</span><span>Atendimento infantil</span></h2>
+      <p class="section-intro">Quando o atendimento é para criança, a IA muda de tom por completo — o registro encantado da Fada do Dente.</p>
+
+      <div class="bubble kids">Olá! Seja muito bem-vindo(a) à clínica Dental Beauty Kids ✨🧚‍♀️
+Fiquei sabendo que tem uma criança especial buscando atendimento e que o sorriso dela merece um cuidado cheio de amor, coragem e magia. 🪄</div>
+
+      <h3>Troca de contexto no meio da conversa</h3>
+      <p>Se a conversa já estava correndo (falando de aparelho, bairro) e a pessoa revela que é para o filho, a IA <strong>não recomeça do zero</strong>: aproveita tudo que já foi coletado, muda o foco para a criança e pede só o que falta — normalmente a idade. Nunca pergunta "tem para seu filho também?".</p>
+    </section>
+
+    <!-- 08 -->
+    <section id="s8">
+      <h2><span class="num">08</span><span>Réguas automáticas</span></h2>
+      <p class="section-intro">Disparos por data, independentes da conversa. Rodam uma vez por dia, às 9h, e continuam funcionando fora do horário comercial.</p>
+
+      <h3>Prazos de retorno pós-procedimento</h3>
+      <p>O sistema olha os atendimentos marcados como <strong>concluídos</strong> na Clinicorp e conta o prazo a partir dali.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Procedimento</th><th>Retorno</th></tr></thead>
+          <tbody>
+            <tr><td>Tratamento periodontal</td><td><span class="pill">3 meses</span></td></tr>
+            <tr><td>Limpeza · Clareamento · Restauração · Canal</td><td><span class="pill">6 meses</span></td></tr>
+            <tr><td>Ortodontia · Invisalign · Odontopediatria · Lentes</td><td><span class="pill">6 meses</span></td></tr>
+            <tr><td>Coroa · Prótese · Implante</td><td><span class="pill">12 meses</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="note">
+        <span class="note-label">Ajustável</span>
+        <p>Esses prazos são configuração, não código fixo. Mudar "clareamento para 4 meses" ou incluir um procedimento novo leva minutos.</p>
+      </div>
+
+      <h3>As cinco réguas</h3>
+
+      <div class="regua">
+        <div class="regua-head"><h3>Retorno pós-procedimento</h3><span class="pill">3, 6 ou 12 meses</span></div>
+        <p class="regua-when">Dispara quando completa o prazo do procedimento realizado.</p>
+        <div class="bubble">Oi, [Nome]! 😊
+Já faz 6 meses da sua última limpeza aqui na Dental Beauty.
+Além de remover tártaro e prevenir cáries e gengivite, a gente aproveita pra revisar sua saúde bucal completa — com calma, sem pressa e sem aquele barulho de broca que incomoda 🦷✨
+Posso reservar seu horário para a próxima limpeza?</div>
+        <p style="color:var(--muted);font-size:15px">Existe um texto próprio para cada procedimento: clareamento, restauração, canal, prótese, implante, periodontal, ortodontia, Invisalign e lentes.</p>
+      </div>
+
+      <div class="regua">
+        <div class="regua-head"><h3>Lembrete de consulta</h3><span class="pill">T-24h</span></div>
+        <p class="regua-when">Um dia antes da consulta marcada. Reduz faltas.</p>
+        <div class="bubble">Oi, [Nome]! 😊
+Lembrando da sua consulta amanhã, [dia] às [hora], na Dental Beauty.
+Responda SIM pra confirmar ou NÃO se precisar remarcar — a gente reorganiza na hora 🙌</div>
+      </div>
+
+      <div class="regua">
+        <div class="regua-head"><h3>Aniversário</h3><span class="pill">no dia</span></div>
+        <p class="regua-when">Todo dia o sistema busca os aniversariantes do dia na Clinicorp. Separa adulto e infantil pela idade.</p>
+        <div class="bubble">Feliz aniversário, [Nome]! 🎉🎂
+A equipe da Dental Beauty te deseja um dia leve, feliz e cheio de motivos pra sorrir 💙
+Se quiser dar um up no sorriso nesse novo ciclo, a gente tá por aqui 🦷✨</div>
+      </div>
+
+      <div class="regua">
+        <div class="regua-head"><h3>Pesquisa de satisfação</h3><span class="pill">1 dia após a consulta</span></div>
+        <p class="regua-when">No dia seguinte ao atendimento concluído.</p>
+        <div class="bubble">Oi, [Nome]! 😊
+Como foi sua experiência com a gente hoje?
+De 0 a 10, o quanto indicaria a Dental Beauty pra alguém? 💙
+Sua resposta vem direto pra mim.</div>
+        <p style="color:var(--muted);font-size:15px"><strong>Nota 9 ou 10</strong> → convite para avaliar no Google. <strong>7 ou 8</strong> → pergunta o que poderia melhorar. <strong>0 a 6</strong> → pedido de desculpas e transferência para atendimento humano.</p>
+      </div>
+
+      <div class="regua">
+        <div class="regua-head"><h3>Reengajamento de inativos</h3><span class="pill">6 e 12 meses</span></div>
+        <p class="regua-when">Paciente atendido há 6 ou 12 meses que não voltou desde então. Quem retornou é excluído automaticamente.</p>
+        <div class="bubble">Oi, [Nome]! 😊
+Faz um ano que não nos vemos.
+Uma avaliação completa agora evita tratamentos maiores depois — e aqui a consulta é tranquila, sem barulho de broca, com tempo pra conversar e planejar junto 🦷✨
+Quer que eu veja um horário?</div>
+      </div>
+
+      <h3>Trilha infantil</h3>
+      <p>Todas as réguas têm versão infantil, dirigida ao responsável e citando o nome da criança.</p>
+      <div class="bubble kids">Oi, [ nome responsável ]! 😊
+Já está na hora da limpeza do(a) [ nome do filho(a) ]!
+Aqui na Dental Beauty Kids, cuidamos do sorriso com calma e carinho — tem brinquedos, cadeira com a cor favorita e tecnologia sem barulho de broca 🦷✨
+Quer que eu veja um horário?</div>
+    </section>
+
+    <!-- 09 -->
+    <section id="s9">
+      <h2><span class="num">09</span><span>Follow-up de leads que não agendaram</span></h2>
+      <p class="section-intro">Cinco mensagens ao longo de dez dias, com texto e mídia próprios para cada especialidade. São 25 automações no total.</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Dia</th><th>Intenção da mensagem</th><th>Mídia</th></tr></thead>
+          <tbody>
+            <tr><td class="mono">D+1</td><td>Retoma o assunto e se coloca à disposição para explicar</td><td>Foto de resultado</td></tr>
+            <tr><td class="mono">D+2</td><td>Quebra a objeção mais comum daquela especialidade</td><td>Vídeo da estrutura</td></tr>
+            <tr><td class="mono">D+4</td><td>Prova social — casos e depoimentos reais</td><td>Depoimento</td></tr>
+            <tr><td class="mono">D+7</td><td>Reconhece a semana passada e pergunta se ficou dúvida</td><td>Varia</td></tr>
+            <tr><td class="mono">D+10</td><td>Encerra o atendimento sem pressionar, deixando a porta aberta</td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="kicker">Especialidades com trilha própria</p>
+      <p>Implante e prótese · Lentes · Ortodontia · Odontopediatria · Clínica geral</p>
+
+      <div class="bubble">Oi, [Nome]! Essa semana atendemos vários pacientes que também tinham receio de fazer implante… e saíram super tranquilos 😊 Cada caso é único, por isso a avaliação faz toda diferença. Olha esse depoimento de nossa paciente 1 ano após o tratamento. Quer que eu veja um horário pra você?</div>
+      <p style="color:var(--muted);font-size:15px">Exemplo: implante, D+4.</p>
+    </section>
+
+    <!-- 10 -->
+    <section id="s10">
+      <h2><span class="num">10</span><span>Funil e dados capturados</span></h2>
+      <p class="section-intro">A IA preenche o cadastro durante a conversa, sem pedir nada além do necessário e sem comentar com o paciente.</p>
+
+      <h3>Etapas do funil de Atendimento</h3>
+      <p>Em atendimento <span class="mono">D0 · D1 · D2 · D4 · D6</span> → Aniversariantes → Agendado Retorno → <strong>Agendado</strong> ou <strong>Não agendado</strong>, ambos divididos por especialidade (odontopediatria, lentes, ortodontia, implante e prótese, clínica geral).</p>
+
+      <h3>Funil de Orçamento</h3>
+      <p>Agendado Retorno → <span class="mono">D0 · D1 · D3 · D7 · D15</span> → Orçamento Aprovado ou Não fechado.</p>
+
+      <h3>O que fica registrado em cada contato</h3>
+      <div class="two-col">
+        <div class="card">
+          <p class="kicker">Origem</p>
+          <p style="margin:0">Canal de entrada (formulário, site, Facebook/Instagram, indicação, parceria…) e a campanha ou parceiro específico.</p>
+        </div>
+        <div class="card">
+          <p class="kicker">Interesse</p>
+          <p style="margin:0">Especialidade, unidade, bairro e se já é paciente da casa.</p>
+        </div>
+        <div class="card">
+          <p class="kicker">Resultado</p>
+          <p style="margin:0">Status da negociação e, quando não agenda, o <strong>motivo</strong> — em 13 opções, de "convênio" a "mora distante".</p>
+        </div>
+        <div class="card">
+          <p class="kicker">Contexto</p>
+          <p style="margin:0">Código do paciente na Clinicorp, data e hora do agendamento e um resumo da conversa.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11 -->
+    <section id="s11">
+      <h2><span class="num">11</span><span>Horários e passagem para humano</span></h2>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Período</th><th>Quem atende</th></tr></thead>
+          <tbody>
+            <tr><td>Horário comercial <span class="mono">seg–sex, 9h–18h</span></td><td><strong>Recepção humana.</strong> A IA fica em silêncio</td></tr>
+            <tr><td>Fora do horário e fins de semana</td><td><strong>IA.</strong> Faz a triagem e agenda</td></tr>
+            <tr><td>Sempre, dia e noite</td><td><strong>Mensagens automáticas</strong> — não dependem do horário</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="color:var(--muted);font-size:15px">O horário comercial acima é o padrão configurado. Ajustar dias e faixas é questão de configuração.</p>
+
+      <h3>Quando a IA passa para uma pessoa</h3>
+      <ul class="plain">
+        <li>Pedido explícito do paciente.</li>
+        <li>Objeção de pagamento agressiva ou negociação complexa.</li>
+        <li>Reclamação.</li>
+        <li>Qualquer assunto fora do escopo dela.</li>
+      </ul>
+      <p>Ao transferir, envia ao atendente um <strong>resumo estruturado</strong>: nome, número, bairro/unidade, objetivo, o que já foi tratado e o próximo passo. A pessoa não precisa ler a conversa inteira.</p>
+    </section>
+
+    <!-- 12 -->
+    <section id="s12">
+      <h2><span class="num">12</span><span>Onde o roteiro atual pode melhorar</span></h2>
+      <p class="section-intro">Leitura crítica do que está programado hoje, pensando no ponto levantado: a IA está muito focada em agendar e pouco em criar conexão com o lead.</p>
+
+      <div class="gap-item flag">
+        <h3>A conversa começa pela logística, não pela pessoa</h3>
+        <p>Hoje a segunda pergunta é o <strong>bairro</strong> — uma pergunta de operação. O paciente acabou de dizer que quer resolver algo no sorriso e a resposta que recebe é sobre endereço.</p>
+        <p class="fix"><strong>Alternativa:</strong> acolher primeiro o que a pessoa trouxe, com uma pergunta sobre ela — há quanto tempo incomoda, o que a fez procurar agora, o que gostaria de mudar. O bairro entra depois, naturalmente, quando já existe conversa.</p>
+      </div>
+
+      <div class="gap-item flag">
+        <h3>O preço aparece cedo demais</h3>
+        <p>A regra de ouro obriga apresentar o valor da avaliação <strong>antes</strong> de qualquer horário. Na prática, a pessoa recebe um preço antes de ter percebido valor — e a objeção chega junto.</p>
+        <p class="fix"><strong>Alternativa:</strong> manter a trava do CRO, mas inverter a ordem interna: mostrar antes o que está incluso e um caso real (foto, vídeo, depoimento) para tratamentos de maior valor, e só então o número.</p>
+      </div>
+
+      <div class="gap-item flag">
+        <h3>As mídias são usadas para responder, não para despertar</h3>
+        <p>A regra atual manda enviar mídia só "quando agregar" — na prática, quando o paciente pede. As 13 mídias disponíveis ficam quase sempre paradas durante a conversa.</p>
+        <p class="fix"><strong>Alternativa:</strong> definir um momento certo de envio por especialidade — antes do preço em implante e lentes, e logo no início em odontopediatria, onde o vídeo do espaço infantil resolve o medo do responsável.</p>
+      </div>
+
+      <div class="gap-item">
+        <h3>Não há escuta do motivo real</h3>
+        <p>O roteiro coleta especialidade, bairro e dados cadastrais — mas nunca registra <em>por que</em> a pessoa procurou. Isso é justamente o que a recepção usaria para atender melhor depois.</p>
+        <p class="fix"><strong>Alternativa:</strong> uma pergunta aberta no início e o registro dessa resposta em campo próprio, visível no cadastro e no resumo da transferência.</p>
+      </div>
+
+      <div class="gap-item">
+        <h3>O cross-sell só acontece no fim</h3>
+        <p>A oferta cruzada (atendimento infantil para quem agenda adulto, e vice-versa) está prevista apenas <strong>ao finalizar</strong> o agendamento — o momento em que a pessoa já está se despedindo.</p>
+        <p class="fix"><strong>Alternativa:</strong> transformar em uma pergunta de cuidado durante a conversa, não em oferta no encerramento.</p>
+      </div>
+
+      <div class="gap-item">
+        <h3>Quem não agenda sai do radar depois do décimo dia</h3>
+        <p>O follow-up encerra no <span class="mono">D+10</span> e o contato fica parado em "não agendado". Não há nada previsto depois disso.</p>
+        <p class="fix"><strong>Alternativa:</strong> um reengajamento trimestral por especialidade, aproveitando a base segmentada que já é montada automaticamente.</p>
+      </div>
+
+      <div class="note">
+        <span class="note-label">Observação técnica</span>
+        <p>Todos esses ajustes são de <strong>roteiro e configuração</strong>, não de desenvolvimento. As regras que não podem mudar são as do CRO (preço só de avaliação), a agenda real e o uso de modelos aprovados nos disparos.</p>
+      </div>
+    </section>
+
+    <footer>
+      <p>Documento preparado para avaliação conjunta com a consultoria. As regras aqui descritas refletem a configuração vigente do atendente virtual e das mensagens automáticas.</p>
+    </footer>
+  </main>
+</div>
+
+</body>
+</html>

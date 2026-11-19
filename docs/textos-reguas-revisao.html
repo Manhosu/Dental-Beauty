@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 18mm 16mm; }
+  * { box-sizing: border-box; }
+  body { font-family: 'Segoe UI', Helvetica, Arial, sans-serif; color: #1e2430; font-size: 12px; line-height: 1.5; margin: 0; }
+  .cover { text-align: center; padding: 40px 0 26px; border-bottom: 3px solid #16a3a3; margin-bottom: 22px; }
+  .cover h1 { font-size: 25px; margin: 0 0 6px; color: #0f7a7a; letter-spacing: .3px; }
+  .cover .sub { font-size: 13px; color: #5a6472; }
+  .cover .tag { display:inline-block; margin-top:12px; background:#e8f6f6; color:#0f7a7a; font-weight:600; font-size:11px; padding:5px 12px; border-radius:20px; }
+  .intro { background:#f7f9fb; border:1px solid #e3e8ee; border-radius:8px; padding:12px 16px; margin-bottom:22px; font-size:11.5px; color:#3a4453; }
+  .intro b { color:#1e2430; }
+  h2 { font-size:15px; color:#0f7a7a; margin:24px 0 6px; padding-bottom:6px; border-bottom:2px solid #d6ecec; page-break-after: avoid; }
+  .h2sub { font-size:10.5px; color:#8a94a2; margin:-2px 0 12px; }
+  .card { border:1px solid #e3e8ee; border-radius:8px; padding:11px 14px; margin-bottom:9px; page-break-inside: avoid; }
+  .card .head { display:flex; align-items:center; gap:8px; margin-bottom:5px; }
+  .tagp { display:inline-block; background:#16a3a3; color:#fff; font-weight:700; font-size:10.5px; padding:3px 9px; border-radius:5px; white-space:nowrap; }
+  .when { font-size:10.5px; color:#8a94a2; }
+  .msg { color:#2a3240; }
+  .note { font-size:10.5px; color:#5a6472; font-style:italic; margin:6px 0 0; }
+  .foot { margin-top:26px; padding-top:12px; border-top:1px solid #e3e8ee; font-size:10.5px; color:#8a94a2; text-align:center; }
+</style>
+</head>
+<body>
+  <div class="cover">
+    <h1>Mensagens Fixas & Réguas de Relacionamento</h1>
+    <div class="sub">Dental Beauty · Oral Multi</div>
+    <div class="tag">Para revisão e confirmação</div>
+  </div>
+
+  <div class="intro">
+    Estas são as <b>mensagens automáticas de relacionamento</b> — as que o sistema envia sozinho com base na agenda e no histórico do paciente na Clinicorp:
+    <b>retorno pós-procedimento</b> (no prazo de cada tipo), <b>aniversário</b>, <b>lembrete/anti no-show</b>, <b>pesquisa de satisfação (NPS)</b> e <b>reengajamento por inatividade</b>.
+    Os <b>prazos</b> já foram definidos com vocês; os <b>textos abaixo são a nossa proposta</b> — revise e me diga se quer ajustar tom, informação ou emoji. Onde aparece <b>[Nome]</b>, o sistema troca pelo nome do paciente.
+  </div>
+
+  <h2>🔁 Retorno pós-procedimento</h2>
+  <div class="h2sub">Dispara automaticamente X meses após o procedimento constar como realizado (Atendido) na Clinicorp.</div>
+
+  <div class="card"><div class="head"><span class="tagp">Limpeza</span><span class="when">6 meses após</span></div><div class="msg">Oi, [Nome]! 😊 Já faz 6 meses da sua última limpeza aqui na Dental Beauty — o tempo voa! Manter a limpeza em dia evita tártaro, cárie e problemas na gengiva. Quer que eu já veja um horário pra sua próxima?</div></div>
+  <div class="card"><div class="head"><span class="tagp">Clareamento</span><span class="when">6 meses após</span></div><div class="msg">Oi, [Nome]! ✨ Já faz 6 meses do seu clareamento. Que tal uma avaliação pra manter o sorriso branquinho e ver se vale um retoque? Posso te passar horários!</div></div>
+  <div class="card"><div class="head"><span class="tagp">Restaurações</span><span class="when">6 meses após</span></div><div class="msg">Oi, [Nome]! 🙂 Já faz 6 meses da sua restauração. Uma revisão periódica garante que está tudo certinho e previne novos probleminhas. Quer agendar uma avaliação?</div></div>
+  <div class="card"><div class="head"><span class="tagp">Canal</span><span class="when">6 meses após</span></div><div class="msg">Oi, [Nome]! 😊 Já faz 6 meses do seu tratamento de canal. Acompanhar o dente tratado é importante pra garantir que está tudo saudável. Posso reservar seu retorno?</div></div>
+  <div class="card"><div class="head"><span class="tagp">Coroa / Prótese</span><span class="when">12 meses após</span></div><div class="msg">Oi, [Nome]! 🙂 Já faz 1 ano da sua coroa/prótese — uma revisão anual mantém tudo bem ajustado e durável. Quer que eu veja um horário pra avaliação?</div></div>
+  <div class="card"><div class="head"><span class="tagp">Implante</span><span class="when">6 meses após</span></div><div class="msg">Oi, [Nome]! 😊 Já faz 6 meses do seu implante. O acompanhamento é essencial pra garantir a saúde do implante e da gengiva ao redor. Vamos marcar seu retorno?</div></div>
+  <div class="card"><div class="head"><span class="tagp">Tratamento Periodontal</span><span class="when">3 meses após</span></div><div class="msg">Oi, [Nome]! 🙂 Já faz 3 meses do seu tratamento periodontal — nesse caso o acompanhamento mais próximo faz toda a diferença pra manter a gengiva saudável. Posso agendar seu retorno?</div></div>
+  <div class="card"><div class="head"><span class="tagp">Ortodontia adulto</span><span class="when">6 meses após</span></div><div class="msg">Oi, [Nome]! 😊 Já faz um tempinho do seu acompanhamento ortodôntico. Que tal uma avaliação pra ver a evolução do seu sorriso? Me diz que eu reservo um horário!</div></div>
+  <div class="card"><div class="head"><span class="tagp">Invisalign</span><span class="when">6 meses após</span></div><div class="msg">Oi, [Nome]! ✨ Já faz 6 meses do seu acompanhamento com Invisalign. Vamos avaliar a evolução e os próximos passos do alinhamento? Posso ver um horário pra você.</div></div>
+  <div class="card"><div class="head"><span class="tagp">Odontopediatria</span><span class="when">6 meses após</span></div><div class="msg">Oi, [Nome]! 😊 Já faz 6 meses da última consulta do(a) pequeno(a) aqui com a gente. Manter as consultas em dia cuida do sorriso desde cedo. Quer que eu veja um horário?</div></div>
+  <div class="card"><div class="head"><span class="tagp">Lente / Faceta</span><span class="when">6 meses após</span></div><div class="msg">Oi, [Nome]! ✨ Já faz 6 meses das suas lentes/facetas. Uma revisão periódica mantém tudo lindo e bem cuidado. Posso agendar sua avaliação?</div></div>
+
+  <h2>🎂 Aniversário</h2>
+  <div class="h2sub">Dispara no dia do aniversário do paciente.</div>
+  <div class="card"><div class="msg">Feliz aniversário, [Nome]! 🎉🎂 A equipe da Dental Beauty deseja um dia incrível e cheio de sorrisos! Conte com a gente pra manter esse sorriso sempre bonito e saudável. 💙</div></div>
+
+  <h2>⏰ Lembrete / Anti no-show</h2>
+  <div class="h2sub">Confirmação da consulta antes do horário; se o paciente responder NÃO, o sistema libera a vaga e oferece remarcar.</div>
+  <div class="card"><div class="head"><span class="tagp">T-24h</span><span class="when">véspera da consulta</span></div><div class="msg">Oi, [Nome]! 😊 Passando pra lembrar da sua consulta amanhã, [dia] às [hora], na Dental Beauty [unidade]. Podemos confirmar? Responda <b>SIM</b> pra confirmar ou <b>NÃO</b> se precisar remarcar. 🙌</div></div>
+  <div class="card"><div class="head"><span class="tagp">T-2h</span><span class="when">no dia — opcional</span></div><div class="msg">Oi, [Nome]! Sua consulta é hoje às [hora] 😊 Está tudo certo pra você vir? Qualquer coisa, é só me avisar!</div></div>
+
+  <h2>⭐ Pesquisa de satisfação (NPS)</h2>
+  <div class="h2sub">Dispara no dia seguinte à consulta realizada.</div>
+  <div class="card"><div class="msg">Oi, [Nome]! 😊 Que bom que você esteve com a gente na Dental Beauty! Numa nota de 0 a 10, o quanto você recomendaria nosso atendimento a um amigo ou familiar?</div>
+  <div class="note">Nota 9–10 → agradece e envia o link de avaliação do Google. &nbsp;·&nbsp; 7–8 → agradece e pergunta o que pode melhorar. &nbsp;·&nbsp; 0–6 → se desculpa e transfere para um atendente humano.</div></div>
+
+  <h2>💤 Reengajamento por inatividade</h2>
+  <div class="h2sub">Para pacientes que sumiram — traz de volta com leveza.</div>
+  <div class="card"><div class="head"><span class="tagp">Sem retorno há 12 meses</span></div><div class="msg">Oi, [Nome]! 😊 Faz um tempinho que não te vemos por aqui! Que tal uma avaliação pra deixar seu sorriso em dia? Uma revisão anual previne vários probleminhas. Posso ver um horário?</div></div>
+  <div class="card"><div class="head"><span class="tagp">Sem consulta há 6 meses</span></div><div class="msg">Oi, [Nome]! 🙂 Já faz 6 meses desde sua última consulta — que tal uma avaliação pra manter tudo em ordem? Me diz e eu reservo um horário pra você.</div></div>
+
+  <div class="foot">Prazos já definidos com a clínica · Textos propostos aguardando confirmação · Dental Beauty · Oral Multi</div>
+</body>
+</html>
