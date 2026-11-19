@@ -39,9 +39,16 @@ Investigado a fundo em 18/11. O bloqueio é comercial, não técnico, e o preço
 
 | Onde | O que mostra |
 |---|---|
-| Agente → **Implantar → Canais** | `WhatsApp` e `SMS`: **"No Data"** |
+| Agente → **Implantar → Canais** | *"Ainda não há canais configurados"* — os 8 canais aparecem como **disponíveis**, nenhum ligado |
+| Canais → **SMS → Configurar → números de telefone** | **"No Data"** — o canal existe, mas não há nenhum número LC Phone para apontar |
+| Canais → **Adicionar canais do marketplace** | *"Ainda não há provedores instalados"* |
 | **Configurações → Sistema telefônico → Números de Telefone** | **"No Data"** — nenhum número na location |
 | **Configurações → WhatsApp** | página de venda com o botão **"PAGAR $20 E ASSINAR"** |
+
+As duas linhas do meio foram levantadas em **19/11** e são as que fecham a questão. O canal SMS
+existe e aceitaria a Clara — ele só não tem número para onde apontar. E a aba de marketplace, que
+seria a porta do 4zapy, está vazia: **o app não se registra como provedor de conversa**, só como
+app de envio.
 
 A própria página de venda diz, com todas as letras: *"Automatize respostas do WhatsApp com o
 Conversation AI! Responda de imediato, lide com consultas 24 horas por dia, 7 dias por semana."* É
@@ -74,8 +81,65 @@ contra a Clinicorp de produção. Falta só ela poder ouvir. Duas opções:
 
 1. **Assinar o WhatsApp oficial** na location — $20 pelo botão, mais o custo por mensagem da Meta.
    É o caminho que o painel oferece e que comprovadamente liga o Conversation AI.
-2. **Perguntar à consultoria** se o 4zapy tem algum modo de expor o número como canal de IA. Não
-   custa nada perguntar, mas o painel não oferece isso em lugar nenhum — a chance é baixa.
+2. ~~Perguntar à consultoria se o 4zapy expõe o número como canal de IA.~~ **Respondido em 19/11:
+   não funciona.** A própria consultoria confirmou que o app deixa de operar no número se ele for
+   registrado na API oficial, e a aba de provedores de marketplace está vazia. Opção encerrada.
+
+**O que isso custa de verdade.** Registrar o número na API oficial **desliga o 4zapy nesse número**
+— quem confirmou foi a consultoria. Então não é "$20 a mais": é trocar o canal de envio das réguas.
+Hoje elas saem de graça pelo app; no oficial cada mensagem de régua vira *template de utilidade*.
+Pela média do primeiro dia real (19/11, 67 envios) dá ~2.000 mensagens/mês, que a R$ 0,035
+são **~R$ 70/mês**, mais os $20 da assinatura. As respostas de paciente continuam grátis: conversa
+iniciada por ele é de serviço, e as 1.000 primeiras do mês não são cobradas.
+
+## A recobrança que pegou quem já tinha confirmado (19/11)
+
+O cliente reportou que a paciente respondeu e o robô cobrou de novo. Investigado na conversa real
+(Luna Farias Oliveira, consulta 23/11 13:30):
+
+| Hora | O que aconteceu |
+|---|---|
+| 09:00 | régua pede o SIM |
+| 09:15 | paciente responde **"Confirmado"** |
+| 10:55 | a recepção responde à mão |
+| 12:10 | régua: *"Ainda não recebemos a confirmação…"* |
+| 12:28 | paciente responde "Confirmado" e "Sim" |
+
+**A lista de palavras não é a culpada.** O gatilho é
+`Corpo da mensagem contains any of ["sim","confirmo","confirmad","estarei"]` — "Confirmado" casa com
+`confirmad`. O fluxo `RÉGUA — Confirmação recebida` está **publicado**, com **reentrada ligada**, e
+funcionou para sete outros contatos no mesmo dia (09:03, 09:27, 09:46, 10:28, 12:18, 12:28, 13:20).
+
+O histórico de inscrições dela mostra **uma única entrada, às 12:28:49**. Ou seja: o "Confirmado"
+das 09:15 **não chegou a disparar o gatilho**. A mensagem está na conversa, mas o evento de entrada
+não veio no momento em que ela foi escrita — é o app não-oficial entregando o recebido fora de hora.
+
+Some-se a isso o desenho: com a confirmação no **D-4**, a cobrança das 12h cai **no mesmo dia**, só
+**3h depois** do pedido. Mesmo com a detecção perfeita, quem responde à tarde é cobrado antes.
+
+> **Recomendação (precisa do OK da clínica, porque 12h e 19h foram escolha dela):** largar a
+> cobrança das 12h e deixar só a das 19h, mantendo a liberação às 8h do dia seguinte. A clínica
+> continua com 3 dias para remanejar a vaga e o paciente deixa de receber três mensagens em
+> 24 horas. São 5 minutos de painel.
+
+## Dentista que faltou: o que a agenda resolve sozinha
+
+Levantado na API em 19/11, sobre 281 agendamentos de 20/10 a 19/11:
+
+- **agendamento cancelado some da lista.** Nenhum registro voltou com `Deleted = "X"` — a Clinicorp
+  simplesmente não devolve o que foi cancelado. Como toda régua de agenda lê
+  `GET /appointment/list`, **cancelar na Clinicorp já cala a régua**, sem tocar em código.
+- **bloqueio de agenda não aparece.** Nenhum dos 281 veio sem nome de paciente, e nenhum com
+  "cancelado", "bloqueio", "compromisso" ou "férias" na categoria. Então criar um compromisso
+  bloqueando a agenda **não serve de sinal**: o backend não enxerga esse registro, e os pacientes já
+  marcados continuam recebendo normalmente.
+
+A ideia do cliente de "mandar uma instrução para a IA" não funciona por um motivo anterior: **quem
+dispara as réguas não é a Clara**, é o cron do backend lendo a Clinicorp. A Clara não tem como pausar
+o que ela não envia — nem depois que ganhar canal.
+
+Se a clínica quiser uma pausa que não exija mexer agendamento por agendamento, isso é escopo novo:
+um interruptor "não enviar nada da profissional X no dia Y", acionado por fora da Clinicorp.
 
 ## Como desligar tudo, se precisar
 
