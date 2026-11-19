@@ -313,7 +313,7 @@ Um workflow por régua, cada um disparado pela sua tag. Dentro dele, ramificaç�
 | --- | --- | --- | --- |
 | `RÉGUA — Aniversário` | `regua-aniversario` | trilha | 2 |
 | `RÉGUA — Confirmação de consulta` | `regua-confirmacao` | trilha | 2 |
-| `RÉGUA — Sem confirmação (12h, 19h e liberação)` | `regua-confirmacao` | — | 3 |
+| `RÉGUA — Sem confirmação (19h e liberação)` | `regua-confirmacao` | — | 2 |
 | `RÉGUA — Confirmação recebida` | *Cliente respondeu* | — | 0 (só marca tag) |
 | `RÉGUA — Lembrete do dia` | `regua-lembrete-hoje` | trilha | 2 |
 | `RÉGUA — Retorno pós-procedimento` | `regua-posprocedimento` | trilha × procedimento | 13 |
@@ -429,18 +429,21 @@ Se surgir algum imprevisto, conseguem me avisar por aqui o quanto antes? Assim r
 
 ---
 
-# 2c · RÉGUA — Sem confirmação (12h, 19h e liberação)
+# 2c · RÉGUA — Sem confirmação (19h e liberação)
 
 Gatilho: Tag de contato · `regua-confirmacao` — a **mesma** da régua 2, rodando em paralelo.
-Workflow `c73e7007-21cc-4ba0-ade7-e7b0ed2fffb4`, em rascunho. Para publicar faltam só dois
-interruptores — o `x-api-key` do webhook e `LIBERAR_HORARIO_ATIVO=true` (ver
-`roteiro-ia-v2-cliente.md`).
+Workflow `c73e7007-21cc-4ba0-ade7-e7b0ed2fffb4`, publicado. O `x-api-key` do webhook já está
+preenchido; `LIBERAR_HORARIO_ATIVO` segue `false` de propósito (ver `go-live.md`).
+
+> **A cobrança das 12h foi removida em 19/11, com o OK do cliente.** Ela saía 3h depois do pedido
+> de SIM — que agora é no D-4 — e pegava quem ainda ia responder à tarde. Ficou só a das 19h, e a
+> liberação continua às 8h do dia seguinte, então a clínica mantém 3 dias para remanejar a vaga.
 
 Quem responde qualquer coisa sai do fluxo sozinho (`Parar ao receber resposta`). Quem responde ao
 *primeiro* pedido de SIM — que saiu da régua 2, não desta — é pego pela tag `consulta-confirmada`,
 marcada pelo workflow `RÉGUA — Confirmação recebida` (`7e1f4dba-d429-4c04-9877-c47b45e2da85`).
 
-## 2c.1 · Sem confirmação · 12h e 19h (mesmo texto nas duas)
+## 2c.1 · Sem confirmação · 19h
 
 ```
 {{contact.first_name}}, ainda não recebemos a confirmação da sua consulta de {{contact.rgua__dia}} às {{contact.rgua__hora}}.

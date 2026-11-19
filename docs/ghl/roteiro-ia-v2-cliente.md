@@ -228,28 +228,33 @@ de reconhecer um "Confirmado!" faria o sistema **cancelar a consulta de quem con
 um "assim que eu puder" a mais só deixa de mandar uma recobrança. Então vale errar para o lado de
 reconhecer.
 
-**`RÉGUA — Sem confirmação (12h, 19h e liberação)`** (`c73e7007-21cc-4ba0-ade7-e7b0ed2fffb4`)
+**`RÉGUA — Sem confirmação (19h e liberação)`** (`c73e7007-21cc-4ba0-ade7-e7b0ed2fffb4`)
 Gatilho: a **mesma tag** `regua-confirmacao` que dispara a confirmação. Roda em paralelo:
 
 ```
 Tag regua-confirmacao
   └─ Remove consulta-confirmada   (limpa o ciclo anterior)
-     └─ Espera até as 12h          (janela recorrente, todos os dias, America/Sao_Paulo)
+     └─ Espera até as 19h          (janela recorrente, todos os dias, America/Sao_Paulo)
         └─ Já confirmou?
              ├─ tem consulta-confirmada → FIM
-             └─ senão → "Sem confirmação" (12h)
-                   └─ Espera até as 19h → "Sem confirmação" (19h)
-                        └─ Espera até as 8h do dia seguinte
-                             └─ Webhook: dá baixa na agenda
-                                  └─ "Horário liberado"
+             └─ senão → "Sem confirmação" (19h)
+                   └─ Espera até as 8h do dia seguinte
+                        └─ Webhook: dá baixa na agenda
+                             └─ "Horário liberado"
 ```
+
+> **Mudou em 19/11, com o OK do cliente: caiu a cobrança das 12h.** O desenho original tinha duas,
+> às 12h e às 19h, e fazia sentido quando a confirmação era no D-2. Com ela no D-4, a das 12h saía
+> **3 horas depois** do pedido de SIM — pegava em cheio quem ia responder à tarde. Foi o que
+> aconteceu com a paciente que o cliente reportou (ver `go-live.md`). A liberação continua às 8h do
+> dia seguinte, então a clínica não perde o prazo para remanejar a vaga.
 
 Três decisões que não são óbvias:
 
 1. **A cadeia não mora no fluxo da confirmação.** Lá ela teria de ser duplicada nos ramos adulto e
    infantil, e a v4 só tem uma redação para a recobrança. Em fluxo próprio é uma cadeia só.
 2. **`Parar ao receber resposta` ligado neste fluxo, desligado no da confirmação.** Aqui ele faz o
-   trabalho: respondeu à mensagem das 12h, a execução morre e não há 19h nem liberação. No fluxo da
+   trabalho: respondeu à mensagem das 19h, a execução morre e não há liberação. No fluxo da
    confirmação ele seria um tiro no pé — fecharia a execução antes do "remove a tag", e o paciente
    nunca mais receberia confirmação. Por isso o If/else com a tag: a resposta ao *primeiro* pedido
    de SIM foi enviada pelo outro workflow, e o "parar ao responder" não enxerga.

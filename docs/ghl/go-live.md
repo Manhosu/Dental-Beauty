@@ -117,10 +117,14 @@ não veio no momento em que ela foi escrita — é o app não-oficial entregando
 Some-se a isso o desenho: com a confirmação no **D-4**, a cobrança das 12h cai **no mesmo dia**, só
 **3h depois** do pedido. Mesmo com a detecção perfeita, quem responde à tarde é cobrado antes.
 
-> **Recomendação (precisa do OK da clínica, porque 12h e 19h foram escolha dela):** largar a
-> cobrança das 12h e deixar só a das 19h, mantendo a liberação às 8h do dia seguinte. A clínica
-> continua com 3 dias para remanejar a vaga e o paciente deixa de receber três mensagens em
-> 24 horas. São 5 minutos de painel.
+> ✅ **Resolvido em 19/11, com o OK do cliente: a cobrança das 12h saiu.** O fluxo virou
+> `#2 RÉGUA — Sem confirmação (19h e liberação)`: a espera passou de 12h para 19h, e a mensagem das
+> 12h e a espera intermediária foram apagadas. A liberação segue às 8h do dia seguinte, então a
+> clínica mantém 3 dias para remanejar a vaga. Workflow salvo e publicado.
+>
+> Um efeito colateral, benigno: apagar a espera tira do fluxo quem estava parado nela. A turma de
+> 19/11 já tinha recebido a cobrança das 12h, então perdeu só o aviso das 19h — e deixou de receber
+> o "liberamos o seu horário" de amanhã, que seria falso enquanto `LIBERAR_HORARIO_ATIVO=false`.
 
 ## Dentista que faltou: o que a agenda resolve sozinha
 
