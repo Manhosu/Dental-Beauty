@@ -158,16 +158,29 @@ Webhook Action error: {"error":"invalid","issues":[{"code":"invalid_type",
 "expected":"string","received":"undefined","path":["appointmentId"],"message":"Required"}]}
 ```
 
-O workflow manda `appointmentId` vazio porque o campo `{{contact.rgua__agendamento}}` nunca é
-preenchido — e nunca é preenchido porque **`GHL_FIELD_AGENDAMENTO` não existe no `.env`**. No
-código (`ghlTagDispatcher.ts`) a gravação é condicional:
+**A causa NÃO é o backend.** A primeira hipótese foi `GHL_FIELD_AGENDAMENTO` faltando no ambiente.
+Está errada, e fica registrada para ninguém repetir o caminho:
 
-```ts
-if (ids.agendamento && payload.appointmentId) { … }
-```
+| Verificado em 22/11 | Resultado |
+|---|---|
+| `GHL_FIELD_AGENDAMENTO` no Render | **presente**, com o valor certo `T7UxlEaWVQ7w0CMKliPL` |
+| Campo `Régua - Agendamento` nos contatos que falharam | **preenchido** — Matheus `5564279249436673` e Márcia `6340962639413249`, ambos desde **21/11 12:00**, ou seja 20h antes do webhook rodar |
+| Mapeamento no painel (`Dados personalizados`) | `appointmentId` → `Contact.Custom Fields.Régua - Agendamento` |
+| Cabeçalho `x-api-key` | preenchido — e o erro foi **400**, não 401, então a autenticação passou |
 
-Sem o id do campo, o `if` é falso e o contato vai para o workflow sem o número do agendamento.
-O id correto, levantado na API em 22/11: **`T7UxlEaWVQ7w0CMKliPL`** (`Régua - Agendamento`).
+Ou seja: o backend grava, o contato tem o valor, o mapeamento aponta para o campo certo — e mesmo
+assim o GHL monta o corpo **sem a chave**. O problema é do lado do painel, na resolução do chip de
+variável para o corpo do webhook. É parente da armadilha de rótulo defasado que já apareceu nas
+mensagens (ver `textos-reguas-v5-APROVADO.md`).
+
+**Próximo passo, quando for ligar a liberação:** refazer o chip — apagar o valor do campo
+`appointmentId` e escolher `Régua - Agendamento` de novo pelo seletor de variáveis. Só dá para
+confirmar na execução seguinte, às 8h.
+
+> ⚠️ **Não use Ctrl+A dentro desse painel.** Em 22/11, com o foco não pegando no campo do chip, o
+> Ctrl+A selecionou **os 7 nós do canvas** e o Delete abriu "excluir 7 nós selecionado? (6 ações e
+> 1 acionador)". Foi cancelado a tempo e nada se perdeu, mas é o caminho mais curto para apagar a
+> régua inteira. Para limpar o chip, use o botão de lixeira da linha ou apague com Backspace.
 
 **2. A mensagem saía mesmo assim.** Um segundo depois de cada falha, a ação `Horario liberado`
 aparece como **Executado**. O texto dizia: *"Como não recebemos a sua confirmação, liberamos o
@@ -181,14 +194,15 @@ webhook, que falha sem efeito. O texto está guardado em `mensagens-para-colar.m
 
 ### Ordem para ligar a liberação de verdade
 
-1. `GHL_FIELD_AGENDAMENTO=T7UxlEaWVQ7w0CMKliPL` no Render + redeploy — o backend passa a gravar o id
-   no contato. (Já está no `.env` local e documentado no `.env.example`.)
-2. Esperar alguns dias e conferir no log do Render: `simulado` **com** `appointmentId` preenchido.
-   Enquanto vier vazio, o item 1 não pegou.
-3. `LIBERAR_HORARIO_ATIVO=true` + redeploy.
+1. Refazer o chip do `appointmentId` no webhook (seletor de variáveis → `Régua - Agendamento`),
+   salvar e publicar.
+2. No dia seguinte, conferir em **Registros de execução → Webhook**: o status tem que sair de
+   `Failed`. Enquanto falhar com `appointmentId Required`, o item 1 não pegou.
+3. `LIBERAR_HORARIO_ATIVO=true` no Render + redeploy, e conferir no log `simulado` sumindo.
 4. **Só então** recolocar a mensagem `Horario liberado` no fim da cadeia.
 
-Inverter essa ordem é o que produziu o problema de 22/11.
+Inverter essa ordem é o que produziu o problema de 22/11: a mensagem estava no ar antes de qualquer
+um dos três passos funcionar.
 
 ## Dentista que faltou: o que a agenda resolve sozinha
 
