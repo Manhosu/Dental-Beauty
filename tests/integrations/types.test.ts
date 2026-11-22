@@ -34,6 +34,9 @@ const fake: ClinicorpClient = {
   async listSpecialties() {
     return [];
   },
+  async getPatientById() {
+    return null;
+  },
   async findPatientByPhone() {
     return null;
   },

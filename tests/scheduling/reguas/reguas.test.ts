@@ -43,6 +43,7 @@ function fakeClinicorp(over: Partial<ClinicorpClient> = {}): ClinicorpClient {
     listBirthdays: vi.fn().mockResolvedValue([]),
     listSpecialties: vi.fn(),
     findPatientByPhone: vi.fn(),
+    getPatientById: vi.fn().mockResolvedValue(null),
     ...over,
   } as unknown as ClinicorpClient;
 }

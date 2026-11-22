@@ -88,6 +88,7 @@ export class HttpClinicorpClient implements ClinicorpClient {
       Phone?: string;
       Email?: string;
       Status?: string;
+      BirthDate?: string;
     };
     const candidatos = response as RawPatient[];
 
@@ -107,6 +108,40 @@ export class HttpClinicorpClient implements ClinicorpClient {
       phone: raw.Phone,
       email: raw.Email,
       status: raw.Status,
+      ...(raw.BirthDate ? { birthDate: raw.BirthDate } : {}),
+    };
+  }
+
+  /**
+   * Ficha pelo id. O mesmo `/patient/get` da busca por telefone, mas com `PatientId`: aí a
+   * Clinicorp devolve **um objeto**, não uma lista, então não há como pegar a ficha errada.
+   *
+   * Existe por causa da anamnese infantil: o telefone do agendamento de uma criança é o do
+   * responsável, e buscar por ele traria a data de nascimento do adulto.
+   */
+  async getPatientById(patientId: number): Promise<import('./types').Patient | null> {
+    type RawPatient = {
+      PatientId?: number;
+      Name?: string;
+      Phone?: string;
+      Email?: string;
+      Status?: string;
+      BirthDate?: string;
+    };
+
+    const raw = await this.request<RawPatient>('GET', '/patient/get', {
+      query: { subscriber_id: this.config.subscriberId, PatientId: String(patientId) },
+    });
+
+    if (!raw || raw.PatientId === undefined) return null;
+
+    return {
+      id: raw.PatientId,
+      name: raw.Name ?? '',
+      phone: raw.Phone,
+      email: raw.Email,
+      status: raw.Status,
+      ...(raw.BirthDate ? { birthDate: raw.BirthDate } : {}),
     };
   }
 

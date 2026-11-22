@@ -105,6 +105,11 @@ export interface Patient {
   phone?: string;
   email?: string;
   status?: string;
+  /**
+   * `BirthDate` como a Clinicorp devolve (ISO). É o que decide quem recebe a anamnese online:
+   * desde 20/11/2026 o link é só para criança de até 12 anos.
+   */
+  birthDate?: string;
 }
 
 export interface ClinicorpClient {
@@ -119,4 +124,10 @@ export interface ClinicorpClient {
   listBirthdays(): Promise<Birthday[]>;
   listSpecialties(): Promise<Specialty[]>;
   findPatientByPhone(phone: string): Promise<Patient | null>;
+  /**
+   * Ficha pelo id (`GET /patient/get?PatientId=`). Diferente da busca por telefone, devolve **uma**
+   * ficha — o que importa para a criança, cujo telefone no agendamento é o do responsável e
+   * traria a ficha dele.
+   */
+  getPatientById(patientId: number): Promise<Patient | null>;
 }

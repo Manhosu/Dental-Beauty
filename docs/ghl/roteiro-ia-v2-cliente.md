@@ -104,8 +104,8 @@ Documento próprio da clínica, 17/11. O sistema **já está no ar**.
   manda pelo WhatsApp. Se a confirmação também cair no D-2, o link vai **logo depois do SIM**.
   Marcou com menos de 2 dias: manda logo depois da mensagem de agendamento.
 - **D-1 às 8h**: `GET /api/v1/anamnese/externo/links/<id>` diz se respondeu. Se não, um lembrete só.
-- Sete formulários por especialidade: `odontopediatria`, `ortodontia`, `implante`, `protese`,
-  `lentes`, `endodontia`, `clinico_geral` (padrão quando não dá para saber).
+- ~~Sete formulários por especialidade~~ — **mudou em 20/11/2026: só `odontopediatria`.** Ver
+  abaixo. Os outros seis continuam existindo na API e deixaram de ser usados.
 - Mandar o `clinicorp_patient_id` sempre que existir — sem ele o PDF não sobe sozinho para a ficha.
 - Chamar de novo é seguro: devolve o mesmo link com `reaproveitado: true`.
 - **A IA não recebe as respostas**, só se o paciente respondeu. São dados de saúde.
@@ -114,6 +114,35 @@ Documento próprio da clínica, 17/11. O sistema **já está no ar**.
 Implementado em `src/integrations/anamnese/client.ts`. O segredo veio por mensagem e está **só no
 `.env`**, que é gitignored. Como ele trafegou por WhatsApp, vale a clínica trocá-lo depois do teste
 — o próprio documento prevê a troca.
+
+#### Escopo novo, 20/11/2026: o link é só da criança
+
+A clínica mudou de ideia. O formulário virou **"Conhecendo o Mini Guardião"**, quem responde é o
+responsável, e ele vai **só para criança de até 12 anos**. Adulto, adolescente acima de 12 e as
+outras especialidades não recebem mais nada: a anamnese deles é feita na clínica. Endpoint e segredo
+seguem iguais, e a especialidade enviada é **sempre `odontopediatria`**.
+
+**O problema era saber a idade.** O agendamento da Clinicorp não traz nem idade nem nascimento, e o
+telefone de uma criança é o do responsável — buscar a ficha por telefone traria a data de nascimento
+do adulto. A saída foi `GET /patient/get?PatientId=`, que aceita o `Patient_PersonId` do próprio
+agendamento e devolve **uma** ficha, com `BirthDate`. Medido em 22/11: dos 242 agendamentos dos
+últimos 30 dias, **nenhum** veio sem `Patient_PersonId`, e as primeiras avaliações são ~1,6 por dia
+— então é uma chamada a mais por candidato, não por paciente da agenda.
+
+**A rede de segurança.** `create_appointment_by_api` não tem campo de data de nascimento, então
+ficha de paciente novo nasce sem ela — justamente a criança que a Clara acabou de agendar. Quando a
+ficha não tem nascimento, a régua cai na categoria da agenda (`odontopediatria`, `infantil`,
+`criança`, `kids`) e envia só se ela disser que é infantil. A ficha manda mais que a agenda: adulto
+com nascimento conhecido não recebe nem em agenda escrita como infantil. Sem nenhum dos dois sinais,
+não envia — o erro caro é mandar ficha infantil para adulto.
+
+> ⚠️ **Vale perguntar à clínica** se `create_appointment_by_api` aceita algum campo de nascimento.
+> Se aceitar, a data que a Clara coleta passa a ir junto no agendamento e a rede da agenda deixa de
+> ser necessária.
+
+No prompt da Clara (19→22/11): **Etapa 2** passou a pedir a *data de nascimento* da criança no lugar
+da idade, e o bloco infantil ganhou o aviso de que na primeira consulta a criança precisa vir
+acompanhada do **responsável legal**.
 
 **Montado em 17/11:** `runAnamneseD2` e `runAnamneseD1` (`anamneseJobs.ts`), rodando na rodada das
 8h junto do lembrete do dia. O `id` do link vive no Redis por 7 dias (`anamneseStore.ts`) — ele

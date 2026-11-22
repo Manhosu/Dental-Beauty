@@ -93,6 +93,7 @@ describe('HttpClinicorpClient', () => {
         phone: '21996160653',
         email: 'edmo@gmail.com',
         status: 'ACTIVE',
+        birthDate: '1953-06-16T03:00:00.000Z',
       });
 
       const [url] = fetchFn.mock.calls[0] as [string, RequestInit];
