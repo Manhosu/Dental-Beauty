@@ -452,6 +452,12 @@ Para guardarmos o seu horário, responda SIM até as 22h de hoje. Se precisar mu
 
 ## 2c.2 · Horário liberado · 8h do dia seguinte
 
+> 🔴 **FORA DO AR desde 22/11/2026.** A ação foi removida do workflow porque estava afirmando ao
+> paciente algo que não acontecia: o webhook falhava (`appointmentId` vazio) e, mesmo passando,
+> `LIBERAR_HORARIO_ATIVO=false` não cancela nada. Dois pacientes com consulta em 23/11 receberam
+> este texto na manhã de 22/11 e seguiam marcados. O texto fica aqui para ser recolocado **depois**
+> dos passos 1 a 3 de `go-live.md` § "Ordem para ligar a liberação de verdade".
+
 ```
 Olá, {{contact.first_name}}! Como não recebemos a sua confirmação, liberamos o horário de {{contact.rgua__dia}} para outro paciente.
 Sabemos que a rotina aperta, e queremos muito te receber. Qual dia da semana fica melhor para remarcarmos?

@@ -146,6 +146,50 @@ Some-se a isso o desenho: com a confirmação no **D-4**, a cobrança das 12h ca
 > 19/11 já tinha recebido a cobrança das 12h, então perdeu só o aviso das 19h — e deixou de receber
 > o "liberamos o seu horário" de amanhã, que seria falso enquanto `LIBERAR_HORARIO_ATIVO=false`.
 
+## 🔴 A liberação de horário nunca funcionou — e mandava mensagem falsa (achado de 22/11)
+
+Encontrado ao conferir os **Registros de execução** do workflow `Sem confirmação`. São dois
+problemas empilhados, e o segundo chegava ao paciente.
+
+**1. O webhook falha, sempre.** Nas três execuções de 22/11 (8:02–8:03) o erro foi idêntico:
+
+```
+Webhook Action error: {"error":"invalid","issues":[{"code":"invalid_type",
+"expected":"string","received":"undefined","path":["appointmentId"],"message":"Required"}]}
+```
+
+O workflow manda `appointmentId` vazio porque o campo `{{contact.rgua__agendamento}}` nunca é
+preenchido — e nunca é preenchido porque **`GHL_FIELD_AGENDAMENTO` não existe no `.env`**. No
+código (`ghlTagDispatcher.ts`) a gravação é condicional:
+
+```ts
+if (ids.agendamento && payload.appointmentId) { … }
+```
+
+Sem o id do campo, o `if` é falso e o contato vai para o workflow sem o número do agendamento.
+O id correto, levantado na API em 22/11: **`T7UxlEaWVQ7w0CMKliPL`** (`Régua - Agendamento`).
+
+**2. A mensagem saía mesmo assim.** Um segundo depois de cada falha, a ação `Horario liberado`
+aparece como **Executado**. O texto dizia: *"Como não recebemos a sua confirmação, liberamos o
+horário de [dia] para outro paciente."* Era falso duas vezes — o webhook tinha falhado, e mesmo se
+tivesse passado, `LIBERAR_HORARIO_ATIVO=false` responde `simulado` e não cancela nada. Conferido na
+agenda: **Maria Vitória Nunes Oliveira (23/11 17h) e Matheus Teixeira de Abreu (23/11 9h) seguiam
+com consulta marcada** depois de receberem o aviso.
+
+**Feito em 22/11:** a ação `Horario liberado` foi **removida** do workflow. A cadeia termina no
+webhook, que falha sem efeito. O texto está guardado em `mensagens-para-colar.md` §2c.2 para voltar.
+
+### Ordem para ligar a liberação de verdade
+
+1. `GHL_FIELD_AGENDAMENTO=T7UxlEaWVQ7w0CMKliPL` no Render + redeploy — o backend passa a gravar o id
+   no contato. (Já está no `.env` local e documentado no `.env.example`.)
+2. Esperar alguns dias e conferir no log do Render: `simulado` **com** `appointmentId` preenchido.
+   Enquanto vier vazio, o item 1 não pegou.
+3. `LIBERAR_HORARIO_ATIVO=true` + redeploy.
+4. **Só então** recolocar a mensagem `Horario liberado` no fim da cadeia.
+
+Inverter essa ordem é o que produziu o problema de 22/11.
+
 ## Dentista que faltou: o que a agenda resolve sozinha
 
 Levantado na API em 19/11, sobre 281 agendamentos de 20/10 a 19/11:

@@ -269,8 +269,12 @@ Tag regua-confirmacao
              └─ senão → "Sem confirmação" (19h)
                    └─ Espera até as 8h do dia seguinte
                         └─ Webhook: dá baixa na agenda
-                             └─ "Horário liberado"
+                             └─ ~~"Horário liberado"~~  ← removida em 22/11
 ```
+
+> 🔴 **A mensagem final saiu do ar em 22/11.** O webhook vinha falhando com `appointmentId` vazio
+> (faltava `GHL_FIELD_AGENDAMENTO` no `.env`) e a mensagem era enviada mesmo assim, dizendo que o
+> horário tinha sido liberado quando não tinha. Detalhe e a ordem para religar em `go-live.md`.
 
 > **Mudou em 19/11, com o OK do cliente: caiu a cobrança das 12h.** O desenho original tinha duas,
 > às 12h e às 19h, e fazia sentido quando a confirmação era no D-2. Com ela no D-4, a das 12h saía
