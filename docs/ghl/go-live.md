@@ -173,9 +173,25 @@ assim o GHL monta o corpo **sem a chave**. O problema é do lado do painel, na r
 variável para o corpo do webhook. É parente da armadilha de rótulo defasado que já apareceu nas
 mensagens (ver `textos-reguas-v5-APROVADO.md`).
 
-**Próximo passo, quando for ligar a liberação:** refazer o chip — apagar o valor do campo
-`appointmentId` e escolher `Régua - Agendamento` de novo pelo seletor de variáveis. Só dá para
-confirmar na execução seguinte, às 8h.
+**Chip refeito em 22/11 (feito).** O caminho que funcionou, sem tocar em Ctrl+A:
+
+1. `Ajustar à tela` antes de clicar no nó — fora da tela o nó não responde (virtualização do canvas).
+2. Abrir `Da baixa na agenda da Clinicorp`.
+3. **Botão de lixeira da linha**, à direita do campo de valor e fora dele, apagando o par inteiro.
+   Não tente limpar o chip por dentro do campo.
+4. `Adicionar item` → chave `appointmentId`.
+5. `Seletor de variáveis` → `Contact` → `Custom Fields` → `Régua - Agendamento`.
+6. `Salvar ação` e depois **Salvar fluxo de trabalho** — são dois botões, o segundo é o que grava.
+
+O botão Salvar do fluxo saiu de desabilitado para ativo, ou seja o par novo difere do antigo no que
+fica gravado, mesmo o chip aparecendo igual na tela. Conferido depois de recarregar a página: o par
+persistiu e o `x-api-key` ficou intacto.
+
+**Descartado no mesmo dia:** a ação `Limpa a confirmacao do ciclo anterior` roda antes do webhook,
+então valia conferir se ela zerava o campo antes das 8h. Não zera — é `Remova tag de contato` com
+`consulta-confirmada` e `REMOVER TODAS AS TAGS` desligado. Não encosta em campo personalizado.
+
+Só dá para confirmar se resolveu na execução seguinte, às 8h.
 
 > ⚠️ **Não use Ctrl+A dentro desse painel.** Em 22/11, com o foco não pegando no campo do chip, o
 > Ctrl+A selecionou **os 7 nós do canvas** e o Delete abriu "excluir 7 nós selecionado? (6 ações e
@@ -194,10 +210,10 @@ webhook, que falha sem efeito. O texto está guardado em `mensagens-para-colar.m
 
 ### Ordem para ligar a liberação de verdade
 
-1. Refazer o chip do `appointmentId` no webhook (seletor de variáveis → `Régua - Agendamento`),
-   salvar e publicar.
-2. No dia seguinte, conferir em **Registros de execução → Webhook**: o status tem que sair de
-   `Failed`. Enquanto falhar com `appointmentId Required`, o item 1 não pegou.
+1. ~~Refazer o chip do `appointmentId` no webhook~~ — **feito em 22/11**, fluxo salvo e publicado.
+2. **← estamos aqui.** Em 23/11, conferir em **Registros de execução → Webhook**: o status tem que
+   sair de `Failed`. Enquanto falhar com `appointmentId Required`, o item 1 não pegou e é preciso
+   outro caminho (digitar `{{contact.rgua__agendamento}}` como texto no campo, sem usar o chip).
 3. `LIBERAR_HORARIO_ATIVO=true` no Render + redeploy, e conferir no log `simulado` sumindo.
 4. **Só então** recolocar a mensagem `Horario liberado` no fim da cadeia.
 
