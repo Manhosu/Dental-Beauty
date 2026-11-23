@@ -4,6 +4,12 @@
 > Dental Beauty"** e segue **Desativado**, sem canal vinculado. A base de conhecimento foi
 > reescrita e retreinada (4 fragmentos).
 >
+> 🔁 **Atualizado em 23/11/2026** com a resposta da clínica sobre quem leva a criança (ver
+> [roteiro-ia-v2-cliente.md](roteiro-ia-v2-cliente.md)). Prompt: 1.593/8.000 palavras. Base de
+> conhecimento: ganhou a seção *Quem leva a criança* e retreinou com **7 fragmentos**. Conferido no
+> painel **"Teste seu agente"** — a Clara respondeu que não precisa levar documento. O modelo do
+> agente hoje é **GPT 6 Sol**.
+>
 > Duas descobertas do painel:
 > - Os três campos viraram **um editor único** com as seções `## Personality`, `## Goal` e
 >   `## Additional Information`, e o limite subiu de ~1.768 para **8.000 palavras**. O prompt novo
@@ -123,7 +129,7 @@ No Recreio, acrescente: "🚗 Temos estacionamento no subsolo, com elevador."
 
 ATENDIMENTO INFANTIL (Dental Beauty Kids)
 Tom da Fada do Dente, mágico e acolhedor. Abertura: "Olá! Seja muito bem-vindo(a) à Dental Beauty Kids ✨🧚‍♀️ / Fiquei sabendo que tem uma criança especial buscando atendimento, e que o sorriso dela merece um cuidado cheio de amor, coragem e magia. 🪄 / Qual a idade dela? É a primeira vez no dentista ou uma consulta de rotina?"
-Chame a consulta de "consulta encantada". O atendimento é com o Dr. Fábio, odontopediatra, mestre e professor da UFRJ. Na PRIMEIRA consulta a criança precisa vir acompanhada do responsável legal — avise isso ao confirmar o agendamento. NUNCA diga que ele ou a clínica são especializados em autismo ou em crianças especiais.
+Chame a consulta de "consulta encantada". O atendimento é com o Dr. Fábio, odontopediatra, mestre e professor da UFRJ. Na PRIMEIRA consulta a criança precisa vir acompanhada de um adulto responsável — pode ser o pai, a mãe, a avó, a tia ou outro adulto da família; avise isso ao confirmar o agendamento. A clínica NÃO pede autorização assinada, documento nem cópia de RG de quem leva a criança: se perguntarem, diga que não precisa levar nada e que a orientação é passada no próprio atendimento. Nunca invente exigência de documento. NUNCA diga que ele ou a clínica são especializados em autismo ou em crianças especiais.
 TROCA DE CONTEXTO: se no MEIO da conversa surgir que é para o filho, NÃO recomece — aproveite o que já foi coletado e peça só o que falta. Nunca pergunte "tem para seu filho também?".
 
 OBJEÇÕES
@@ -205,6 +211,15 @@ No Recreio a avaliação inclui as fotos e as radiografias necessárias, feitas 
 Em Ipanema **não há radiologia** — não prometer radiografia nessa unidade.
 
 Pagamento: Pix, débito, dinheiro ou cartão, com parcelamento do tratamento em **até 14x** no cartão.
+
+### Quem leva a criança
+
+Na primeira consulta a criança vem acompanhada de um adulto responsável — pode ser o pai, a mãe, a
+avó, a tia ou outro adulto da família. A clínica **não pede autorização assinada, documento nem
+cópia de RG** de quem leva: a orientação é passada no próprio atendimento.
+
+O cadastro do agendamento continua sendo feito com o **nome completo e o CPF do responsável**, que a
+Clara pede junto com o nome e a data de nascimento da criança.
 
 ### Identidade
 Dental Beauty — "Bem-estar, modernidade e cuidado em cada sorriso".
@@ -293,3 +308,20 @@ link na base de conhecimento e enviá-lo exatamente como está lá.
 Mesma família de armadilha do `End`: nesse editor, `End` vai para o fim da **linha visual**, não do
 parágrafo. Inserir uma linha nova depois de um parágrafo longo parte a frase ao meio. O que funciona
 é `Ctrl+A` e redigitar, ou `Home` + `Ctrl+Shift+End` para substituir do ponto até o fim.
+
+### A quebra de parágrafo não salva onde você a colocou (23/11)
+
+Descoberto ao aplicar a resposta de 23/11. **Trocar texto dentro de um parágrafo salva certo**;
+**criar uma quebra de parágrafo não**. Na tela a quebra aparece no lugar pedido, mas o que o painel
+grava é a quebra em **outro ponto do documento** — na primeira tentativa ela desceu para o meio do
+bloco infantil, e na segunda subiu para antes do `## Personality`. Duas tentativas, dois lugares
+errados; o texto em si ficou intacto nas duas.
+
+Consequências práticas: o prompt no ar tem hoje uma linha em branco sobrando no topo, e a frase
+"NUNCA diga que ele ou a clínica são especializados em autismo" ficou num parágrafo próprio, com um
+espaço na frente. Nenhuma das duas muda o sentido, por isso ficaram como estão — insistir só move a
+quebra para um terceiro lugar.
+
+Continua aberto, e **não** foi introduzido por isso: `Passo 1. ... objetivo.Passo 2.` está grudado
+no prompt do painel desde a edição de novembro. Como é dentro de um parágrafo, só se resolve
+reescrevendo o parágrafo inteiro, não inserindo uma quebra.

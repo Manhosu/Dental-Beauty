@@ -144,6 +144,21 @@ No prompt da Clara (19→22/11): **Etapa 2** passou a pedir a *data de nasciment
 da idade, e o bloco infantil ganhou o aviso de que na primeira consulta a criança precisa vir
 acompanhada do **responsável legal**.
 
+#### Quem leva a criança não é o pai nem a mãe — respondido em 23/11/2026
+
+Perguntei o que a clínica exige quando quem leva a criança é a avó, a tia ou outro adulto:
+autorização assinada, documento, cópia do RG do responsável. **Resposta: "não pedimos documentos,
+apenas informamos."**
+
+Aplicado no bloco infantil do comando e na base de conhecimento (seção *Quem leva a criança*): a
+criança vem acompanhada de **um adulto responsável** — pai, mãe, avó, tia ou outro adulto da família
+— e a Clara responde que **não precisa levar documento nenhum**, porque a orientação é passada no
+próprio atendimento. O comando ganhou também a trava "nunca invente exigência de documento", que é o
+erro caro aqui: inventar uma exigência faz a família desmarcar.
+
+O que **não** mudou: o cadastro do agendamento continua pedindo nome completo e CPF do responsável.
+"Apenas informamos" tira a exigência de documento, não o cadastro.
+
 **Montado em 17/11:** `runAnamneseD2` e `runAnamneseD1` (`anamneseJobs.ts`), rodando na rodada das
 8h junto do lembrete do dia. O `id` do link vive no Redis por 7 dias (`anamneseStore.ts`) — ele
 nasce no D-2 e só é usado no D-1, e as duas rodadas são execuções diferentes do processo. O

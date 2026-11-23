@@ -31,6 +31,18 @@ variável para `true` e redeployar.
 Ela lê a conversa e **escreve a resposta, mas quem envia é a recepção**. Nada chega ao paciente sem
 alguém dar OK. Trocar para `Piloto automático` é um clique em IA → Clara → Modo.
 
+### ✅ Dá para testar a Clara sem canal — achado de 23/11
+
+A tela do agente (Agentes de AI → Conversation AI → Clara) tem, à direita, o painel **"Teste seu
+agente"**: uma caixa de conversa que responde com o prompt, a base de conhecimento e as ações reais.
+A própria tela avisa *"Nada aqui chega aos seus contatos"*.
+
+Isso resolve o teste que a clínica pediu para fazer esta semana: **não precisa do WhatsApp de $20
+para experimentar a Clara**, só para ela atender paciente de verdade. A assinatura continua sendo a
+decisão aberta, mas ela deixou de bloquear a avaliação do atendimento.
+
+Usado em 23/11 para conferir a resposta nova sobre quem leva a criança, em ~30 segundos.
+
 ## O que falta: a Clara não tem canal — e isso custa $20/mês
 
 Investigado a fundo em 18/11. O bloqueio é comercial, não técnico, e o preço está na tela.
