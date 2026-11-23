@@ -33,6 +33,16 @@ export interface GhlCustomField {
   field_value: string;
 }
 
+/**
+ * Leitura do contato — só o que precisamos. Na leitura o GHL devolve o campo personalizado como
+ * `value`; no upsert ele exige `field_value`. Aceitamos os dois para não depender disso.
+ */
+interface ContactReadResponse {
+  contact?: {
+    customFields?: Array<{ id?: string; value?: unknown; field_value?: unknown }>;
+  };
+}
+
 const DEFAULT_VERSION = '2021-07-28';
 
 export class GoHighLevelCrmClient implements SonaxCrmPort {
@@ -62,6 +72,36 @@ export class GoHighLevelCrmClient implements SonaxCrmPort {
       }
       return (await res.json().catch(() => ({}))) as T;
     });
+  }
+
+  /** GET autenticado. O resto do cliente escreve; a leitura do contato é a única leitura. */
+  private async get<T>(path: string): Promise<T> {
+    return withRetry(async () => {
+      const res = await this.fetchFn(`${this.config.baseUrl}${path}`, {
+        method: 'GET',
+        headers: this.headers(),
+      });
+      if (!res.ok) {
+        throw new ExternalApiError(`GoHighLevel GET ${path} -> ${res.status}`, res.status);
+      }
+      return (await res.json().catch(() => ({}))) as T;
+    });
+  }
+
+  /**
+   * Lê um campo personalizado do contato.
+   *
+   * Existe por causa da liberação de horário: o workflow do GHL não consegue mandar o campo
+   * personalizado no corpo do webhook, então o backend vai buscar o valor a partir do id do
+   * contato. Ver `src/http/routes/reguas.ts`.
+   */
+  async getContactField(contactId: string, fieldId: string): Promise<string | undefined> {
+    const data = await this.get<ContactReadResponse>(`/contacts/${contactId}`);
+    const campo = (data.contact?.customFields ?? []).find((c) => c.id === fieldId);
+    const valor = campo?.value ?? campo?.field_value;
+    if (typeof valor === 'string') return valor.trim() || undefined;
+    if (typeof valor === 'number' && Number.isFinite(valor)) return String(valor);
+    return undefined;
   }
 
   /**

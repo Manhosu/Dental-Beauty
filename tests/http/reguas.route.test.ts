@@ -23,7 +23,7 @@ describe('POST /reguas/liberar-horario', () => {
     });
 
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ status: 'simulado', appointmentId: 'agd-1' });
+    expect(res.json()).toEqual({ status: 'simulado', appointmentId: 'agd-1', origem: 'corpo' });
     // O ponto do interruptor: responder OK para o workflow sem cancelar nada de verdade.
     expect(clinicorp.cancelAppointment).not.toHaveBeenCalled();
   });
@@ -42,6 +42,7 @@ describe('POST /reguas/liberar-horario', () => {
     expect(res.json()).toEqual({
       status: 'liberado',
       appointmentId: 'agd-7',
+      origem: 'corpo',
       released: true,
       aindaNaAgenda: false,
     });
@@ -74,7 +75,12 @@ describe('POST /reguas/liberar-horario', () => {
     });
 
     expect(res.statusCode).toBe(200);
-    expect(res.json()).toEqual({ status: 'liberado', appointmentId: 'agd-7', released: true });
+    expect(res.json()).toEqual({
+      status: 'liberado',
+      appointmentId: 'agd-7',
+      origem: 'corpo',
+      released: true,
+    });
   });
 
   it('recusa o pedido sem id de agendamento', async () => {
@@ -89,6 +95,111 @@ describe('POST /reguas/liberar-horario', () => {
 
     expect(res.statusCode).toBe(400);
     expect(clinicorp.cancelAppointment).not.toHaveBeenCalled();
+  });
+
+  // ── O corpo que o GHL manda de verdade ───────────────────────────────────────────────────────
+  // A ação de webhook do workflow não interpola campo personalizado nos "Dados personalizados":
+  // o chip aparece montado na tela e a chave não chega no corpo (execuções de 22 e 23/11). Daí a
+  // rota procurar o id onde ele possa estar e, em último caso, buscar no contato.
+
+  it('acha o id do agendamento aninhado em customData', async () => {
+    const clinicorp = makeClinicorp();
+    const app = buildServer({ reguas: { clinicorp, liberarHorarioAtivo: false } });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/reguas/liberar-horario',
+      payload: { contact_id: 'ct-1', customData: { appointmentId: 'agd-9' } },
+    });
+
+    expect(res.json()).toEqual({ status: 'simulado', appointmentId: 'agd-9', origem: 'corpo' });
+  });
+
+  it('acha o id quando a chave vem com o nome do campo do GHL, não com o nosso', async () => {
+    const clinicorp = makeClinicorp();
+    const app = buildServer({ reguas: { clinicorp, liberarHorarioAtivo: false } });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/reguas/liberar-horario',
+      payload: { contact_id: 'ct-1', rgua__agendamento: 'agd-11' },
+    });
+
+    expect(res.json()).toMatchObject({ appointmentId: 'agd-11', origem: 'corpo' });
+  });
+
+  it('busca o agendamento no contato quando o corpo não traz a chave', async () => {
+    const clinicorp = makeClinicorp();
+    const buscarAgendamentoDoContato = vi.fn().mockResolvedValue('agd-do-contato');
+    const app = buildServer({
+      reguas: { clinicorp, liberarHorarioAtivo: false, buscarAgendamentoDoContato },
+    });
+
+    // Corpo sem nada de agendamento — o que o GHL manda hoje.
+    const res = await app.inject({
+      method: 'POST',
+      url: '/reguas/liberar-horario',
+      payload: { contact_id: 'ct-42', first_name: 'Enzo' },
+    });
+
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({
+      status: 'simulado',
+      appointmentId: 'agd-do-contato',
+      origem: 'contato',
+    });
+    expect(buscarAgendamentoDoContato).toHaveBeenCalledWith('ct-42');
+  });
+
+  it('prefere o id do corpo e não vai buscar no contato de graça', async () => {
+    const clinicorp = makeClinicorp();
+    const buscarAgendamentoDoContato = vi.fn().mockResolvedValue('agd-do-contato');
+    const app = buildServer({
+      reguas: { clinicorp, liberarHorarioAtivo: false, buscarAgendamentoDoContato },
+    });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/reguas/liberar-horario',
+      payload: { contact_id: 'ct-42', appointmentId: 'agd-do-corpo' },
+    });
+
+    expect(res.json()).toMatchObject({ appointmentId: 'agd-do-corpo', origem: 'corpo' });
+    expect(buscarAgendamentoDoContato).not.toHaveBeenCalled();
+  });
+
+  it('a falha da busca no contato não derruba o processo, só recusa o pedido', async () => {
+    const clinicorp = makeClinicorp();
+    const buscarAgendamentoDoContato = vi.fn().mockRejectedValue(new Error('GHL fora do ar'));
+    const app = buildServer({
+      reguas: { clinicorp, liberarHorarioAtivo: true, buscarAgendamentoDoContato },
+    });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/reguas/liberar-horario',
+      payload: { contact_id: 'ct-42' },
+    });
+
+    expect(res.statusCode).toBe(400);
+    expect(clinicorp.cancelAppointment).not.toHaveBeenCalled();
+  });
+
+  it('a recusa diz quais chaves chegaram, para o registro de execução ser diagnosticável', async () => {
+    const clinicorp = makeClinicorp();
+    const app = buildServer({ reguas: { clinicorp, liberarHorarioAtivo: true } });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/reguas/liberar-horario',
+      payload: { contact_id: 'ct-1', first_name: 'Enzo' },
+    });
+
+    expect(res.statusCode).toBe(400);
+    // Nome de chave e nada de valor: esta resposta aparece no painel e o corpo carrega dado de
+    // paciente.
+    expect(res.json().chavesRecebidas).toEqual(['contact_id', 'first_name']);
+    expect(JSON.stringify(res.json())).not.toContain('Enzo');
   });
 
   it('não existe quando a dependência não é passada', async () => {

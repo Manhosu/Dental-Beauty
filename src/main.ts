@@ -67,11 +67,25 @@ async function main(): Promise<void> {
   }
 
   const businessHours = businessHoursFromEnv(env);
+
+  // Rede de segurança da liberação de horário: o workflow do GHL não consegue mandar o campo
+  // personalizado no corpo do webhook, então a rota busca o agendamento pelo id do contato.
+  const campoAgendamento = env.GHL_FIELD_AGENDAMENTO;
+  const buscarAgendamentoDoContato =
+    crm instanceof GoHighLevelCrmClient && campoAgendamento
+      ? (contactId: string): Promise<string | undefined> =>
+          crm.getContactField(contactId, campoAgendamento)
+      : undefined;
+
   const app = buildServer({
     scheduling: { engine, clinicorp },
     ...(sonaxDeps ? { sonax: sonaxDeps } : {}),
     atendimento: { businessHours },
-    reguas: { clinicorp, liberarHorarioAtivo: env.LIBERAR_HORARIO_ATIVO },
+    reguas: {
+      clinicorp,
+      liberarHorarioAtivo: env.LIBERAR_HORARIO_ATIVO,
+      ...(buscarAgendamentoDoContato ? { buscarAgendamentoDoContato } : {}),
+    },
   });
 
   await app.listen({ port: env.PORT, host: '0.0.0.0' });
