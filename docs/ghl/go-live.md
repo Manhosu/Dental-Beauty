@@ -264,8 +264,8 @@ A conta: a confirmação sai no D-4, a cobrança às 19h do mesmo dia, e a liber
 seguinte. Quem não responde em **~10 horas** perde a vaga **3 dias antes** da consulta.
 
 Hoje não machuca ninguém porque `LIBERAR_HORARIO_ATIVO=false`. Mas no dia em que o interruptor virar,
-isso solta horário de paciente que simplesmente não olhou o WhatsApp numa tarde. Perguntar ao Bruno
-se é isso mesmo que a clínica quer, ou se a liberação deve esperar mais (por exemplo, só no D-1).
+isso solta horário de paciente que simplesmente não olhou o WhatsApp numa tarde. Perguntar à clínica
+se é isso mesmo que ela quer, ou se a liberação deve esperar mais (por exemplo, só no D-1).
 
 ## Dentista que faltou: o que a agenda resolve sozinha
 
