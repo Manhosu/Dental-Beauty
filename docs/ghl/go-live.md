@@ -146,7 +146,7 @@ Some-se a isso o desenho: com a confirmação no **D-4**, a cobrança das 12h ca
 > 19/11 já tinha recebido a cobrança das 12h, então perdeu só o aviso das 19h — e deixou de receber
 > o "liberamos o seu horário" de amanhã, que seria falso enquanto `LIBERAR_HORARIO_ATIVO=false`.
 
-## 🔴 A liberação de horário nunca funcionou — e mandava mensagem falsa (achado de 22/11)
+## ✅ A liberação de horário nunca funcionou — e mandava mensagem falsa (achado de 22/11, resolvido em 23/11)
 
 Encontrado ao conferir os **Registros de execução** do workflow `Sem confirmação`. São dois
 problemas empilhados, e o segundo chegava ao paciente.
@@ -173,25 +173,56 @@ assim o GHL monta o corpo **sem a chave**. O problema é do lado do painel, na r
 variável para o corpo do webhook. É parente da armadilha de rótulo defasado que já apareceu nas
 mensagens (ver `textos-reguas-v5-APROVADO.md`).
 
-**Chip refeito em 22/11 (feito).** O caminho que funcionou, sem tocar em Ctrl+A:
-
-1. `Ajustar à tela` antes de clicar no nó — fora da tela o nó não responde (virtualização do canvas).
-2. Abrir `Da baixa na agenda da Clinicorp`.
-3. **Botão de lixeira da linha**, à direita do campo de valor e fora dele, apagando o par inteiro.
-   Não tente limpar o chip por dentro do campo.
-4. `Adicionar item` → chave `appointmentId`.
-5. `Seletor de variáveis` → `Contact` → `Custom Fields` → `Régua - Agendamento`.
-6. `Salvar ação` e depois **Salvar fluxo de trabalho** — são dois botões, o segundo é o que grava.
-
-O botão Salvar do fluxo saiu de desabilitado para ativo, ou seja o par novo difere do antigo no que
-fica gravado, mesmo o chip aparecendo igual na tela. Conferido depois de recarregar a página: o par
-persistiu e o `x-api-key` ficou intacto.
+**Refazer o chip não resolveu (22→23/11).** O par `appointmentId` foi apagado pela lixeira da linha
+e remontado pelo seletor de variáveis; o fluxo foi salvo e publicado. Na execução seguinte, às 8h de
+23/11, as **10 execuções falharam com o erro idêntico**. O contato que falhou carregava
+`T7UxlEaWVQ7w0CMKliPL = "5591430351814657"` desde 22/11 09:01, 23h antes. Hipótese derrubada.
 
 **Descartado no mesmo dia:** a ação `Limpa a confirmacao do ciclo anterior` roda antes do webhook,
 então valia conferir se ela zerava o campo antes das 8h. Não zera — é `Remova tag de contato` com
 `consulta-confirmada` e `REMOVER TODAS AS TAGS` desligado. Não encosta em campo personalizado.
 
-Só dá para confirmar se resolveu na execução seguinte, às 8h.
+### ✅ Resolvido em 23/11 — e o dado sempre esteve no corpo
+
+O conserto saiu do painel e veio para o backend (commit `514225e`). O que mudou de entendimento:
+
+**O payload padrão do webhook já traz os campos personalizados do contato.** O próprio painel avisa,
+embaixo de `DADOS PERSONALIZADOS`: *"Esses pares personalizados de token-valor serão incluídos junto
+com **dados padrão**"*. O chip nunca foi necessário — era um caminho a mais para o mesmo dado, e o
+único que não funcionava.
+
+Agora `/reguas/liberar-horario` procura o id do agendamento nesta ordem:
+
+1. `appointmentId` / `appointment_id`, na raiz ou em `customData` — a grafia que a gente pede;
+2. qualquer chave que **fale de agendamento** (`/agendamento/i`), que é o que cobre o GHL mandar o
+   campo com o nome dele (`Régua - Agendamento`) ou com o fieldKey (`rgua__agendamento`);
+3. se nada disso vier, busca o campo no contato pela API do GHL, a partir do id do contato.
+
+A resposta de sucesso diz por qual caminho veio, em `origem`: `corpo` ou `contato`. A recusa passou a
+listar `chavesRecebidas` — **só os nomes das chaves, nenhum valor**, porque essa resposta aparece no
+registro de execução do painel e o corpo carrega nome e telefone de paciente.
+
+**Como foi confirmado, em minutos e não em 24h.** Está no painel o workflow
+`ZZ BANCADA — teste do webhook da liberacao (nao publicar)`: um acionador nenhum, uma ação de webhook
+só, apontando para o mesmo endpoint com o mesmo `x-api-key` e **sem nenhum dado personalizado**. Roda
+pelo botão `Testar fluxo de trabalho` escolhendo o contato `TESTE Liberacao (apagar)`
+(`teste-liberacao@dental-beauty.invalid`, id `9IieEzKxBK29828bSesu`), que **não tem telefone** — então
+nenhuma mensagem alcança ele nem por acidente. Resultado:
+
+```
+Status: Executado / Success
+{"status":200,"msg":"webhook response: {\"status\":\"simulado\",
+\"appointmentId\":\"TESTE-AGD-999\",\"origem\":\"corpo\"}"}
+```
+
+`origem: corpo` num webhook sem dado personalizado nenhum é a prova: o campo veio nos dados padrão.
+
+Vale guardar a bancada. Ela troca um ciclo de conferência de 24h — porque a régua real só toca o
+webhook às 8h — por 30 segundos. Foram dois dias e duas hipóteses erradas por falta dela.
+
+> O par `appointmentId` com o chip **continua na ação da régua real** e não atrapalha: o GHL manda a
+> chave vazia ou não manda, e nos dois casos a rota cai no passo 2. Se um dia o GHL passar a resolver
+> o chip, o valor que chegar é o certo.
 
 > ⚠️ **Não use Ctrl+A dentro desse painel.** Em 22/11, com o foco não pegando no campo do chip, o
 > Ctrl+A selecionou **os 7 nós do canvas** e o Delete abriu "excluir 7 nós selecionado? (6 ações e
@@ -210,15 +241,31 @@ webhook, que falha sem efeito. O texto está guardado em `mensagens-para-colar.m
 
 ### Ordem para ligar a liberação de verdade
 
-1. ~~Refazer o chip do `appointmentId` no webhook~~ — **feito em 22/11**, fluxo salvo e publicado.
-2. **← estamos aqui.** Em 23/11, conferir em **Registros de execução → Webhook**: o status tem que
-   sair de `Failed`. Enquanto falhar com `appointmentId Required`, o item 1 não pegou e é preciso
-   outro caminho (digitar `{{contact.rgua__agendamento}}` como texto no campo, sem usar o chip).
-3. `LIBERAR_HORARIO_ATIVO=true` no Render + redeploy, e conferir no log `simulado` sumindo.
-4. **Só então** recolocar a mensagem `Horario liberado` no fim da cadeia.
+1. ~~Fazer o webhook chegar com o `appointmentId`~~ — **resolvido em 23/11** no backend, não no
+   painel. Confirmado na bancada: `Executado`, `origem: corpo`.
+2. **← estamos aqui.** Decidir **quando** a vaga deve ser solta (ver abaixo) — é escolha da clínica,
+   não detalhe técnico, e precisa ser resolvida antes de ligar o interruptor.
+3. Em 24/11, conferir em **Registros de execução → Webhook** da régua real que as execuções das 8h
+   saíram de `Failed`. A resposta tem que trazer `origem`; se vier `contato`, funcionou pela busca na
+   API, que também vale. Se vier `400`, o campo `chavesRecebidas` diz exatamente o que o GHL mandou.
+4. `LIBERAR_HORARIO_ATIVO=true` no Render + redeploy, e conferir no log `simulado` sumindo.
+5. **Só então** recolocar a mensagem `Horario liberado` no fim da cadeia.
 
 Inverter essa ordem é o que produziu o problema de 22/11: a mensagem estava no ar antes de qualquer
-um dos três passos funcionar.
+um dos passos funcionar.
+
+### ⚠️ Antes de ligar: a vaga é solta no D-3
+
+Apareceu nos dados de 23/11 e **não é bug, é a cadeia funcionando como foi desenhada** — mas é
+decisão da clínica, não nossa. A consulta do contato que falhou hoje é **26/11**; o webhook de
+liberação disparou **23/11**.
+
+A conta: a confirmação sai no D-4, a cobrança às 19h do mesmo dia, e a liberação às 8h do dia
+seguinte. Quem não responde em **~10 horas** perde a vaga **3 dias antes** da consulta.
+
+Hoje não machuca ninguém porque `LIBERAR_HORARIO_ATIVO=false`. Mas no dia em que o interruptor virar,
+isso solta horário de paciente que simplesmente não olhou o WhatsApp numa tarde. Perguntar ao Bruno
+se é isso mesmo que a clínica quer, ou se a liberação deve esperar mais (por exemplo, só no D-1).
 
 ## Dentista que faltou: o que a agenda resolve sozinha
 

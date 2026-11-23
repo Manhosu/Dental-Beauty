@@ -128,6 +128,26 @@ describe('POST /reguas/liberar-horario', () => {
     expect(res.json()).toMatchObject({ appointmentId: 'agd-11', origem: 'corpo' });
   });
 
+  it('ignora o appointmentId vazio do chip e usa o campo que vem nos dados padrão', async () => {
+    // É o corpo exato da régua que está no ar: a ação ainda tem o par `appointmentId` montado com
+    // o chip, que o GHL não resolve, e ao lado vêm os dados padrão com o campo do contato.
+    const clinicorp = makeClinicorp();
+    const buscarAgendamentoDoContato = vi.fn();
+    const app = buildServer({
+      reguas: { clinicorp, liberarHorarioAtivo: false, buscarAgendamentoDoContato },
+    });
+
+    const res = await app.inject({
+      method: 'POST',
+      url: '/reguas/liberar-horario',
+      payload: { appointmentId: '', contact_id: 'ct-1', rgua__agendamento: 'agd-padrao' },
+    });
+
+    expect(res.json()).toMatchObject({ appointmentId: 'agd-padrao', origem: 'corpo' });
+    // Achou no corpo, então nem precisou da chamada extra ao GHL.
+    expect(buscarAgendamentoDoContato).not.toHaveBeenCalled();
+  });
+
   it('busca o agendamento no contato quando o corpo não traz a chave', async () => {
     const clinicorp = makeClinicorp();
     const buscarAgendamentoDoContato = vi.fn().mockResolvedValue('agd-do-contato');
