@@ -279,6 +279,51 @@ Hoje não machuca ninguém porque `LIBERAR_HORARIO_ATIVO=false`. Mas no dia em q
 isso solta horário de paciente que simplesmente não olhou o WhatsApp numa tarde. Perguntar à clínica
 se é isso mesmo que ela quer, ou se a liberação deve esperar mais (por exemplo, só no D-1).
 
+## ✅ A cobrança das 19h saiu do ar — e o webhook da liberação passou a funcionar (24/11)
+
+Duas coisas fecharam no mesmo dia.
+
+### A clínica pediu uma mensagem só, e a causa não é a lógica
+
+O time voltou a relatar: *"a IA que confirma consulta está mandando uma nova mensagem horas após,
+mesmo com a pessoa tendo confirmado"*, e pediu **para deixar apenas uma mensagem**. Feito: a ação
+`Sem confirmacao - 19h` foi **excluída** do workflow `#2 RÉGUA — Sem confirmação (19h e liberação)`,
+salva às **15h40 de 24/11** — antes das 19h, então os **~15 contatos que entraram às 9h daquele dia
+não chegaram a receber**. A régua de confirmação passou a mandar **exatamente uma** mensagem: o
+pedido de SIM do D-4.
+
+**O ponto importante para a conversa com a clínica:** isso não se conserta ajustando a régua. A
+condição que decide cobrar é `If "Tags" inclui "consulta-confirmada"`, e a tag é marcada quando a
+resposta do paciente chega ao GHL. O diagnóstico de 19/11 (acima) mostrou que o **app não-oficial do
+WhatsApp entrega o recebido fora de hora** — o "Confirmado" das 09:15 só virou evento às 12:28. Às
+19h a tag ainda não existe, a condição dá falso, a cobrança sai. Lista de palavras, horário e
+condição já foram conferidos e estão certos: **o que está quebrado é o canal**.
+
+Ou seja: a assinatura do WhatsApp oficial deixou de ser só a condição para a Clara atender. É também
+o que faz a confirmação parar de cobrar quem já respondeu. Enquanto não houver canal oficial, a
+régua de confirmação funciona bem **com uma mensagem só**, que é como ficou.
+
+### O webhook da liberação está passando
+
+Conferido hoje em **Registros de execução → Webhook**, que era a verificação que tinha ficado
+marcada para 24/11:
+
+| Dia | Resultado |
+|---|---|
+| **24/11, 8:00–8:03** | **5 chamadas, todas `Executado`** |
+| 23/11, 8:03 | `Failed` (as antigas, antes do deploy da correção) |
+
+A correção de 23/11 (`514225e`, parar de depender do chip do GHL e ler o `appointmentId` do corpo)
+**funciona em produção**. `Executado` aqui significa que o backend respondeu 200 — com
+`LIBERAR_HORARIO_ATIVO=false` ele registra "agenda não foi tocada" e não cancela nada, que é o
+esperado.
+
+> ⚠️ **Consequência nova de tirar a mensagem das 19h.** O ramo "Nao confirmou - cobra" agora vai
+> direto para a espera das 8h e para o webhook. No dia em que `LIBERAR_HORARIO_ATIVO` virar `true`,
+> a vaga será liberada **sem nenhum aviso prévio ao paciente** — some a única mensagem que dava a
+> ele a chance de responder antes. Antes de virar o interruptor, ou a mensagem das 19h volta, ou a
+> liberação passa a avisar na hora. Isso soma-se à pergunta do D-3, que segue sem resposta.
+
 ## Dentista que faltou: o que a agenda resolve sozinha
 
 Levantado na API em 19/11, sobre 281 agendamentos de 20/10 a 19/11:

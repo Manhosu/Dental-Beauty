@@ -438,12 +438,32 @@ preenchido; `LIBERAR_HORARIO_ATIVO` segue `false` de propósito (ver `go-live.md
 > **A cobrança das 12h foi removida em 19/11, com o OK do cliente.** Ela saía 3h depois do pedido
 > de SIM — que agora é no D-4 — e pegava quem ainda ia responder à tarde. Ficou só a das 19h, e a
 > liberação continua às 8h do dia seguinte, então a clínica mantém 3 dias para remanejar a vaga.
+>
+> **E em 24/11 a das 19h saiu também** (ver 2c.1). Hoje este workflow **não manda mensagem
+> nenhuma**: ele só espera, avalia a condição e chama o webhook da liberação.
 
 Quem responde qualquer coisa sai do fluxo sozinho (`Parar ao receber resposta`). Quem responde ao
 *primeiro* pedido de SIM — que saiu da régua 2, não desta — é pego pela tag `consulta-confirmada`,
 marcada pelo workflow `RÉGUA — Confirmação recebida` (`7e1f4dba-d429-4c04-9877-c47b45e2da85`).
 
 ## 2c.1 · Sem confirmação · 19h
+
+> 🔴 **FORA DO AR desde 24/11/2026, a pedido da clínica.** O time relatou que a IA "manda uma nova
+> mensagem horas após, mesmo com a pessoa tendo confirmado", e pediu para **ficar só uma mensagem**.
+> A ação `Sem confirmacao - 19h` foi excluída do workflow e o fluxo foi salvo às 15h40 de 24/11 —
+> **antes** das 19h, então os ~15 contatos que entraram às 9h daquele dia não chegaram a receber.
+>
+> Com isso, **a régua de confirmação manda exatamente uma mensagem**: o pedido de SIM do D-4, que
+> sai da régua 2. O ramo "Nao confirmou - cobra" continua existindo, mas agora vai direto para a
+> espera das 8h e para o webhook da liberação, sem texto nenhum para o paciente.
+>
+> **Por que a cobrança pegava quem já tinha confirmado** — e por que não era a lógica: a condição é
+> `If "Tags" inclui "consulta-confirmada"`, marcada pelo workflow `RÉGUA — Confirmação recebida`
+> quando a resposta chega. O diagnóstico de 19/11 (ver `go-live.md`) mostrou que o **app não-oficial
+> do WhatsApp entrega a mensagem recebida fora de hora**: o "Confirmado" das 09:15 só virou evento
+> de entrada às 12:28. Às 19h a tag ainda não existe, a condição dá falso e a cobrança sai. Nenhum
+> ajuste de palavra-chave, de horário ou de condição resolve isso — **é o canal**. Só muda com o
+> WhatsApp oficial, que é a decisão de assinatura que segue aberta.
 
 ```
 {{contact.first_name}}, ainda não recebemos a confirmação da sua consulta de {{contact.rgua__dia}} às {{contact.rgua__hora}}.
