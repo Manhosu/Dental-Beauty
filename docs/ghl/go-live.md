@@ -324,6 +324,58 @@ esperado.
 > ele a chance de responder antes. Antes de virar o interruptor, ou a mensagem das 19h volta, ou a
 > liberação passa a avisar na hora. Isso soma-se à pergunta do D-3, que segue sem resposta.
 
+## ✅ Auditoria de entrega — tudo que foi construído está no ar (24/11)
+
+Feita para responder uma pergunta direta: *sobrou alguma coisa construída e esquecida desligada?*
+**Não.** Conferido dos dois lados, backend e painel.
+
+**Backend (`src/main.ts`):** no caminho do GHL as **sete** réguas apontam para o mesmo dispatcher por
+tag — `aniversario`, `noShow` (confirmação), `lembreteHoje`, `posProcedimento`, `nps`,
+`inatividade`, `posCirurgia` — mais a anamnese D-2/D-1, que liga sozinha porque `ANAMNESE_SECRET`
+está no ambiente. Não existe flag por régua: ou tudo roda, ou nada roda. Está rodando.
+
+**Painel — as 4 páginas da lista de fluxos.** Todas as 12 réguas e o `RÉGUA — Confirmação recebida`
+estão **Publicado(a)**. Os únicos rascunhos são: um lote de campanha do cliente (ver abaixo), dois
+`New Workflow : <número>` vazios e sobrando, e a `ZZ BANCADA` de teste, que é rascunho de propósito.
+
+**Reconciliação: o que a agenda diz que deveria ter disparado, contra o que o painel registra.**
+Ensaio seco das funções reais, dia a dia, de 18 a 24/11:
+
+| Régua | Esperado 18–24/11 | Inscritos no painel | Leitura |
+|---|---|---|---|
+| Confirmação | 76 | 99 (desde 11/11) | bate |
+| Lembrete do dia | 46 | 57 (desde 12/11) | bate |
+| Pesquisa de satisfação | 38 sem a trava | 33 | bate — a trava "a cada 3 vindas" corta o resto |
+| Reengajamento 6+12 | 14 brutos | 10 | bate — o dedupe colapsa repetição entre dias |
+| Pós-procedimento | 3 | — | bate |
+| Aniversário | 7 hoje | 69 (desde 11/11) | bate |
+| **Cuidado no dia seguinte** | **0 todos os dias** | **0** | **honesto** |
+| **Pesquisa em tratamento** | **0** | **0** | **honesto** |
+
+Os dois zeros foram investigados em vez de assumidos:
+
+- **Cuidado no dia seguinte (pós-cirurgia)** nunca disparou porque **nenhum atendimento cirúrgico
+  chegou a "Atendido" desde o go-live**. Os 7 cirúrgicos dos últimos 30 dias caem todos antes de
+  18/11. A régua está publicada e o classificador funciona — ela simplesmente não teve caso. É a
+  única régua que **ainda não foi provada com dado real em produção**; vai se provar na primeira
+  cirurgia atendida.
+- **Pesquisa em tratamento** só sai da **4ª visita observada** do paciente (`total > 1` no contador
+  de vindas), e o contador no Redis começou do zero em 18/11. Em 6 dias ninguém acumulou 4 visitas.
+  Vai começar a sair sozinha em algumas semanas.
+
+**Limpeza feita:** a aba *"Precisa de avaliação"* acusava **1** erro — o webhook que falhou em
+23/11 às 11h03, já corrigido e verificado hoje. Marcado como lido, e a aba voltou para **0**. Agora
+um alerta ali significa problema de verdade, e não um fantasma de ontem.
+
+**Dois itens que são do cliente, não nossos** (ficam aqui só registrados, não foram tocados):
+
+1. `Disparo tag disparocrianca-n3-11/26 — leads de criança sem agendamento, 753 mais antigos` está
+   em **rascunho**, enquanto o lote irmão (`n2`, os 753 mais recentes) está publicado. Ou a campanha
+   foi dividida de propósito e a segunda metade nunca saiu, ou foi esquecida. **Perguntar antes de
+   publicar** — são 753 mensagens.
+2. Dois `New Workflow : <número>` vazios, sem ação nenhuma. Lixo visual; dá para apagar quando a
+   clínica quiser.
+
 ## Dentista que faltou: o que a agenda resolve sozinha
 
 Levantado na API em 19/11, sobre 281 agendamentos de 20/10 a 19/11:
