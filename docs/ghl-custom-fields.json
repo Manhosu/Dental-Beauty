@@ -1,0 +1,172 @@
+{
+  "Anamnese - Link": {
+    "id": "foB9jkyqGLtaxiowXnM1",
+    "key": "contact.anamnese__link",
+    "tipo": "TEXT"
+  },
+  "Bairro": {
+    "id": "U7XDwlXD0RJIWwkJzytW",
+    "key": "contact.bairro",
+    "tipo": "TEXT"
+  },
+  "Campanha/Parceiro": {
+    "id": "TnbIWwnsDKM31y6urweC",
+    "key": "contact.campanhaparceiro",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Canal de Entrada": {
+    "id": "UItxkro5UmXi8GD5TZDB",
+    "key": "contact.canal_de_entrada",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Código Clinicorp": {
+    "id": "FXOXU1BpsONnt7NhXv71",
+    "key": "contact.cdigo_clinicorp",
+    "tipo": "TEXT"
+  },
+  "Data de Retorno": {
+    "id": "TQL1fXdvybQCet7wgbVR",
+    "key": "contact.data_de_retorno_ao_contato",
+    "tipo": "DATE"
+  },
+  "Data do Último Atendimento": {
+    "id": "agOS7mVnrCHymK1grWLe",
+    "key": "contact.data_do_ltimo_atendimento",
+    "tipo": "DATE"
+  },
+  "Data/Hora do Agendamento": {
+    "id": "jmdbqaSJPPEAQF60gqsk",
+    "key": "contact.datahora_do_agendamento",
+    "tipo": "DATE"
+  },
+  "Detalhe do Motivo": {
+    "id": "VURh1y3qCKWRMeLZDuSd",
+    "key": "contact.detalhe_do_motivo",
+    "tipo": "TEXT"
+  },
+  "Especialidade": {
+    "id": "yFVtRuJkABXyxzL2Ecan",
+    "key": "contact.especialidade",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Já é paciente": {
+    "id": "OeeysIGDW183UBOIhTcc",
+    "key": "contact.j__paciente",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Link Frase Campanhas": {
+    "id": "2EUGHtRFQJkULqPxSPAH",
+    "key": "contact.link_frase_campanhas",
+    "tipo": "TEXT"
+  },
+  "Motivo Sem Acordo": {
+    "id": "MUm1fnS2h1D0vlLIFF3X",
+    "key": "contact.motivo_sem_acordo",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "NPS - Nota": {
+    "id": "CDZnT8oVibUiC7zAzxkK",
+    "key": "contact.nps__nota",
+    "tipo": "NUMERICAL"
+  },
+  "Nome da Criança": {
+    "id": "D8nLqe0F9X4XAzyycSnu",
+    "key": "contact.nome_da_criana",
+    "tipo": "TEXT"
+  },
+  "Nome do Responsável": {
+    "id": "RS8J9QI4eFwLnMDILbzg",
+    "key": "contact.nome_do_responsvel",
+    "tipo": "TEXT"
+  },
+  "Observação": {
+    "id": "hUCmhy2j1VlsJTUeXJom",
+    "key": "contact.observao",
+    "tipo": "TEXT"
+  },
+  "Orçamento - Especialidade": {
+    "id": "2oDsg2vBJaW52Jr9Akcx",
+    "key": "contact.oramento__especialidade",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Orçamento - Mês": {
+    "id": "8BuOkSAQgNYYm9uIgJg0",
+    "key": "contact.oramento__ms",
+    "tipo": "TEXT"
+  },
+  "Orçamento - Observações": {
+    "id": "qV3bQpkhgwOaW9iwyItU",
+    "key": "contact.oramento__observaes",
+    "tipo": "LARGE_TEXT"
+  },
+  "Orçamento - Retorno Agendado": {
+    "id": "F0tBqr8Prp92tb3KRJTy",
+    "key": "contact.oramento__retorno_agendado",
+    "tipo": "DATE"
+  },
+  "Orçamento - Status": {
+    "id": "CTI0ww9deglhZ3o12ISZ",
+    "key": "contact.oramento__status",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Orçamento - Tipo de Cliente": {
+    "id": "wOBl0Ok1kTwJTBzMI3xa",
+    "key": "contact.oramento__tipo_de_cliente",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Orçamento - Valor": {
+    "id": "s3mI27rqMFmZ3MkqjJq2",
+    "key": "contact.oramento__valor",
+    "tipo": "MONETORY"
+  },
+  "Profissional": {
+    "id": "onA7P3e8wMAai1WHVT9m",
+    "key": "contact.profissional",
+    "tipo": "TEXT"
+  },
+  "Reason for Visit": {
+    "id": "yY0huF7PZu7DqfRbTghG",
+    "key": "contact.reason_for_visit",
+    "tipo": "TEXT"
+  },
+  "Resumo do Atendimento": {
+    "id": "tZqotPjWQSgCa7kZrG1m",
+    "key": "contact.resumo_do_atendimento",
+    "tipo": "LARGE_TEXT"
+  },
+  "Régua - Agendamento": {
+    "id": "T7UxlEaWVQ7w0CMKliPL",
+    "key": "contact.rgua__agendamento",
+    "tipo": "TEXT"
+  },
+  "R�gua - Dia": {
+    "id": "yzRuBc4QxUtyql9GTEpm",
+    "key": "contact.rgua__dia",
+    "tipo": "TEXT"
+  },
+  "R�gua - Hora": {
+    "id": "8EmEs4943eXyAFNX240h",
+    "key": "contact.rgua__hora",
+    "tipo": "TEXT"
+  },
+  "Status da Negociação": {
+    "id": "jiOA0wbvzaPLA53R7NMo",
+    "key": "contact.status_da_negociao",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Trilha": {
+    "id": "6BaeEWxRs6YU30ltODMS",
+    "key": "contact.trilha",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Unidade": {
+    "id": "9LmL1zDWQcRrFaKiEMg9",
+    "key": "contact.unidade",
+    "tipo": "SINGLE_OPTIONS"
+  },
+  "Último Procedimento": {
+    "id": "qEtzu0Lewqmw3R7JqU3J",
+    "key": "contact.ltimo_procedimento",
+    "tipo": "TEXT"
+  }
+}

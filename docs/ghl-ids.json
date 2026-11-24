@@ -1,0 +1,37 @@
+{
+  "Atendimento Lead": {
+    "id": "9xaIJ30qBzkMskdK05zj",
+    "stages": {
+      "Em atendimento D0": "e3116d99-25ce-425f-920a-093a71cce313",
+      "Em atendimento D1": "f8491790-9918-4bf2-965f-86cd81b0e0dd",
+      "Em atendimento D2": "1525f7d6-6aaa-456e-8ead-1cafd137f125",
+      "Em atendimento D4": "5230b8e5-beb5-4c55-b569-471248242fb6",
+      "Em atendimento D6": "69896fcc-36fa-4884-88c7-caf8474d59f0",
+      "Aniversariantes": "8d20c6d9-cdc2-4c72-99c6-da37b826e2a1",
+      "Agendado Retorno": "5a84e0b8-0ffc-467d-b87a-169644d5b2a0",
+      "Agendado Odontopediatria": "15f089a9-970c-4921-a5a1-fe2afffd3662",
+      "Agendado Lentes": "69b62ed8-89f3-4406-bdb2-f9fdc26cf5d1",
+      "Agendado Ortodontia": "aabdb04d-ba49-4cda-bb25-aed67313fa59",
+      "Agendado Implante e prótese": "7e0bfee0-68f6-4057-8d57-9eef0935386a",
+      "Agendado clínica geral": "d8bb221e-e7dc-43a7-9625-70006d6c04da",
+      "Não agendado Odontopediatria": "8bec7b4f-dcc4-4454-9954-d25cf5d7c245",
+      "Não agendado Lentes": "72bf2a4f-f61b-4e2a-aa2b-c46d3cf0d82e",
+      "Não agendado Ortodontia": "67794a70-0482-4213-8975-73f7fe790ffc",
+      "Não agendado Implante e prótese": "35d05a71-87d5-4c9c-8dc9-ae838dbb262e",
+      "Não agendado clínica geral": "4a095c23-09b8-4b35-910f-6366ee707c95"
+    }
+  },
+  "Orçamento": {
+    "id": "fSS7IXsuKdI4qDAtjxDC",
+    "stages": {
+      "Agendado Retorno": "1124d1ae-ad30-493c-bd7b-c1aa645339ac",
+      "D0": "5634eb1d-2f9f-472f-a336-0b2e0ebcf0ed",
+      "D1": "24f484ea-7074-4f0b-ac7d-df0890afd5bb",
+      "D3": "f7c3fcc9-002e-4fc2-9e1f-030d88eb169b",
+      "D7": "92e44b7a-f4e0-4ec9-8226-288c5a950e11",
+      "D15": "0ceedb78-abe8-4c9f-ad04-f3f150972134",
+      "Orçamento Aprovado": "c862cad1-cf23-4471-acf9-47de3809226b",
+      "Não fechado": "28faac5f-2209-4270-8b2e-ccff9584f077"
+    }
+  }
+}

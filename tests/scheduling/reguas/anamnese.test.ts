@@ -1,0 +1,321 @@
+import { describe, it, expect, vi } from 'vitest';
+import {
+  runAnamneseD2,
+  runAnamneseD1,
+  ehPrimeiraAvaliacao,
+  idadeEm,
+} from '../../../src/scheduling/reguas/anamneseJobs';
+import { createMemoryAnamneseStore } from '../../../src/scheduling/reguas/anamneseStore';
+import type { ClinicorpClient } from '../../../src/integrations/clinicorp/types';
+import type { AnamneseClient, AnamneseLink } from '../../../src/integrations/anamnese/client';
+
+/** Nascimento que dá 10 anos em 19/11/2026 — a idade que recebe o link. */
+const NASC_CRIANCA = '2016-03-10T03:00:00.000Z';
+/** Nascimento que dá 37 anos em 19/11/2026 — não recebe mais nada desde 20/11/2026. */
+const NASC_ADULTO = '1989-05-20T08:00:00.000Z';
+
+/**
+ * `fichas` mapeia patientId → data de nascimento. Quem não estiver no mapa volta sem data, que é
+ * o caso em que a régua não envia.
+ */
+function fakeClinicorp(
+  appointments: unknown[],
+  fichas: Record<string, string | undefined> = {},
+): ClinicorpClient {
+  return {
+    listAppointmentsByDate: vi.fn().mockResolvedValue(appointments),
+    getPatientById: vi.fn(async (id: number) => ({
+      id,
+      name: 'Paciente',
+      ...(fichas[String(id)] ? { birthDate: fichas[String(id)] } : {}),
+    })),
+  } as unknown as ClinicorpClient;
+}
+
+function link(over: Partial<AnamneseLink> = {}): AnamneseLink {
+  return {
+    id: 'link-1',
+    link: 'https://odontobi.pages.dev/anamnese?t=abc',
+    especialidade: 'clinico_geral',
+    expiraEm: '2026-12-17T00:00:00Z',
+    reaproveitado: false,
+    respondido: false,
+    respondidoEm: null,
+    noClinicorp: true,
+    ...over,
+  };
+}
+
+function fakeAnamnese(over: Partial<AnamneseClient> = {}): AnamneseClient {
+  return {
+    criarLink: vi.fn().mockResolvedValue(link()),
+    consultarLink: vi.fn().mockResolvedValue(link()),
+    ...over,
+  } as AnamneseClient;
+}
+
+describe('ehPrimeiraAvaliacao', () => {
+  // Categorias reais da agenda (medidas em 13/11/2026).
+  it('pega as avaliações e deixa de fora retorno, revisão e consulta', () => {
+    expect(ehPrimeiraAvaliacao('Avaliação Recreio')).toBe(true);
+    expect(ehPrimeiraAvaliacao('Avaliação Ipanema')).toBe(true);
+    expect(ehPrimeiraAvaliacao('85 - Odontopediatria - Consulta de Avaliação Infantil')).toBe(true);
+
+    expect(ehPrimeiraAvaliacao('Avaliação para paciente - retorno(COBRADA)')).toBe(false);
+    expect(ehPrimeiraAvaliacao('Retorno Manutenção odontopediatria(COBRADA)')).toBe(false);
+    expect(ehPrimeiraAvaliacao('Consulta')).toBe(false);
+    expect(ehPrimeiraAvaliacao('Revisão')).toBe(false);
+    expect(ehPrimeiraAvaliacao('Limpeza')).toBe(false);
+    expect(ehPrimeiraAvaliacao(undefined)).toBe(false);
+  });
+});
+
+describe('idadeEm', () => {
+  it('conta anos completos na data da consulta', () => {
+    expect(idadeEm('2016-03-10T03:00:00.000Z', '2026-11-19')).toBe(10);
+    expect(idadeEm('10/03/2016', '2026-11-19')).toBe(10);
+    // Faz 12 no dia da consulta: ainda recebe.
+    expect(idadeEm('2014-11-19', '2026-11-19')).toBe(12);
+    // Faz 13 um dia depois da consulta: tem 12 na consulta.
+    expect(idadeEm('2013-11-20', '2026-11-19')).toBe(12);
+    // Fez 13 um dia antes: fora.
+    expect(idadeEm('2013-11-18', '2026-11-19')).toBe(13);
+  });
+
+  it('devolve undefined quando não dá para saber', () => {
+    expect(idadeEm(undefined, '2026-11-19')).toBeUndefined();
+    expect(idadeEm('', '2026-11-19')).toBeUndefined();
+    expect(idadeEm('ontem', '2026-11-19')).toBeUndefined();
+    expect(idadeEm('2016-03-10', 'sem data')).toBeUndefined();
+  });
+});
+
+describe('runAnamneseD2', () => {
+  it('cria o link só para a primeira avaliação e manda com o PatientId', async () => {
+    const clinicorp = fakeClinicorp(
+      [
+        { id: 'a1', patientName: 'Maria', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Recreio', patientId: 5192245887762432 },
+        { id: 'a2', patientName: 'Joao', mobilePhone: '5522', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Consulta', patientId: 2 },
+        { id: 'a3', patientName: 'SemFone', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Recreio', patientId: 3 },
+      ],
+      { '5192245887762432': NASC_CRIANCA, '2': NASC_CRIANCA, '3': NASC_CRIANCA },
+    );
+    const anamnese = fakeAnamnese();
+    const store = createMemoryAnamneseStore();
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runAnamneseD2(clinicorp, anamnese, store, dispatch, '2026-11-19');
+
+    expect(sent).toBe(1);
+    expect(anamnese.criarLink).toHaveBeenCalledWith({
+      especialidade: 'odontopediatria',
+      clinicorpPatientId: '5192245887762432',
+      nome: 'Maria',
+    });
+    expect(dispatch.mock.calls[0]?.[0]).toMatchObject({
+      type: 'anamnese',
+      phone: '5511',
+      anamneseLink: 'https://odontobi.pages.dev/anamnese?t=abc',
+    });
+    // O id ficou guardado para o D-1 poder perguntar se respondeu.
+    expect(await store.recuperar('a1')).toBe('link-1');
+  });
+
+  it('usa sempre odontopediatria, mesmo quando a agenda não diz que é criança', async () => {
+    const clinicorp = fakeClinicorp(
+      [{ id: 'a1', patientName: 'Pedro', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Recreio', patientId: 1 }],
+      { '1': NASC_CRIANCA },
+    );
+    const anamnese = fakeAnamnese();
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    await runAnamneseD2(clinicorp, anamnese, createMemoryAnamneseStore(), dispatch, '2026-11-19');
+
+    expect(anamnese.criarLink).toHaveBeenCalledWith(
+      expect.objectContaining({ especialidade: 'odontopediatria' }),
+    );
+    expect(dispatch.mock.calls[0]?.[0]).toMatchObject({ track: 'infantil' });
+  });
+
+  // Regra do cliente, 20/11/2026: o link é só da criança.
+  it('não manda nada para adulto, nem para quem está sem data de nascimento', async () => {
+    const clinicorp = fakeClinicorp(
+      [
+        { id: 'a1', patientName: 'Adulto', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Recreio', patientId: 1 },
+        { id: 'a2', patientName: 'Sem nascimento', mobilePhone: '5522', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Recreio', patientId: 2 },
+        { id: 'a3', patientName: 'Sem ficha', mobilePhone: '5533', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Recreio' },
+        { id: 'a4', patientName: 'Crianca', mobilePhone: '5544', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Recreio', patientId: 4 },
+      ],
+      { '1': NASC_ADULTO, '4': NASC_CRIANCA },
+    );
+    const anamnese = fakeAnamnese();
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runAnamneseD2(
+      clinicorp,
+      anamnese,
+      createMemoryAnamneseStore(),
+      dispatch,
+      '2026-11-19',
+    );
+
+    expect(sent).toBe(1);
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(dispatch.mock.calls[0]?.[0]).toMatchObject({ phone: '5544' });
+  });
+
+  // Paciente novo nasce sem data de nascimento na Clinicorp: create_appointment_by_api não tem
+  // campo para isso. Sem a rede da agenda, a criança agendada pela Clara nunca receberia o link.
+  it('sem data de nascimento, cai na rede da agenda: infantil recebe, o resto não', async () => {
+    const clinicorp = fakeClinicorp(
+      [
+        { id: 'a1', patientName: 'Criança nova', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Infantil', patientId: 1 },
+        { id: 'a2', patientName: 'Adulto novo', mobilePhone: '5522', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Recreio', patientId: 2 },
+      ],
+      {}, // nenhuma das duas fichas tem nascimento
+    );
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runAnamneseD2(
+      clinicorp,
+      fakeAnamnese(),
+      createMemoryAnamneseStore(),
+      dispatch,
+      '2026-11-19',
+    );
+
+    expect(sent).toBe(1);
+    expect(dispatch.mock.calls[0]?.[0]).toMatchObject({ phone: '5511' });
+  });
+
+  // A ficha manda mais que a agenda: adulto numa agenda escrita como infantil não recebe.
+  it('data de nascimento de adulto vence a rede da agenda', async () => {
+    const clinicorp = fakeClinicorp(
+      [{ id: 'a1', patientName: 'Adulto', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Infantil', patientId: 1 }],
+      { '1': NASC_ADULTO },
+    );
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runAnamneseD2(
+      clinicorp,
+      fakeAnamnese(),
+      createMemoryAnamneseStore(),
+      dispatch,
+      '2026-11-19',
+    );
+
+    expect(sent).toBe(0);
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+
+  it('o corte é 12 anos: com 12 recebe, com 13 não', async () => {
+    const clinicorp = fakeClinicorp(
+      [
+        { id: 'a1', patientName: 'Doze', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Recreio', patientId: 1 },
+        { id: 'a2', patientName: 'Treze', mobilePhone: '5522', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Recreio', patientId: 2 },
+      ],
+      { '1': '2014-11-19', '2': '2013-11-18' },
+    );
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runAnamneseD2(
+      clinicorp,
+      fakeAnamnese(),
+      createMemoryAnamneseStore(),
+      dispatch,
+      '2026-11-19',
+    );
+
+    expect(sent).toBe(1);
+    expect(dispatch.mock.calls[0]?.[0]).toMatchObject({ phone: '5511' });
+  });
+
+  it('não manda o link duas vezes para o mesmo agendamento', async () => {
+    const appointments = [
+      { id: 'a1', patientName: 'Maria', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Recreio', patientId: 1 },
+    ];
+    const fichas = { '1': NASC_CRIANCA };
+    const anamnese = fakeAnamnese();
+    const store = createMemoryAnamneseStore();
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    await runAnamneseD2(fakeClinicorp(appointments, fichas), anamnese, store, dispatch, '2026-11-19');
+    await runAnamneseD2(fakeClinicorp(appointments, fichas), anamnese, store, dispatch, '2026-11-19');
+
+    expect(dispatch).toHaveBeenCalledTimes(1);
+  });
+
+  it('um paciente que falha não derruba os outros da rodada', async () => {
+    const clinicorp = fakeClinicorp(
+      [
+        { id: 'a1', patientName: 'Quebra', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Recreio', patientId: 1 },
+        { id: 'a2', patientName: 'Passa', mobilePhone: '5522', date: 'x', fromTime: '9', toTime: '10', categoryDescription: 'Avaliação Recreio', patientId: 2 },
+      ],
+      { '1': NASC_CRIANCA, '2': NASC_CRIANCA },
+    );
+    const anamnese = fakeAnamnese({
+      criarLink: vi
+        .fn()
+        .mockRejectedValueOnce(new Error('502'))
+        .mockResolvedValue(link({ id: 'link-2' })),
+    });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+    const store = createMemoryAnamneseStore();
+
+    const sent = await runAnamneseD2(clinicorp, anamnese, store, dispatch, '2026-11-19');
+
+    expect(sent).toBe(1);
+    expect(dispatch.mock.calls[0]?.[0]).toMatchObject({ phone: '5522' });
+    // O que falhou não ficou guardado, então a próxima execução tenta de novo.
+    expect(await store.recuperar('a1')).toBeUndefined();
+  });
+});
+
+describe('runAnamneseD1', () => {
+  it('lembra só quem ainda não respondeu', async () => {
+    const clinicorp = fakeClinicorp([
+      { id: 'a1', patientName: 'Respondeu', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10' },
+      { id: 'a2', patientName: 'Nao respondeu', mobilePhone: '5522', date: 'x', fromTime: '9', toTime: '10' },
+      { id: 'a3', patientName: 'Sem ficha', mobilePhone: '5533', date: 'x', fromTime: '9', toTime: '10' },
+    ]);
+    const store = createMemoryAnamneseStore();
+    await store.lembrar('a1', 'link-respondido');
+    await store.lembrar('a2', 'link-pendente');
+
+    const anamnese = fakeAnamnese({
+      consultarLink: vi.fn().mockImplementation(async (id: string) =>
+        link({ id, respondido: id === 'link-respondido' }),
+      ),
+    });
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runAnamneseD1(clinicorp, anamnese, store, dispatch, '2026-11-20');
+
+    expect(sent).toBe(1);
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(dispatch.mock.calls[0]?.[0]).toMatchObject({
+      type: 'anamnese_lembrete',
+      phone: '5522',
+    });
+    // Quem nunca recebeu ficha não entra na consulta à API.
+    expect(anamnese.consultarLink).toHaveBeenCalledTimes(2);
+  });
+
+  it('não manda nada quando ninguém tem ficha pendente', async () => {
+    const clinicorp = fakeClinicorp([
+      { id: 'a1', patientName: 'X', mobilePhone: '5511', date: 'x', fromTime: '9', toTime: '10' },
+    ]);
+    const dispatch = vi.fn().mockResolvedValue(undefined);
+
+    const sent = await runAnamneseD1(
+      clinicorp,
+      fakeAnamnese(),
+      createMemoryAnamneseStore(),
+      dispatch,
+      '2026-11-20',
+    );
+
+    expect(sent).toBe(0);
+    expect(dispatch).not.toHaveBeenCalled();
+  });
+});

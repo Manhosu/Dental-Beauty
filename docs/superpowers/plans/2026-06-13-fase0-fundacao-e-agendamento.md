@@ -1134,15 +1134,18 @@ Expected: FAIL.
 
 - [ ] **Step 3: Implementar**
 
+> **Correção aplicada na revisão (pós-implementação):** a assinatura de `set` abaixo foi corrigida para casar com o ioredis real (`set(key, value, 'PX', ttlMs, 'NX')` — sem `'PX'` duplicado) e o token passou a usar `randomUUID()` (em vez de contador module-level, que colidia entre processos).
+
 ```ts
 // src/scheduling/lock.ts
+import { randomUUID } from 'node:crypto';
+
 export interface LockRedis {
   set(
     key: string,
     value: string,
-    mode: 'PX',
     px: 'PX',
-    ttl: number,
+    ttlMs: number,
     nx: 'NX',
   ): Promise<'OK' | null>;
   eval(script: string, numKeys: number, key: string, value: string): Promise<number>;
@@ -1156,8 +1159,6 @@ export interface LockHandle {
 const RELEASE_SCRIPT =
   "if redis.call('get', KEYS[1]) == ARGV[1] then return redis.call('del', KEYS[1]) else return 0 end";
 
-let tokenCounter = 0;
-
 export class SlotLock {
   constructor(private readonly redis: LockRedis) {}
 
@@ -1167,8 +1168,8 @@ export class SlotLock {
 
   async acquire(professionalId: string, slotId: string, ttlMs: number): Promise<LockHandle | null> {
     const key = this.keyFor(professionalId, slotId);
-    const token = `${professionalId}:${slotId}:${++tokenCounter}`;
-    const res = await this.redis.set(key, token, 'PX', 'PX', ttlMs, 'NX');
+    const token = randomUUID();
+    const res = await this.redis.set(key, token, 'PX', ttlMs, 'NX');
     return res === 'OK' ? { key, token } : null;
   }
 
