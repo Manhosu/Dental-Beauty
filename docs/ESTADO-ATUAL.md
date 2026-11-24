@@ -1,7 +1,14 @@
 # Estado Atual do Sistema — Dental Beauty
 
-> **Fonte de verdade para reentrar no projeto.** Atualizado em **2026-08-13**.
+> **Fonte de verdade para reentrar no projeto.** Atualizado em **2026-08-13**; a **§7 (riscos) em
+> 2026-11-23**.
 > Se você está retomando o contexto do zero, leia este arquivo primeiro e só depois os específicos.
+
+> ⚠️ **As seções 1 a 6 e 9 descrevem a arquitetura do Chatbotify, que foi substituída.** A plataforma
+> em produção hoje é o **GoHighLevel (painel Black CRM)** com a agente **Clara** — ver
+> [ghl/go-live.md](ghl/go-live.md) para o estado atual e [MIGRACAO-GOHIGHLEVEL.md](MIGRACAO-GOHIGHLEVEL.md)
+> para a migração. O que continua valendo deste arquivo: as **regras de negócio** (§2), os **riscos**
+> (§7, atualizada) e o **mapa da documentação** (§8).
 
 ---
 
@@ -160,16 +167,45 @@ CHATBOTIFY_CRM_ACCOUNT_ID / CHATBOTIFY_CRM_API_TOKEN / SONAX_WEBHOOK_TOKEN
 
 ## 7. Riscos conhecidos
 
-1. **Réguas de CHECKOUT nunca validadas com dado real.** Pós-procedimento, NPS e inatividade
-   dependem de `StatusId` vir no `/appointment/list`. Se não vier, retornam **0 em silêncio**.
-   Conferir com um dia real antes de ligar.
-2. **Trilha infantil sem nome do responsável.** Os templates infantis pedem `{{1}}` responsável +
-   `{{2}}` criança, mas os endpoints da Clinicorp usados hoje só expõem o nome do paciente. A régua
-   manda o nome da criança nas duas variáveis — resolver antes de ativar a trilha infantil.
+> Os riscos 1 e 2 estavam abertos desde agosto e foram **fechados em 23/11/2026**, medindo contra a
+> Clinicorp de produção (30 dias de agenda: 24/10–22/11, 233 agendamentos). O que foi medido está
+> registrado abaixo, porque o custo de reabrir essa dúvida é alto.
+
+1. ~~**Réguas de CHECKOUT nunca validadas com dado real.**~~ **RESOLVIDO — funcionam.** `StatusId`
+   **vem** no `/appointment/list` (233 de 233 agendamentos; 1 só sem o campo). O
+   `/appointment/status_list` devolve `Type: "CHECKOUT"` → id `4684110596931584`, que é exatamente o
+   que o código resolve em tempo de execução, então a comparação casa. Ensaio seco das quatro réguas
+   contra o dia 21/11: **NPS 7 disparos, pós-procedimento 2, inatividade 2** — nada de zero em
+   silêncio. A pós-cirurgia deu 0 nesse dia porque **não houve cirurgia nesse dia**: nos 30 dias o
+   classificador acha **7 atendimentos cirúrgicos** ("Cirurgia" ×5, "Endodontia", "Tratamento
+   endodôntico 1 canal"). Pode ligar.
+2. ~~**Trilha infantil sem nome do responsável.**~~ **RESOLVIDO pelos textos v5 — não é mais
+   bloqueio.** O dado de fato **não existe** na API, e isso está confirmado: `/patient/get` devolve
+   só 6 campos (`PatientId`, `Name`, `Phone`, `Email`, `Status`, `BirthDate`), sem nenhum campo de
+   responsável/titular; e o `Name` da agenda, que parecia candidato, vem **vazio** quando não é
+   primeira consulta e **igual ao paciente** quando é. Mas **nenhuma mensagem infantil usa o nome do
+   responsável**: as 10 da trilha dizem *"família de {{contact.nome_da_criana}}"*. O `first_name`
+   aparece só em texto de adulto. Logo o nome duplicado que o dispatcher manda **nunca chega ao
+   paciente** — a trilha infantil pode ser ativada. Se algum texto futuro quiser chamar o
+   responsável pelo nome, aí sim o dado não existe e precisa ser pedido na conversa.
 3. **`midias-followup/` é gitignored** — as 13 mídias existem só na máquina local. Manter backup
    fora do PC (já se perdeu contexto uma vez).
 4. **Credenciais que circularam em texto puro** e seguem sem rotação: token Clinicorp, senha do
-   Chatbotify, chave OpenAI `sk-proj-...`, senha do Sonax.
+   Chatbotify, chave OpenAI `sk-proj-...`, senha do Sonax. Somou-se a chave da API da Render
+   (18/11), que dá **escrita em todos os serviços** da conta — revogar.
+
+### O que a agenda real diz (24/10–22/11/2026, 233 agendamentos)
+
+Medido de passagem, e vale mais que o diagnóstico: são os números que justificam as réguas.
+
+| Fato | Número | Por que importa |
+|---|---|---|
+| Faltas | **43 (18,5%)** | Quase 1 em 5 não aparece. É o caso de negócio das réguas de confirmação, recobrança e no-show. |
+| Atendidos | 189 (81,1%) | Base das réguas de CHECKOUT. |
+| Status usados pela clínica | **só 2**: "4-Atendido" e "8-Faltou" | Dos 8 status que existem, "1-Confirmado", "2-Em espera" e "3-Em atendimento" **nunca** são usados. Não dá para saber pela Clinicorp quem confirmou — por isso a confirmação é controlada no GHL, e está certo assim. |
+| `Procedures` preenchido | **1 de 233** | O procedimento executado praticamente não existe na API. A categoria da agenda (`CategoryDescription`) é o que sobra, e é texto livre. |
+| Categorias com texto de retorno | 28 de 233 | O filtro `temTextoDeRetorno` evita mandar ~150 contatos/mês ao GHL para o workflow descartar. |
+| Categoria mais comum | "Consulta" (109) e "Avaliação Recreio" (43) | Metade da agenda é genérica — confirma que retorno por procedimento só funciona para a minoria identificável. |
 
 ---
 
